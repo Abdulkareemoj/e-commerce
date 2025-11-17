@@ -4,7 +4,7 @@ import { Text } from '@/components/ui/text';
 import { Menu } from 'lucide-react-native';
 import { useColorScheme } from 'nativewind';
 import * as React from 'react';
-import { Image, type ImageStyle, View, ScrollView, Pressable } from 'react-native';
+import { Image, type ImageStyle, View, ScrollView, Pressable, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 // import { LocationSearchHeader } from '@/components/LocationSearchHeader'; // Removed for Drawer header
 import { ProductCard } from '@/components/ProductCard';
@@ -127,7 +127,7 @@ export default function HomeScreen() {
   return (
     <SafeAreaView className="flex-1 bg-background">
       <ScrollView contentContainerClassName="p-4 gap-8">
-        {/* 1. Featured/Flash Sale Banner */}
+        {/*  Featured/Flash Sale Banner */}
         <View className="h-40 w-full items-center justify-center rounded-xl bg-primary/10 p-4">
           <Text variant="h3" className="text-center text-primary">
             Flash Sale: Up to 50% Off!
@@ -135,7 +135,7 @@ export default function HomeScreen() {
           <Text className="text-sm text-primary/80">Ends in 02:34:12</Text>
         </View>
 
-        {/* 2. Categories Section (Horizontal Scroll) */}
+        {/*  Categories Section (Horizontal Scroll) */}
         <View className="gap-4">
           <View className="flex-row items-center justify-between">
             <Text variant="large" className="font-semibold">
@@ -157,15 +157,21 @@ export default function HomeScreen() {
           </ScrollView>
         </View>
 
-        {/* 3. Recommended Products Section (Responsive Grid) */}
+        {/*  Recommended Products Section (Responsive Grid) */}
         <View className="gap-4">
           <Text variant="large" className="font-semibold">
             Recommended for you
           </Text>
           <View className="flex-row flex-wrap items-center justify-center gap-4">
             {MOCK_PRODUCTS.map((product) => (
-              <View key={product.id} className="w-[48%] sm:w-[31%] lg:w-[23%]">
-                <ProductCard product={product} />
+              <View
+                key={product.id}
+                className={Platform.OS === 'web' ? 'w-[31%] lg:w-[23%]' : 'w-full'}>
+                <ProductCard
+                  product={product}
+                  isSale={product.id === 'p2'} // Mock: p2 is on sale
+                  categories={['Watch', 'Samsung']}
+                />
               </View>
             ))}
           </View>
