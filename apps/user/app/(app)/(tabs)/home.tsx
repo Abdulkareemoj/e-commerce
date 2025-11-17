@@ -6,7 +6,7 @@ import { useColorScheme } from 'nativewind';
 import * as React from 'react';
 import { Image, type ImageStyle, View, ScrollView, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { LocationSearchHeader } from '@/components/LocationSearchHeader';
+// import { LocationSearchHeader } from '@/components/LocationSearchHeader'; // Removed for Drawer header
 import { ProductCard } from '@/components/ProductCard';
 import { Category, Product } from '@/types';
 import { Link } from 'expo-router';
@@ -126,8 +126,6 @@ function CategoryItem({ category }: { category: Category }) {
 export default function HomeScreen() {
   return (
     <SafeAreaView className="flex-1 bg-background">
-      <LocationSearchHeader />
-
       <ScrollView contentContainerClassName="p-4 gap-8">
         {/* 1. Featured/Flash Sale Banner */}
         <View className="h-40 w-full items-center justify-center rounded-xl bg-primary/10 p-4">
@@ -152,7 +150,7 @@ export default function HomeScreen() {
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
-            contentContainerClassName="gap-4">
+            contentContainerClassName="flex-row items-center justify-center gap-4">
             {MOCK_CATEGORIES.map((cat) => (
               <CategoryItem key={cat.id} category={cat} />
             ))}
@@ -164,9 +162,9 @@ export default function HomeScreen() {
           <Text variant="large" className="font-semibold">
             Recommended for you
           </Text>
-          <View className="flex-row flex-wrap justify-between gap-y-4">
+          <View className="flex-row flex-wrap items-center justify-center gap-4">
             {MOCK_PRODUCTS.map((product) => (
-              <View key={product.id} className="w-[48%] sm:w-[23%] lg:w-[18%]">
+              <View key={product.id} className="w-[48%] sm:w-[31%] lg:w-[23%]">
                 <ProductCard product={product} />
               </View>
             ))}

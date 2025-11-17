@@ -99,9 +99,6 @@ export default function CartScreen() {
         <ScrollView
           contentContainerClassName={`p-4 gap-4 ${isWeb ? 'w-2/3' : 'w-full'}`}
           className={isWeb ? 'border-r border-border' : ''}>
-          <Text variant="h2" className="mb-2 font-bold">
-            Your Cart ({cartItems.length} Items)
-          </Text>
           <View className="gap-4">
             {cartItems.map((item) => (
               <CartItemCard key={item.id} item={item} />

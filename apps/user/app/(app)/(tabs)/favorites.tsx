@@ -6,7 +6,7 @@ import * as React from 'react';
 import { ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ProductCard } from '@/components/ProductCard';
-import { MOCK_PRODUCTS } from '@/app/(app)/home';
+import { MOCK_PRODUCTS } from '@/app/(app)/(tabs)/home';
 
 // Mock Favorites Data (using all mock products)
 const MOCK_FAVORITES = MOCK_PRODUCTS.concat(MOCK_PRODUCTS.slice(0, 1));
@@ -31,14 +31,6 @@ export default function FavoritesScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-background">
-      <View className="flex-row items-center justify-between border-b border-border p-4">
-        <Text variant="h2" className="font-bold">
-          My Favorites ({MOCK_FAVORITES.length})
-        </Text>
-        <Button variant="outline" size="sm">
-          <Text>Move All to Cart</Text>
-        </Button>
-      </View>
       <ScrollView contentContainerClassName="p-4">
         <View className="flex-row flex-wrap justify-between gap-y-4">
           {MOCK_FAVORITES.map((product, index) => (
