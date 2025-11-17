@@ -7,11 +7,13 @@ import { Product } from '@/types';
 import { Link } from 'expo-router';
 import { Heart, ShoppingCart } from 'lucide-react-native';
 import React from 'react';
-import { Image, View } from 'react-native';
+import { Image, View, Platform } from 'react-native';
 import { useCart } from '@/hooks/useCart';
 
 interface ProductCardProps {
   product: Product;
+  isSale?: boolean;
+  categories?: string[];
 }
 
 // Mock Rating Component (since we don't have a dedicated one yet)
@@ -38,7 +40,7 @@ function Rating({ rating }: { rating: number }) {
   return <View className="flex-row">{stars}</View>;
 }
 
-export function ProductCard({ product }: ProductCardProps) {
+export function ProductCard({ product, isSale = false, categories = [] }: ProductCardProps) {
   const { addItem } = useCart();
 
   // Mock function for adding to cart
@@ -62,12 +64,26 @@ export function ProductCard({ product }: ProductCardProps) {
 
   return (
     <Link href={`/(app)/product/${product.id}`} asChild>
-      <Card className="w-full flex-col justify-between p-0 shadow-none sm:w-auto sm:shadow-sm">
+      <Card
+        className={`w-full flex-col justify-between p-0 ${Platform.OS === 'web' ? 'shadow-sm' : 'shadow-none'}`}>
         <View className="relative">
+          {/* SALE Badge */}
+          {isSale && (
+            <View className="absolute left-3 top-3 z-10 rounded-sm bg-red-500 px-2 py-1">
+              <Text className="text-xs font-bold text-white">SALE</Text>
+            </View>
+          )}
           {/* Product Image */}
           <Image
             source={{ uri: product.images[0] }}
-            className="h-32 w-full rounded-t-xl bg-muted/50"
+            // Larger, centered product image on web; slightly smaller on native
+            style={{
+              width: '100%',
+              height: Platform.OS === 'web' ? 200 : 160,
+              borderTopLeftRadius: 12,
+              borderTopRightRadius: 12,
+            }}
+            className={Platform.OS === 'web' ? 'bg-muted/50' : 'bg-muted/50'}
             resizeMode="cover"
           />
           {/* Favorite Button */}
@@ -80,18 +96,29 @@ export function ProductCard({ product }: ProductCardProps) {
           </Button>
         </View>
 
-        <CardContent className="flex-col gap-1 p-3">
+        <CardContent className="flex-col gap-2 p-3">
           <Text className="line-clamp-2 text-sm font-semibold">{product.title}</Text>
           <Rating rating={product.rating} />
           <Text className="text-lg font-bold text-primary">
             {formatCurrency(product.priceCents, product.currency)}
           </Text>
+          {/* Category Tags */}
+          {categories && categories.length > 0 && (
+            <View className="flex-row flex-wrap gap-1">
+              {categories.map((cat, idx) => (
+                <View key={idx} className="rounded-full bg-primary/10 px-2 py-1">
+                  <Text className="text-xs font-medium text-primary">{cat}</Text>
+                </View>
+              ))}
+            </View>
+          )}
+          {/* Divider Line */}
         </CardContent>
 
         <CardFooter className="p-3 pt-0">
           <Button className="flex-1" size="sm" onPress={handleAddToCart}>
             <Icon as={ShoppingCart} size={16} />
-            <Text>Add</Text>
+            <Text>Add to Cart</Text>
           </Button>
         </CardFooter>
       </Card>
