@@ -2,5 +2,5 @@ import { Stack } from 'expo-router';
 import React from 'react';
 
 export default function ProfileStackLayout() {
-  return <Stack screenOptions={{ headerShown: true, title: 'Profile' }} />;
+  return <Stack screenOptions={{ headerShown: false, title: 'Profile' }} />;
 }
