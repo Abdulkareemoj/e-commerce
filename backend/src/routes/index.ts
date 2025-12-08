@@ -1,12 +1,14 @@
 import { Hono } from "hono";
-import adminRoutes from "./admin"; // Assuming admin/index.ts exports a Hono app
-import userRoutes from "./user"; // Assuming user/index.ts exports a Hono app
-import vendorRoutes from "./vendor"; // Assuming vendor/index.ts exports a Hono app
+import adminRoutes from "./admin";
+import userRoutes from "./user";
+import vendorRoutes from "./vendor";
+import productPublicRoutes from "./product"; 
 
 const api = new Hono();
 
 api.route("/admin", adminRoutes);
-api.route("/user", userRoutes);
+api.route("/user", userRoutes); 
 api.route("/vendor", vendorRoutes);
+api.route("/products", productPublicRoutes);
 
 export default api;
