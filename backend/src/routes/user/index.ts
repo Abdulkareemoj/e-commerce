@@ -1,16 +1,19 @@
 import { Hono } from "hono";
-import profileRoutes from "./profile";
-import cartRoutes from "./cart";
-import messagingRoutes from "./messaging";
-import ordersRoutes from "./orders";
-import productRoutes from "./products";
+import { checkRole } from "@/utils/permissions"; 
+import profileUser from "./profile";
+import cartUser from "./cart";
+import messagingUser from "./messaging";
+import ordersUser from "./orders";
+import productUser from "./products";
 
 const userRoutes = new Hono();
 
-userRoutes.route("/profile", profileRoutes);
-userRoutes.route("/cart", cartRoutes);
-userRoutes.route("/messaging", messagingRoutes);
-userRoutes.route("/orders", ordersRoutes);
-userRoutes.route("/product", productRoutes);
+userRoutes.use("*", checkRole("user")); 
+
+userRoutes.route("/profile", profileUser);
+userRoutes.route("/cart", cartUser);
+userRoutes.route("/messaging", messagingUser);
+userRoutes.route("/orders", ordersUser);
+userRoutes.route("/product", productUser);
 
 export default userRoutes;

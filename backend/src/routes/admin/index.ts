@@ -1,13 +1,16 @@
 import { Hono } from "hono";
+import { checkRole } from "@/utils/permissions"; 
 
 import platformRoutes from "./platform";
 import usersRoutes from "./users";
 import vendorsRoutes from "./vendors";
 
-const vendorRoutes = new Hono();
+const adminRoutes = new Hono();
 
-vendorRoutes.route("/platform", platformRoutes);
-vendorRoutes.route("/users", usersRoutes);
-vendorRoutes.route("/vendor", vendorsRoutes);
+adminRoutes.use("*", checkRole("admin")); 
 
-export default vendorRoutes;
+adminRoutes.route("/platform", platformRoutes);
+adminRoutes.route("/users", usersRoutes);
+adminRoutes.route("/vendor", vendorsRoutes);
+
+export default adminRoutes;
