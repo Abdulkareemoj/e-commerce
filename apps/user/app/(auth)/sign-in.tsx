@@ -1,18 +1,23 @@
 import React from 'react';
 import { Pressable, ScrollView, TextInput, View } from 'react-native';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Text } from '@/components/ui/text';
+import { api } from '@/lib/api'; // Import the api utility
+import { useAuthStore } from '@/lib/authStore'; // Import the auth store
 import { Link, router } from 'expo-router';
+import { AlertCircle } from 'lucide-react-native';
 
 export default function SignInScreen() {
   const [email, setEmail] = React.useState('test@example.com');
   const [password, setPassword] = React.useState('password');
   const passwordInputRef = React.useRef<TextInput>(null);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
 
   function onEmailSubmitEditing() {
     passwordInputRef.current?.focus();
@@ -20,17 +25,15 @@ export default function SignInScreen() {
 
   async function onSubmit() {
     setIsSubmitting(true);
+    setError(null);
     try {
-      // TODO: Implement actual sign in logic here later (e.g., using better-auth)
-      console.log('Attempting sign in with:', email, password);
-
-      // Mock delay
-      await new Promise((resolve) => setTimeout(resolve, 500));
-
-      router.replace('/(app)/home');
-    } catch (error) {
-      // TODO: Show error toast
-      console.error('Sign in error:', error);
+      const response = await api.publicPost('/auth/login', { email, password });
+      console.log('Login successful:', response);
+      useAuthStore.getState().setAuth(response.user, response.accessToken, response.refreshToken); // Update Zustand store
+      router.replace('/(app)/(tabs)/home');
+    } catch (error: any) {
+      console.error('Sign in error:', error.message);
+      setError(error.message || 'An unexpected error occurred. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -52,6 +55,16 @@ export default function SignInScreen() {
               </CardDescription>
             </CardHeader>
             <CardContent className="gap-6">
+              {error && (
+                <Alert variant="destructive" icon={AlertCircle}>
+                  <AlertTitle>Sign-in Failed</AlertTitle>
+                  <AlertDescription>
+                    {error.includes('Invalid login credentials')
+                      ? 'Incorrect email or password.'
+                      : error}
+                  </AlertDescription>
+                </Alert>
+              )}
               <View className="gap-6">
                 <View className="gap-1.5">
                   <Label htmlFor="email">Email</Label>

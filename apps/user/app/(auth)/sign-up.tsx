@@ -7,12 +7,15 @@ import { Text } from '@/components/ui/text';
 import { router } from 'expo-router';
 import * as React from 'react';
 import { Pressable, TextInput, View, ScrollView } from 'react-native';
+import { api } from '@/lib/api'; // Import the api utility
+import { useAuthStore } from '@/lib/authStore'; // Import the auth store
 
 export default function SignUpScreen() {
   const [email, setEmail] = React.useState('');
   const [password, setPassword] = React.useState('');
   const [name, setName] = React.useState('');
   const [isSubmitting, setIsSubmitting] = React.useState(false);
+const [error, setError] = React.useState<string | null>(null);
 
   const passwordInputRef = React.useRef<TextInput>(null);
 
@@ -22,17 +25,15 @@ export default function SignUpScreen() {
 
   async function onSubmit() {
     setIsSubmitting(true);
+    setError(null);
     try {
-      // TODO: Implement actual sign up logic here later (e.g., using better-auth)
-      console.log('Attempting sign up with:', name, email, password);
-
-      // Mock delay
-      await new Promise((resolve) => setTimeout(resolve, 500));
-
+      const response = await api.publicPost('/auth/register', { name, email, password });
+      console.log('Sign up successful:', response);
+      useAuthStore.getState().setAuth(response.user, response.accessToken, response.refreshToken); // Update Zustand store
       router.replace('/(app)/home');
-    } catch (error) {
-      // TODO: Show error toast
-      console.error('Sign up error:', error);
+    } catch (error: any) {
+      console.error('Sign up error:', error.message);
+      setError(error.message || 'An unexpected error occurred. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -54,6 +55,14 @@ export default function SignUpScreen() {
               </CardDescription>
             </CardHeader>
             <CardContent className="gap-6">
+              {error && (
+                <Alert variant="destructive" icon={AlertCircle}>
+                  <AlertTitle>Sign-up Failed</AlertTitle>
+                  <AlertDescription>
+                    {error.includes('unique constraint') ? 'This email is already in use.' : error}
+                  </AlertDescription>
+                </Alert>
+              )}
               <View className="gap-6">
                 <View className="gap-1.5">
                   <Label htmlFor="name">Name</Label>
