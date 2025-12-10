@@ -7,15 +7,17 @@ import { Text } from '@/components/ui/text';
 import { router } from 'expo-router';
 import * as React from 'react';
 import { Pressable, TextInput, View, ScrollView } from 'react-native';
-import { api } from '@/lib/api'; // Import the api utility
-import { useAuthStore } from '@/lib/authStore'; // Import the auth store
+import { api } from '@/lib/api';
+import { useAuthStore } from '@/lib/authStore';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { AlertCircle } from 'lucide-react-native';
 
 export default function SignUpScreen() {
   const [email, setEmail] = React.useState('');
   const [password, setPassword] = React.useState('');
   const [name, setName] = React.useState('');
   const [isSubmitting, setIsSubmitting] = React.useState(false);
-const [error, setError] = React.useState<string | null>(null);
+  const [error, setError] = React.useState<string | null>(null);
 
   const passwordInputRef = React.useRef<TextInput>(null);
 
@@ -30,7 +32,7 @@ const [error, setError] = React.useState<string | null>(null);
       const response = await api.publicPost('/auth/register', { name, email, password });
       console.log('Sign up successful:', response);
       useAuthStore.getState().setAuth(response.user, response.accessToken, response.refreshToken); // Update Zustand store
-      router.replace('/(app)/home');
+      router.replace('/(app)/(tabs)/home');
     } catch (error: any) {
       console.error('Sign up error:', error.message);
       setError(error.message || 'An unexpected error occurred. Please try again.');
