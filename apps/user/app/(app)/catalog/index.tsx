@@ -2,7 +2,6 @@ import { Button } from '@/components/ui/button';
 import { Icon } from '@/components/ui/icon';
 import { Text } from '@/components/ui/text';
 import { ProductCard } from '@/components/ProductCard';
-import { MOCK_PRODUCTS } from '@/app/(app)/home'; // Reusing mock data
 import { Filter, Grid, List, SlidersHorizontal, X } from 'lucide-react-native';
 import * as React from 'react';
 import { ScrollView, View, Pressable } from 'react-native';
@@ -10,15 +9,15 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
 import { useWindowDimensions } from 'react-native';
+import { MOCK_PRODUCTS } from '@/app/(app)/(tabs)/home';
 
-// Mock Filter Data
 const MOCK_FILTERS = {
   categories: ['Electronics', 'Apparel', 'Home Goods', 'Books'],
   brands: ['Brand A', 'Brand B', 'Brand C'],
   priceRanges: ['Under $50', '$50 - $100', '$100 - $500', 'Over $500'],
 };
 
-// --- Filter Component (Reusable for both Sheet and Sidebar) ---
+// Filter Component (Reusable for both Sheet and Sidebar)
 function FilterSection({ title, options }: { title: string; options: string[] }) {
   return (
     <View className="gap-3">
@@ -40,7 +39,7 @@ function FilterSection({ title, options }: { title: string; options: string[] })
   );
 }
 
-// --- Web Filter Sidebar ---
+// Web Filter Sidebar
 function WebFilterSidebar() {
   return (
     <View className="hidden w-64 flex-col gap-4 border-r border-border p-4 lg:flex">

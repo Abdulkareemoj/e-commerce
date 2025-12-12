@@ -40,8 +40,6 @@ const MOCK_THREADS: {
   },
 ];
 
-// --- Components ---
-
 function MessageThreadCard({ thread }: { thread: (typeof MOCK_THREADS)[0] }) {
   return (
     <Link href={`/(app)/messages/${thread.id}`} asChild>
@@ -71,15 +69,6 @@ function MessageThreadCard({ thread }: { thread: (typeof MOCK_THREADS)[0] }) {
 export default function MessagesScreen() {
   return (
     <SafeAreaView className="flex-1 bg-background">
-      <View className="flex-row items-center justify-between border-b border-border p-4">
-        <Text variant="h2" className="font-bold">
-          Messages
-        </Text>
-        <Button size="sm">
-          <Icon as={Plus} size={16} />
-          <Text>New Chat</Text>
-        </Button>
-      </View>
       <ScrollView contentContainerClassName="p-4 gap-4">
         {MOCK_THREADS.map((thread) => (
           <MessageThreadCard key={thread.id} thread={thread} />

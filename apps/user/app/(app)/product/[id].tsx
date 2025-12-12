@@ -1,7 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { Icon } from '@/components/ui/icon';
 import { Text } from '@/components/ui/text';
-import { MOCK_PRODUCTS } from '@/app/(app)/home';
 import { ShoppingCart, Heart, Share2, Star } from 'lucide-react-native';
 import * as React from 'react';
 import {
@@ -18,17 +17,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { formatCurrency } from '@/lib/money';
 import { useCart } from '@/hooks/useCart';
 import { Pressable } from '@rn-primitives/slot';
+import { MOCK_PRODUCTS } from '@/app/(app)/(tabs)/home';
 
-// Mock Product Data (using the first mock product)
 const product = MOCK_PRODUCTS[0];
 
-// Mock Review Data
 const MOCK_REVIEWS = [
   { id: 1, user: 'Alice J.', rating: 5, comment: 'Amazing monitor, colors are vibrant!' },
   { id: 2, user: 'Bob K.', rating: 4, comment: 'Great value for the price, fast shipping.' },
 ];
-
-// --- Components ---
 
 function ProductImageGallery({ images }: { images: string[] }) {
   const [activeIndex, setActiveIndex] = React.useState(0);

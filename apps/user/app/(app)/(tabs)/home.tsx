@@ -1,15 +1,17 @@
+import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Icon } from '@/components/ui/icon';
 import { Text } from '@/components/ui/text';
 import { Menu } from 'lucide-react-native';
 import { useColorScheme } from 'nativewind';
-import * as React from 'react';
+
 import { Image, type ImageStyle, View, ScrollView, Pressable, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 // import { LocationSearchHeader } from '@/components/LocationSearchHeader'; // Removed for Drawer header
 import { ProductCard } from '@/components/ProductCard';
 import { Category, Product } from '@/types';
 import { Link } from 'expo-router';
+import { api } from '@/lib/api';
 import {
   Smartphone,
   Headphones,
@@ -19,8 +21,8 @@ import {
   Home as HomeIcon,
 } from 'lucide-react-native';
 
-// --- Mock Data ---
-const MOCK_CATEGORIES: Category[] = [
+// Mock Data
+export const MOCK_CATEGORIES: Category[] = [
   { id: '1', name: 'All', icon: 'HomeIcon' },
   { id: '2', name: 'Smartphones', icon: 'Smartphone' },
   { id: '3', name: 'Headphones', icon: 'Headphones' },
@@ -87,7 +89,6 @@ export const MOCK_PRODUCTS: Product[] = [
     createdAt: new Date().toISOString(),
   },
 ];
-
 // Map string icon names to Lucide components
 const ICON_MAP: Record<string, React.ComponentProps<typeof Icon>['as']> = {
   HomeIcon,
@@ -98,7 +99,7 @@ const ICON_MAP: Record<string, React.ComponentProps<typeof Icon>['as']> = {
   Shirt,
 };
 
-// --- Components ---
+// Components
 
 function CategoryItem({ category }: { category: Category }) {
   const IconComponent = ICON_MAP[category.icon] || HomeIcon;
@@ -124,6 +125,24 @@ function CategoryItem({ category }: { category: Category }) {
 }
 
 export default function HomeScreen() {
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const data = await api.publicGet('/products');
+        setProducts(data.products || []);
+      } catch (err) {
+        setError('Failed to load products');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProducts();
+  }, []);
+
   return (
     <SafeAreaView className="flex-1 bg-background">
       <ScrollView contentContainerClassName="p-4 gap-8">
@@ -162,19 +181,25 @@ export default function HomeScreen() {
           <Text variant="large" className="font-semibold">
             Recommended for you
           </Text>
-          <View className="flex-row flex-wrap items-center justify-center gap-4">
-            {MOCK_PRODUCTS.map((product) => (
-              <View
-                key={product.id}
-                className={Platform.OS === 'web' ? 'w-[31%] lg:w-[23%]' : 'w-full'}>
-                <ProductCard
-                  product={product}
-                  isSale={product.id === 'p2'} // Mock: p2 is on sale
-                  categories={['Watch', 'Samsung']}
-                />
-              </View>
-            ))}
-          </View>
+          {loading ? (
+            <Text>Loading products...</Text>
+          ) : error ? (
+            <Text className="text-red-500">{error}</Text>
+          ) : (
+            <View className="flex-row flex-wrap items-center justify-center gap-4">
+              {products.map((product) => (
+                <View
+                  key={product.id}
+                  className={Platform.OS === 'web' ? 'w-[31%] lg:w-[23%]' : 'w-full'}>
+                  <ProductCard
+                    product={product}
+                    isSale={product.id === 'p2'} // Mock: p2 is on sale
+                    categories={['Watch', 'Samsung']}
+                  />
+                </View>
+              ))}
+            </View>
+          )}
         </View>
       </ScrollView>
     </SafeAreaView>

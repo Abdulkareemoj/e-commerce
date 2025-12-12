@@ -1,133 +1,178 @@
 import { Icon } from '@/components/ui/icon';
-import { Tabs } from 'expo-router';
-import { Home, Search, ShoppingCart, Heart, User, MessageSquare } from 'lucide-react-native';
+import Drawer from 'expo-router/drawer';
+import { ShoppingCart, Search, User, Settings, LayoutGrid, LogOut } from 'lucide-react-native';
 import React from 'react';
-import { Platform } from 'react-native';
+import { Platform, Pressable, View } from 'react-native';
+import {
+  DrawerContentScrollView,
+  DrawerItem,
+  DrawerItemList,
+  DrawerToggleButton,
+} from '@react-navigation/drawer';
+import { Text } from '@/components/ui/text';
+import { Link, usePathname, router } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useAuthStore } from '@/lib/authStore';
 
-// Helper component for Tab Bar Icons
-function TabBarIcon({
-  name,
-  focused,
-}: {
-  name: React.ComponentProps<typeof Icon>['as'];
-  focused: boolean;
-}) {
-  const colorClass = focused ? 'text-primary' : 'text-muted-foreground';
-  return <Icon as={name} size={24} className={colorClass} />;
+// Placeholder for Cart Button
+function CartButton() {
+  return (
+    <Link href="/(app)/(tabs)/cart" asChild>
+      <Pressable className="p-2">
+        <Icon as={ShoppingCart} size={24} className="text-foreground" />
+      </Pressable>
+    </Link>
+  );
 }
 
-export default function AppLayout() {
+// Placeholder for Search Button
+function SearchButton() {
   return (
-    <Tabs
+    <Link href="/(app)/search" asChild>
+      <Pressable className="p-2">
+        <Icon as={Search} size={24} className="text-foreground" />
+      </Pressable>
+    </Link>
+  );
+}
+
+// Custom Drawer Content
+
+function CustomDrawerContent(props: any) {
+  const insets = useSafeAreaInsets();
+  const pathname = usePathname();
+  const { user, clearAuth } = useAuthStore(); // get user and clearAuth from store
+
+  const handleLogout = () => {
+    clearAuth(); // clear auth state and tokens
+    router.replace('/(auth)/sign-in');
+  };
+
+  return (
+    <DrawerContentScrollView {...props} contentContainerStyle={{ paddingTop: 10 }}>
+      {/* User Profile Summary */}
+      <View
+        style={{ paddingTop: insets.top }}
+        className="border-b border-border bg-secondary/50 p-4">
+        {user ? (
+          <>
+            <Text variant="h3" className="py-4 font-bold">
+              {user.name}
+            </Text>
+            <Text className="text-sm text-muted-foreground">{user.email}</Text>
+          </>
+        ) : (
+          <Text className="py-4 font-bold">Guest User</Text>
+        )}
+      </View>
+
+      {/* Drawer Items */}
+      <DrawerItemList {...props} />
+
+      {/* Logout Button */}
+      <DrawerItem
+        label="Logout"
+        onPress={handleLogout}
+        icon={({ color, size }) => <Icon as={LogOut} size={size} color={color} />}
+      />
+    </DrawerContentScrollView>
+  );
+}
+
+// Main Layout
+
+export default function AppLayout() {
+  const headerLeft = () => (
+    <View className="ml-2 h-full flex-row items-center justify-center">
+      <CartButton />
+      <SearchButton />
+    </View>
+  );
+
+  return (
+    <Drawer
+      drawerContent={CustomDrawerContent}
       screenOptions={{
-        headerShown: true, // Show header by default for consistency
+        headerShown: true,
         headerStyle: {
           backgroundColor: 'hsl(var(--background))',
           borderBottomWidth: 0,
           elevation: 0,
+          height: 56,
         },
         headerTitleStyle: {
           fontWeight: '600',
           fontSize: 20,
         },
-        tabBarActiveTintColor: 'hsl(var(--primary))',
-        tabBarInactiveTintColor: 'hsl(var(--muted-foreground))',
-        tabBarStyle: {
-          backgroundColor: 'hsl(var(--background))',
-          borderTopWidth: 0,
-          ...Platform.select({
-            web: {
-              height: 60,
-              boxShadow: '0px -1px 4px rgba(0, 0, 0, 0.05)',
-            },
-            native: {
-              height: 80,
-              paddingBottom: 20,
-              shadowColor: 'black',
-              shadowOpacity: 0.1,
-              shadowRadius: 20,
-              paddingTop: 10,
-              shadowOffset: {
-                height: -3,
-                width: 0,
-              },
-              elevation: 24,
-            },
-          }),
-        },
-        tabBarIconStyle: {
-          ...Platform.select({
-            native: {
-              paddingTop: 10,
-            },
-            web: {
-              paddingTop: 4,
-            },
-          }),
-        },
-        tabBarLabelStyle: {
-          fontSize: 12,
-          fontWeight: '600',
-          marginBottom: Platform.select({ native: 4, web: 0 }),
-        },
+        // Use DrawerToggleButton for the right side on mobile
+        headerRight: Platform.select({
+          native: () => (
+            <View className="mr-2 h-full items-center justify-center">
+              <DrawerToggleButton />
+            </View>
+          ),
+          web: undefined, // Web often uses a persistent sidebar
+        }),
+        // Move cart/search to the left
+        headerLeft: Platform.select({
+          native: headerLeft,
+          web: undefined,
+        }),
       }}>
-      <Tabs.Screen
-        name="home"
+      {/*  Tabs Group (Home, Cart, Favorites, Messages) */}
+      <Drawer.Screen
+        name="(tabs)"
         options={{
-          title: 'Discover',
-          headerShown: false,
-          tabBarIcon: ({ focused }) => <TabBarIcon name={Home} focused={focused} />,
+          title: 'Home',
+          drawerLabel: 'Home',
+          drawerIcon: ({ color, size }) => <Icon as={LayoutGrid} size={size} color={color} />,
         }}
       />
-      <Tabs.Screen
+
+      <Drawer.Screen
         name="catalog"
         options={{
           title: 'Catalog',
-          tabBarIcon: ({ focused }) => <TabBarIcon name={Search} focused={focused} />,
+          drawerLabel: 'Shop Catalog',
+          drawerIcon: ({ color, size }) => <Icon as={Search} size={size} color={color} />,
         }}
       />
-      <Tabs.Screen
-        name="cart"
-        options={{
-          title: 'Cart',
-          tabBarIcon: ({ focused }) => <TabBarIcon name={ShoppingCart} focused={focused} />,
-        }}
-      />
-      <Tabs.Screen
-        name="favorites"
-        options={{
-          title: 'Favorites',
-          tabBarIcon: ({ focused }) => <TabBarIcon name={Heart} focused={focused} />,
-        }}
-      />
-      <Tabs.Screen
+
+      <Drawer.Screen
         name="profile"
         options={{
           title: 'Profile',
-          tabBarIcon: ({ focused }) => <TabBarIcon name={User} focused={focused} />,
+          drawerLabel: 'My Profile',
+          drawerIcon: ({ color, size }) => <Icon as={User} size={size} color={color} />,
         }}
       />
-      <Tabs.Screen
-        name="messages"
+
+      <Drawer.Screen
+        name="settings"
         options={{
-          title: 'Messages',
-          tabBarIcon: ({ focused }) => <TabBarIcon name={MessageSquare} focused={focused} />,
+          title: 'Settings',
+          drawerLabel: 'Settings',
+          drawerIcon: ({ color, size }) => <Icon as={Settings} size={size} color={color} />,
         }}
       />
 
-      {/* Hidden screens that are part of the stack nSavigation within tabs */}
-      <Tabs.Screen name="product/[id]" options={{ href: null, headerShown: false }} />
-      <Tabs.Screen name="orders" options={{ href: null, headerShown: false }} />
-      <Tabs.Screen name="addresses" options={{ href: null, headerShown: false }} />
-      <Tabs.Screen name="checkout" options={{ href: null, headerShown: false }} />
-      <Tabs.Screen name="search" options={{ href: null, headerShown: false }} />
-      <Tabs.Screen name="settings" options={{ href: null, headerShown: false }} />
-      <Tabs.Screen name="support" options={{ href: null, headerShown: false }} />
-
-      {/* Hidden nested routes */}
-      <Tabs.Screen name="catalog/filters" options={{ href: null, headerShown: false }} />
-      <Tabs.Screen name="settings/privacy" options={{ href: null, headerShown: false }} />
-      <Tabs.Screen name="settings/terms" options={{ href: null, headerShown: false }} />
-    </Tabs>
+      {/* Hidden screens that are part of the stack navigation */}
+      <Drawer.Screen
+        name="product/[id]"
+        options={{ drawerItemStyle: { display: 'none' }, headerShown: false }}
+      />
+      <Drawer.Screen
+        name="orders"
+        options={{ drawerItemStyle: { display: 'none' }, headerShown: false }}
+      />
+      <Drawer.Screen
+        name="checkout"
+        options={{ drawerItemStyle: { display: 'none' }, headerShown: false }}
+      />
+      <Drawer.Screen
+        name="search"
+        options={{ drawerItemStyle: { display: 'none' }, headerShown: false }}
+      />
+    </Drawer>
   );
 }

@@ -1,14 +1,13 @@
+import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Text } from '@/components/ui/text';
 import { Icon } from '@/components/ui/icon';
 import { Heart } from 'lucide-react-native';
-import * as React from 'react';
 import { ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ProductCard } from '@/components/ProductCard';
 import { MOCK_PRODUCTS } from '@/app/(app)/(tabs)/home';
 
-// Mock Favorites Data (using all mock products)
 const MOCK_FAVORITES = MOCK_PRODUCTS.concat(MOCK_PRODUCTS.slice(0, 1));
 
 export default function FavoritesScreen() {
