@@ -1,5 +1,5 @@
 import { getAccessToken, saveTokens, deleteTokens, getRefreshToken } from './storage';
-import { useAuthStore } from './authStore'; // Import the auth store
+import { useAuthStore } from './authStore';
 
 // NOTE: EXPO_PUBLIC_API_BASE_URL must be set in .env file for web/native builds
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || 'http://localhost:3000/api/v1';
@@ -32,7 +32,7 @@ async function fetchWithAuth(endpoint: string, options: ApiRequestOptions = {}) 
 
   // Handle 401 Unauthorized - attempt token refresh
   if (response.status === 401 && options.auth) {
-    const refreshToken = useAuthStore.getState().refreshToken; // Get refresh token from store
+    const refreshToken = useAuthStore.getState().refreshToken;
     if (refreshToken) {
       try {
         const refreshResponse = await fetch(`${API_BASE_URL}/auth/refresh`, {
@@ -44,8 +44,8 @@ async function fetchWithAuth(endpoint: string, options: ApiRequestOptions = {}) 
         if (refreshResponse.ok) {
           const data = await refreshResponse.json();
           const { user, accessToken, refreshToken: newRefreshToken } = data; // Assuming refresh endpoint returns user and new tokens
-          useAuthStore.getState().setAuth(user, accessToken, newRefreshToken); // Update store
-          await saveTokens(accessToken, newRefreshToken); // Save new tokens to SecureStore
+          useAuthStore.getState().setAuth(user, accessToken, newRefreshToken);
+          await saveTokens(accessToken, newRefreshToken);
 
           // Retry the original request with the new token
           headers['Authorization'] = `Bearer ${accessToken}`;
@@ -53,20 +53,20 @@ async function fetchWithAuth(endpoint: string, options: ApiRequestOptions = {}) 
           response = await fetch(url, config);
         } else {
           // Refresh failed, force logout
-          useAuthStore.getState().clearAuth(); // Clear auth state in store
-          await deleteTokens(); // Clear tokens from SecureStore
+          useAuthStore.getState().clearAuth();
+          await deleteTokens();
           throw new Error('Session expired. Please log in again.');
         }
       } catch (error) {
         // If refresh fails or network error occurs during refresh
-        useAuthStore.getState().clearAuth(); // Clear auth state in store
-        await deleteTokens(); // Clear tokens from SecureStore
+        useAuthStore.getState().clearAuth();
+        await deleteTokens();
         throw new Error('Session expired. Please log in again.');
       }
     } else {
       // No refresh token available, force logout
-      useAuthStore.getState().clearAuth(); // Clear auth state in store
-      await deleteTokens(); // Clear tokens from SecureStore
+      useAuthStore.getState().clearAuth();
+      await deleteTokens();
       throw new Error('Authentication required.');
     }
   }

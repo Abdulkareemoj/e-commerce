@@ -1,4 +1,5 @@
 import { getAccessToken, saveTokens, deleteTokens, getRefreshToken } from './storage';
+import { useAuthStore } from './authStore';
 
 // NOTE: EXPO_PUBLIC_API_BASE_URL must be set in .env file for web/native builds
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || 'http://localhost:3000/api/v1';
@@ -10,16 +11,14 @@ interface ApiRequestOptions extends RequestInit {
 
 async function fetchWithAuth(endpoint: string, options: ApiRequestOptions = {}) {
   const url = `${API_BASE_URL}${endpoint}`;
-  const headers: HeadersInit = {
+  const headers: Record<string, string> = {
     'Content-Type': 'application/json',
-    ...options.headers,
+    ...(options.headers as Record<string, string>),
   };
 
-  if (options.auth) {
-    let token = await getAccessToken();
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
-    }
+  const currentAccessToken = useAuthStore.getState().accessToken;
+  if (options.auth && currentAccessToken) {
+    headers['Authorization'] = `Bearer ${currentAccessToken}`;
   }
 
   const config: RequestInit = {
@@ -32,7 +31,7 @@ async function fetchWithAuth(endpoint: string, options: ApiRequestOptions = {}) 
 
   // Handle 401 Unauthorized - attempt token refresh
   if (response.status === 401 && options.auth) {
-    const refreshToken = await getRefreshToken();
+    const refreshToken = useAuthStore.getState().refreshToken;
     if (refreshToken) {
       try {
         const refreshResponse = await fetch(`${API_BASE_URL}/auth/refresh`, {
@@ -43,24 +42,27 @@ async function fetchWithAuth(endpoint: string, options: ApiRequestOptions = {}) 
 
         if (refreshResponse.ok) {
           const data = await refreshResponse.json();
-          await saveTokens(data.accessToken, data.refreshToken);
+          const { user, accessToken, refreshToken: newRefreshToken } = data; // Assuming refresh endpoint returns user and new tokens
+          useAuthStore.getState().setAuth(user, accessToken, newRefreshToken);
+          await saveTokens(accessToken, newRefreshToken);
 
-          // Retry the original request with the new token
-          headers['Authorization'] = `Bearer ${data.accessToken}`;
+          headers['Authorization'] = `Bearer ${accessToken}`;
           config.headers = headers;
           response = await fetch(url, config);
         } else {
-          // Refresh failed, force logout
+          useAuthStore.getState().clearAuth();
           await deleteTokens();
           throw new Error('Session expired. Please log in again.');
         }
       } catch (error) {
         // If refresh fails or network error occurs during refresh
+        useAuthStore.getState().clearAuth();
         await deleteTokens();
         throw new Error('Session expired. Please log in again.');
       }
     } else {
       // No refresh token available, force logout
+      useAuthStore.getState().clearAuth();
       await deleteTokens();
       throw new Error('Authentication required.');
     }
