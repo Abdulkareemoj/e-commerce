@@ -1,15 +1,15 @@
 import { Hono } from "hono";
 
-const profileRoutes = new Hono();
+const profileUser = new Hono();
 
-profileRoutes.get("/", (c) => {
+profileUser.get("/", (c) => {
   // logic to get user profile
   return c.json({ user: "profile data" });
 });
 
-profileRoutes.put("/", (c) => {
+profileUser.put("/", (c) => {
   // logic to update user profile
   return c.json({ message: "Profile updated successfully" });
 });
 
-export default profileRoutes;
+export default profileUser;

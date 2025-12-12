@@ -1,10 +1,10 @@
 import { Hono } from "hono";
 
-const productsRoutes = new Hono();
+const productsUser = new Hono();
 
-productsRoutes.get("/", (c) => {
+productsUser.get("/", (c) => {
   // logic to get user products
   return c.json({ products: "user products data" });
 });
 
-export default productsRoutes;
+export default productsUser;

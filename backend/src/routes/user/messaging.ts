@@ -1,13 +1,13 @@
 import { Hono } from "hono";
 
-const messagingRoutes = new Hono();
-messagingRoutes.get("/", (c) => {
+const messagingUser = new Hono();
+messagingUser.get("/", (c) => {
   // logic to get user messages
   return c.json({ messages: "user messages data" });
 });
-messagingRoutes.post("/send", (c) => {
+messagingUser.post("/send", (c) => {
   // logic to send a message
   return c.json({ message: "Message sent successfully" });
 });
 
-export default messagingRoutes;
+export default messagingUser;
