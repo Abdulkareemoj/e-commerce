@@ -16,8 +16,7 @@ import * as React from 'react';
 import { ScrollView, View, Pressable, useWindowDimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Link } from 'expo-router';
-import { api } from '@/lib/api';
-import { useAuthStore } from '@/lib/authStore';
+import { authClient } from '@/lib/auth-client';
 
 // Navigation Links
 const ACCOUNT_LINKS = [
@@ -48,31 +47,9 @@ function ProfileLink({ name, icon, href }: (typeof ACCOUNT_LINKS)[0]) {
 export default function ProfileScreen() {
   const { width } = useWindowDimensions();
   const isWeb = width >= 1024;
-  const { user } = useAuthStore();
-  const [userProfile, setUserProfile] = React.useState<any>(null);
-  const [isLoading, setIsLoading] = React.useState(true);
-  const [error, setError] = React.useState<string | null>(null);
+  const { data: session } = authClient.useSession();
 
-  React.useEffect(() => {
-    async function fetchProfile() {
-      if (!user) {
-        setIsLoading(false);
-        return;
-      }
-      try {
-        setIsLoading(true);
-        const data = await api.get('/user/profile');
-        setUserProfile(data.user);
-      } catch (err: any) {
-        setError(err.message || 'Failed to fetch profile');
-      } finally {
-        setIsLoading(false);
-      }
-    }
-    fetchProfile();
-  }, [user]);
-
-  if (isLoading || !user) {
+  if (!session?.user) {
     return (
       <SafeAreaView className="flex-1 items-center justify-center bg-background">
         <Text>Loading profile...</Text>
@@ -80,19 +57,10 @@ export default function ProfileScreen() {
     );
   }
 
-  if (error) {
-    return (
-      <SafeAreaView className="flex-1 items-center justify-center bg-background">
-        <Text className="text-red-500">Error: {error}</Text>
-      </SafeAreaView>
-    );
-  }
-
-  // Fallback if no user profile data is available after fetch (e.g., empty response)
-  const displayUser = userProfile || user || { name: 'Guest', email: 'N/A', initials: 'G' };
+  const displayUser = session.user;
   const displayName = displayUser.name || 'Guest User';
   const displayEmail = displayUser.email || 'N/A';
-  const displayInitials = displayUser.name ? displayName.charAt(0).toUpperCase() : 'G';
+  const displayInitials = displayUser.name ? displayUser.name.charAt(0).toUpperCase() : 'G';
 
   return (
     <SafeAreaView className="flex-1 bg-background">
