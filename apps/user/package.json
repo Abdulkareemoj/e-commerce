@@ -36,6 +36,7 @@
     "clsx": "^2.1.1",
     "expo": "^54.0.30",
     "expo-linking": "~8.0.9",
+    "expo-network": "~8.0.8",
     "expo-router": "~6.0.21",
     "expo-secure-store": "~15.0.8",
     "expo-splash-screen": "~31.0.11",
