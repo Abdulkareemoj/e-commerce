@@ -7,8 +7,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Text } from '@/components/ui/text';
-import { api } from '@/lib/api';
-import { useAuthStore } from '@/lib/authStore';
+import { authClient } from '@/lib/auth-client';
+
 import { Link, router } from 'expo-router';
 import { AlertCircle } from 'lucide-react-native';
 
@@ -27,9 +27,11 @@ export default function SignInScreen() {
     setIsSubmitting(true);
     setError(null);
     try {
-      const response = await api.publicPost('/auth/login', { email, password });
-      console.log('Login successful:', response);
-      useAuthStore.getState().setAuth(response.user, response.accessToken, response.refreshToken);
+      await authClient.signIn.email({
+        email,
+        password,
+      });
+
       router.replace('/(app)/(tabs)/home');
     } catch (error: any) {
       console.error('Sign in error:', error.message);

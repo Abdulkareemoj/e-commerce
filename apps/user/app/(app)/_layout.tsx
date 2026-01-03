@@ -12,7 +12,7 @@ import {
 import { Text } from '@/components/ui/text';
 import { Link, usePathname, router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useAuthStore } from '@/lib/authStore';
+import { authClient } from '@/lib/auth-client';
 
 // Placeholder for Cart Button
 function CartButton() {
@@ -41,10 +41,10 @@ function SearchButton() {
 function CustomDrawerContent(props: any) {
   const insets = useSafeAreaInsets();
   const pathname = usePathname();
-  const { user, clearAuth } = useAuthStore(); // get user and clearAuth from store
+  const { data: session } = authClient.useSession();
 
-  const handleLogout = () => {
-    clearAuth(); // clear auth state and tokens
+  const handleLogout = async () => {
+    await authClient.signOut();
     router.replace('/(auth)/sign-in');
   };
 
@@ -54,12 +54,12 @@ function CustomDrawerContent(props: any) {
       <View
         style={{ paddingTop: insets.top }}
         className="border-b border-border bg-secondary/50 p-4">
-        {user ? (
+        {session?.user ? (
           <>
             <Text variant="h3" className="py-4 font-bold">
-              {user.name}
+              {session.user.name}
             </Text>
-            <Text className="text-sm text-muted-foreground">{user.email}</Text>
+            <Text className="text-sm text-muted-foreground">{session.user.email}</Text>
           </>
         ) : (
           <Text className="py-4 font-bold">Guest User</Text>
