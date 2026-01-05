@@ -2,30 +2,39 @@ import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { emailOTP, oneTap, username } from "better-auth/plugins";
 import { admin } from "better-auth/plugins/admin";
-
-import {
-  resetConfirmTemplate,
-  resetTemplate,
-  verificationTemplate,
-} from "@utils/mail";
+import { expo } from "@better-auth/expo";
 
 import { profile } from "@db/schema/profile-schema";
 import { accessControl, adminRole, vendorRole, userAc } from "./permissions";
 import { db, schema } from "@/db";
 // import { organization } from "better-auth/plugins/organization";
 // const resend = new Resend(RESEND_API_KEY);
-const from = process.env.BETTER_AUTH_EMAIL
+const from = process.env.BETTER_AUTH_EMAIL;
 
 export const auth = betterAuth({
-  appName: "Foreum",
+  appName: "ecommerce",
   database: drizzleAdapter(db, {
     provider: "pg",
     schema,
   }),
+  trustedOrigins: [
+    "user://",
+    "vendor://",
+    "admin://",
+    ...(process.env.NODE_ENV === "development"
+      ? [
+          "exp://*/*",
+          "exp://10.0.0.*:*/*",
+          "exp://192.168.*.*:*/*",
+          "exp://172.*.*.*:*/*",
+          "exp://localhost:*/*",
+        ]
+      : []),
+  ],
   plugins: [
     admin({
       defaultRole: "user",
-      adminRoles: ["admin", "moderator"], // Both can access admin routes
+      adminRoles: ["admin"],
       accessControl,
       roles: {
         admin: adminRole,
@@ -46,29 +55,8 @@ export const auth = betterAuth({
       },
       displayUsernameNormalization: (display) => display.trim(),
     }),
-    // organization(),
-    //     {
-    //   async sendInvitationEmail(data) {
-    //     await resend.emails.send({
-    //       from,
-    //       to: data.email,
-    //       subject: "You've been invited to join an organization",
-    //       react: reactInvitationEmail({
-    //         username: data.email,
-    //         invitedByUsername: data.inviter.user.name,
-    //         invitedByEmail: data.inviter.user.email,
-    //         teamName: data.organization.name,
-    //         inviteLink:
-    //           process.env.NODE_ENV === "development"
-    //             ? `http://localhost:3000/accept-invitation/${data.id}`
-    //             : `${
-    //                 process.env.BETTER_AUTH_URL ||
-    //                 "https://demo.better-auth.com"
-    //               }/accept-invitation/${data.id}`,
-    //       });
-    //     });
-    //   },
-    // }
+    expo(),
+
     oneTap(),
     // emailOTP(),
   ],
@@ -109,37 +97,9 @@ export const auth = betterAuth({
   //   autoSignInAfterVerification: true,
   //   expiresIn: 3600, // 1 hour
   // },
-  // emailAndPassword: {
-  //   enabled: true,
-  //   async sendResetPassword({ user, url, token }, request) {
-  //     const emailContent = resetTemplate
-  //       .replace("{{username}}", user.name || user.email)
-  //       .replace(/{{url}}/g, url);
-
-  //     const res = await resend.emails.send({
-  //       from,
-  //       to: user.email,
-  //       subject: "Reset your password",
-  //       html: emailContent,
-  //     });
-  //     console.log(res, `Password reset link sent to ${user.email}.`);
-  //   },
-  //   async onPasswordReset({ user }, request) {
-  //     const emailContent = resetConfirmTemplate.replace(
-  //       "{{username}}",
-  //       user.name || user.email
-  //     );
-
-  //     const res = await resend.emails.send({
-  //       from,
-  //       to: user.email,
-  //       subject: "Password Reset Confirmation",
-  //       html: emailContent,
-  //     });
-  //     console.log(res, `Password reset confirmation sent to ${user.email}.`);
-  //   },
-  //   requireEmailVerification: true,
-  // },
+  emailAndPassword: {
+    enabled: true,
+  },
   account: {
     accountLinking: {
       trustedProviders: ["google", "discord", "foreum"],
