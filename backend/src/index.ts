@@ -47,17 +47,45 @@ app.use("*", pinoLogger({ pino: log }));
 app.use(
   "/api/auth/*",
   cors({
-    origin: process.env.CORS_ORIGIN!,
+    origin:
+      process.env.NODE_ENV === "production" && process.env.CORS_ORIGIN
+        ? process.env.CORS_ORIGIN
+        : "*",
     allowHeaders: ["Content-Type", "Authorization"],
     allowMethods: ["POST", "GET", "OPTIONS"],
     exposeHeaders: ["Content-Length"],
     maxAge: 600,
     credentials: true,
-  })
+  }),
 );
 
 app.on(["POST", "GET"], "/api/auth/*", (c) => {
-  return auth.handler(c.req.raw);
+  const req = c.req.raw;
+  const headers = new Headers(req.headers);
+
+  if (!headers.get("origin")) {
+    const expoOrigin = headers.get("expo-origin");
+    if (expoOrigin) {
+      headers.set("origin", expoOrigin);
+    } else {
+      const host = headers.get("host");
+      if (host) {
+        headers.set("origin", `http://${host}`);
+      }
+    }
+  }
+
+  const forwarded = new Request(
+    req as any,
+    {
+      headers,
+      ...(req.method !== "GET" && req.method !== "HEAD"
+        ? { duplex: "half" }
+        : {}),
+    } as any,
+  );
+
+  return auth.handler(forwarded);
 });
 
 app.get("/health", (c) => c.text("OK"));
@@ -67,6 +95,7 @@ app.route("/api", api);
 const server = serve({
   fetch: app.fetch,
   port,
+  hostname: "0.0.0.0",
 });
 
 // Log startup messages

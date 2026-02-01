@@ -18,11 +18,12 @@ export const auth = betterAuth({
     schema,
   }),
   trustedOrigins: [
-    "user://",
-    "vendor://",
-    "admin://",
-    ...(process.env.NODE_ENV === "development"
+    "http://localhost:8081",
+    "mobile://",
+    ...(process.env.NODE_ENV !== "production"
       ? [
+          "exp://",
+          "exp://**",
           "exp://*/*",
           "exp://10.0.0.*:*/*",
           "exp://192.168.*.*:*/*",
@@ -109,6 +110,10 @@ export const auth = betterAuth({
     google: {
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    },
+    apple: {
+      clientId: process.env.APPLE_CLIENT_ID!,
+      clientSecret: process.env.APPLE_CLIENT_SECRET!,
     },
     discord: {
       clientId: process.env.DISCORD_CLIENT_ID!,
