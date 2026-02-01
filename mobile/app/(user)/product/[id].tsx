@@ -17,7 +17,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { formatCurrency } from '@/lib/money';
 import { useCart } from '@/hooks/useCart';
 import { Pressable } from '@rn-primitives/slot';
-import { MOCK_PRODUCTS } from '@/app/(app)/(tabs)/home';
+import { MOCK_PRODUCTS } from '@/app/(user)/(tabs)/home';
 
 const product = MOCK_PRODUCTS[0];
 

@@ -9,7 +9,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
 import { useWindowDimensions } from 'react-native';
-import { MOCK_PRODUCTS } from '@/app/(app)/(tabs)/home';
+import { MOCK_PRODUCTS } from '@/app/(user)/(tabs)/home';
 
 const MOCK_FILTERS = {
   categories: ['Electronics', 'Apparel', 'Home Goods', 'Books'],

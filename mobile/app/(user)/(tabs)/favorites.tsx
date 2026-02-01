@@ -6,7 +6,7 @@ import { Heart } from 'lucide-react-native';
 import { ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ProductCard } from '@/components/ProductCard';
-import { MOCK_PRODUCTS } from '@/app/(app)/(tabs)/home';
+import { MOCK_PRODUCTS } from '@/app/(user)/(tabs)/home';
 
 const MOCK_FAVORITES = MOCK_PRODUCTS.concat(MOCK_PRODUCTS.slice(0, 1));
 
