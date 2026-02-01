@@ -32,7 +32,7 @@ export default function SignUpScreen() {
       const response = await api.publicPost('/auth/register', { name, email, password });
       console.log('Sign up successful:', response);
       useAuthStore.getState().setAuth(response.user, response.accessToken, response.refreshToken); // Update Zustand store
-      router.replace('/(app)/(tabs)/dashboard');
+      router.replace('//(tabs)/dashboard');
     } catch (error: any) {
       console.error('Sign up error:', error.message);
       setError(error.message || 'An unexpected error occurred. Please try again.');
@@ -112,15 +112,15 @@ export default function SignUpScreen() {
                   <Text>{isSubmitting ? 'Creating Account...' : 'Continue'}</Text>
                 </Button>
               </View>
-              <Text className="text-center text-sm">
-                Already have an account?{' '}
+              <View className="flex flex-row items-center justify-center gap-2 text-sm">
+                <Text>Already have an account?</Text>
                 <Pressable
                   onPress={() => {
                     router.push('/(auth)/sign-in');
                   }}>
-                  <Text className="text-sm underline underline-offset-4">Sign in</Text>
+                  <Text className="text-sm underline underline-offset-4">Sign In</Text>
                 </Pressable>
-              </Text>
+              </View>
               <View className="flex-row items-center">
                 <Separator className="flex-1" />
                 <Text className="px-4 text-sm text-muted-foreground">or</Text>

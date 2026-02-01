@@ -30,7 +30,7 @@ export default function SignInScreen() {
       const response = await api.publicPost('/auth/login', { email, password });
       console.log('Login successful:', response);
       useAuthStore.getState().setAuth(response.user, response.accessToken, response.refreshToken);
-      router.replace('/(app)/(tabs)/dashboard');
+      router.replace('//(tabs)/dashboard');
     } catch (error: any) {
       console.error('Sign in error:', error.message);
       setError(error.message || 'An unexpected error occurred. Please try again.');
@@ -41,7 +41,7 @@ export default function SignInScreen() {
   return (
     <ScrollView
       keyboardShouldPersistTaps="handled"
-      contentContainerClassName="sm:flex-1 items-center justify-center p-4 py-8 sm:py-4 sm:p-6 mt-safe"
+      contentContainerClassName="sm:flex-1 items-center justify-center p-4 py-8 sm:py-4 sm:p-6"
       keyboardDismissMode="interactive">
       <View className="w-full max-w-sm">
         <View className="gap-6">
@@ -107,15 +107,15 @@ export default function SignInScreen() {
                   <Text>{isSubmitting ? 'Signing In...' : 'Continue'}</Text>
                 </Button>
               </View>
-              <Text className="text-center text-sm">
-                Don&apos;t have an account?{' '}
+              <View className="flex flex-row items-center justify-center gap-2 text-sm">
+                <Text>Don&apos;t have an account?</Text>
                 <Pressable
                   onPress={() => {
                     router.push('/(auth)/sign-up');
                   }}>
-                  <Text className="text-sm underline underline-offset-4">Sign up</Text>
+                  <Text className="text-sm underline underline-offset-4">Sign Up</Text>
                 </Pressable>
-              </Text>
+              </View>
               <View className="flex-row items-center">
                 <Separator className="flex-1" />
                 <Text className="px-4 text-sm text-muted-foreground">or</Text>
