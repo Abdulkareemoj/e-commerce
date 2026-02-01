@@ -7,10 +7,10 @@ import { Text } from '@/components/ui/text';
 import { router } from 'expo-router';
 import * as React from 'react';
 import { Pressable, TextInput, View, ScrollView } from 'react-native';
-import { api } from '@/lib/api';
 import { useAuthStore } from '@/lib/authStore';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react-native';
+import { signUp, getSession } from '@/lib/auth-client';
 
 export default function SignUpScreen() {
   const [email, setEmail] = React.useState('');
@@ -29,10 +29,26 @@ export default function SignUpScreen() {
     setIsSubmitting(true);
     setError(null);
     try {
-      const response = await api.publicPost('/auth/register', { name, email, password });
-      console.log('Sign up successful:', response);
-      useAuthStore.getState().setAuth(response.user, response.accessToken, response.refreshToken); // Update Zustand store
-      router.replace('//(tabs)/dashboard');
+      const result = await signUp.email({ name, email, password });
+      if (result?.error) {
+        throw new Error(result.error.message || 'Unable to sign up.');
+      }
+
+      const { data } = await getSession();
+      if (!data?.user) {
+        throw new Error('Signed up, but failed to load session.');
+      }
+
+      useAuthStore.getState().setAuth(data.user as any);
+
+      const role = (data.user as any)?.role;
+      if (role === 'admin') {
+        router.replace('/(admin)/(tabs)/dashboard');
+      } else if (role === 'vendor') {
+        router.replace('/(vendor)/(tabs)/dashboard');
+      } else {
+        router.replace('/(user)/(tabs)/home');
+      }
     } catch (error: any) {
       console.error('Sign up error:', error.message);
       setError(error.message || 'An unexpected error occurred. Please try again.');
@@ -49,7 +65,7 @@ export default function SignUpScreen() {
         <View className="gap-6">
           <Card className="border-border/0 shadow-none sm:border-border sm:shadow-sm sm:shadow-black/5">
             <CardHeader>
-              <CardTitle className="text-center text-xl sm:text-left">
+              <CardTitle className="text-center text-2xl sm:text-left">
                 Create your account
               </CardTitle>
               <CardDescription className="text-center sm:text-left">
@@ -121,12 +137,6 @@ export default function SignUpScreen() {
                   <Text className="text-sm underline underline-offset-4">Sign In</Text>
                 </Pressable>
               </View>
-              <View className="flex-row items-center">
-                <Separator className="flex-1" />
-                <Text className="px-4 text-sm text-muted-foreground">or</Text>
-                <Separator className="flex-1" />
-              </View>
-              {/* <SocialConnections /> */}
             </CardContent>
           </Card>
         </View>

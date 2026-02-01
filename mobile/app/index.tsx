@@ -2,16 +2,15 @@ import { useColorScheme } from 'nativewind';
 import * as React from 'react';
 import { View, ActivityIndicator } from 'react-native';
 import { Redirect } from 'expo-router';
+import { useAuthStore } from '@/lib/authStore';
 
 export default function Index() {
   const { colorScheme } = useColorScheme();
-  // TODO: Hook this up to your actual Auth Context
-  // const { user, isLoading, role } = useAuth();
+  const { user, isAuthenticated, isLoading, initializeAuth } = useAuthStore();
 
-  // MOCK DATA FOR SETUP
-  const isLoading = false;
-  const user: { id: number } | null = null; // Set to { id: 1 } to test logged in state
-  const role: 'admin' | 'vendor' | 'customer' = 'customer' as const;
+  React.useEffect(() => {
+    initializeAuth();
+  }, []);
 
   if (isLoading) {
     return (
@@ -22,17 +21,17 @@ export default function Index() {
   }
 
   // 1. If not logged in, go to Auth group
-  if (!user) {
+  if (!isAuthenticated || !user) {
     return <Redirect href="/(auth)/sign-in" />;
   }
 
   // 2. If logged in, redirect based on role
-  switch (role) {
+  switch (user.role) {
     case 'admin':
       return <Redirect href="/(admin)/(tabs)/dashboard" />;
     case 'vendor':
       return <Redirect href="/(vendor)/(tabs)/dashboard" />;
-    case 'customer':
+    case 'user':
     default:
       return <Redirect href="/(user)/(tabs)/home" />;
   }

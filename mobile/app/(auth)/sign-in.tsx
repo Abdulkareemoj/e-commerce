@@ -7,10 +7,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Text } from '@/components/ui/text';
-import { api } from '@/lib/api';
 import { useAuthStore } from '@/lib/authStore';
 import { Link, router } from 'expo-router';
 import { AlertCircle } from 'lucide-react-native';
+import { signIn, getSession } from '@/lib/auth-client';
 
 export default function SignInScreen() {
   const [email, setEmail] = React.useState('test@example.com');
@@ -27,10 +27,26 @@ export default function SignInScreen() {
     setIsSubmitting(true);
     setError(null);
     try {
-      const response = await api.publicPost('/auth/login', { email, password });
-      console.log('Login successful:', response);
-      useAuthStore.getState().setAuth(response.user, response.accessToken, response.refreshToken);
-      router.replace('//(tabs)/dashboard');
+      const result = await signIn.email({ email, password });
+      if (result?.error) {
+        throw new Error(result.error.message || 'Unable to sign in.');
+      }
+
+      const { data } = await getSession();
+      if (!data?.user) {
+        throw new Error('Signed in, but failed to load session.');
+      }
+
+      useAuthStore.getState().setAuth(data.user as any);
+
+      const role = (data.user as any)?.role;
+      if (role === 'admin') {
+        router.replace('/(admin)/(tabs)/dashboard');
+      } else if (role === 'vendor') {
+        router.replace('/(vendor)/(tabs)/dashboard');
+      } else {
+        router.replace('/(user)/(tabs)/home');
+      }
     } catch (error: any) {
       console.error('Sign in error:', error.message);
       setError(error.message || 'An unexpected error occurred. Please try again.');
@@ -38,6 +54,43 @@ export default function SignInScreen() {
       setIsSubmitting(false);
     }
   }
+
+  async function onSocialSignIn(provider: 'google' | 'apple') {
+    setIsSubmitting(true);
+    setError(null);
+    try {
+      const result = await (signIn as any).social({
+        provider,
+        callbackURL: '/',
+      });
+
+      if (result?.error) {
+        throw new Error(result.error.message || `Unable to sign in with ${provider}.`);
+      }
+
+      const { data } = await getSession();
+      if (!data?.user) {
+        throw new Error('Signed in, but failed to load session.');
+      }
+
+      useAuthStore.getState().setAuth(data.user as any);
+
+      const role = (data.user as any)?.role;
+      if (role === 'admin') {
+        router.replace('/(admin)/(tabs)/dashboard');
+      } else if (role === 'vendor') {
+        router.replace('/(vendor)/(tabs)/dashboard');
+      } else {
+        router.replace('/(user)/(tabs)/home');
+      }
+    } catch (error: any) {
+      console.error('Social sign in error:', error.message);
+      setError(error.message || 'An unexpected error occurred. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
   return (
     <ScrollView
       keyboardShouldPersistTaps="handled"
@@ -47,7 +100,7 @@ export default function SignInScreen() {
         <View className="gap-6">
           <Card className="border-border/0 shadow-none sm:border-border sm:shadow-sm sm:shadow-black/5">
             <CardHeader>
-              <CardTitle className="text-center text-xl sm:text-left">
+              <CardTitle className="text-center text-2xl sm:text-left">
                 Sign in to your app
               </CardTitle>
               <CardDescription className="text-center sm:text-left">
@@ -121,7 +174,25 @@ export default function SignInScreen() {
                 <Text className="px-4 text-sm text-muted-foreground">or</Text>
                 <Separator className="flex-1" />
               </View>
-              {/* <SocialConnections /> */}
+
+              <View className="gap-3">
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  disabled={isSubmitting}
+                  onPress={() => onSocialSignIn('google')}>
+                  <Text>Continue with Google</Text>
+                </Button>
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  disabled={isSubmitting}
+                  onPress={() => onSocialSignIn('apple')}>
+                  <View className="flex-row items-center gap-2">
+                    <Text>Continue with Apple</Text>
+                  </View>
+                </Button>
+              </View>
             </CardContent>
           </Card>
         </View>

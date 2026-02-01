@@ -1,11 +1,12 @@
 import { create } from 'zustand';
-import { getAccessToken, getRefreshToken, deleteTokens } from './storage';
+import { getSession, signOut } from './auth-client';
 
 interface User {
   id: string;
   name: string;
   email: string;
   role: 'user' | 'vendor' | 'admin';
+  image?: string | null;
 }
 
 interface AuthState {
@@ -13,8 +14,9 @@ interface AuthState {
   accessToken: string | null;
   refreshToken: string | null;
   isAuthenticated: boolean;
-  setAuth: (user: User, accessToken: string, refreshToken: string) => void;
-  clearAuth: () => void;
+  isLoading: boolean;
+  setAuth: (user: User, accessToken?: string | null, refreshToken?: string | null) => void;
+  clearAuth: () => Promise<void>;
   initializeAuth: () => Promise<void>;
   setAccessToken: (token: string) => void;
 }
@@ -24,14 +26,27 @@ export const useAuthStore = create<AuthState>((set) => ({
   accessToken: null,
   refreshToken: null,
   isAuthenticated: false,
+  isLoading: true,
 
   setAuth: (user, accessToken, refreshToken) => {
-    set({ user, accessToken, refreshToken, isAuthenticated: true });
+    set({
+      user,
+      accessToken: accessToken ?? null,
+      refreshToken: refreshToken ?? null,
+      isAuthenticated: true,
+      isLoading: false,
+    });
   },
 
-  clearAuth: () => {
-    set({ user: null, accessToken: null, refreshToken: null, isAuthenticated: false });
-    deleteTokens();
+  clearAuth: async () => {
+    await signOut();
+    set({
+      user: null,
+      accessToken: null,
+      refreshToken: null,
+      isAuthenticated: false,
+      isLoading: false,
+    });
   },
 
   setAccessToken: (token: string) => {
@@ -39,17 +54,22 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   initializeAuth: async () => {
-    const accessToken = await getAccessToken();
-    const refreshToken = await getRefreshToken();
-
-    if (accessToken && refreshToken) {
-      // In a real app, you might want to verify the accessToken with the backend
-      // or decode it to get user info without a full API call here.
-      // For now, we'll assume the presence of tokens means authenticated.
-      // A more robust solution would fetch user profile on app start.
-      set({ accessToken, refreshToken, isAuthenticated: true });
-    } else {
-      set({ isAuthenticated: false });
+    set({ isLoading: true });
+    try {
+      const { data } = await getSession();
+      if (data?.session && data?.user) {
+        set({
+          user: data.user as User,
+          accessToken: (data.session as any)?.token ?? null,
+          refreshToken: null,
+          isAuthenticated: true,
+          isLoading: false,
+        });
+      } else {
+        set({ user: null, accessToken: null, isAuthenticated: false, isLoading: false });
+      }
+    } catch (error) {
+      set({ user: null, accessToken: null, isAuthenticated: false, isLoading: false });
     }
   },
 }));

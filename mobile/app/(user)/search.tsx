@@ -8,7 +8,7 @@ import { ScrollView, View, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Separator } from '@/components/ui/separator';
 import { ProductCard } from '@/components/ProductCard';
-import { MOCK_PRODUCTS } from '@/app/(app)/(tabs)/home';
+import { MOCK_PRODUCTS } from '@/app/(user)/(tabs)/home';
 
 // Mock Search Data
 const MOCK_RECENT_SEARCHES = ['4K monitor', 'wireless headphones', 'mechanical keyboard'];
