@@ -9,6 +9,7 @@ import {
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { vendor } from "./vendor-schema";
+import { category } from "./category-schema";
 
 export const product = pgTable("product", {
   id: text("id").primaryKey(),
@@ -20,7 +21,7 @@ export const product = pgTable("product", {
   description: text("description"),
   price: numeric("price", { precision: 10, scale: 2 }).notNull(),
   stock: integer("stock").notNull().default(0),
-  category: text("category").notNull(),
+  categoryId: text("category_id").references(() => category.id),
   images: text("images").array(), // Array of image URLs cos obviously its more than one image
   isAvailable: boolean("is_available").default(true).notNull(),
   createdAt: timestamp("created_at")

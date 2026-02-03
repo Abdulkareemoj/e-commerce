@@ -1,5 +1,11 @@
-import { pgTable, text, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, pgEnum } from "drizzle-orm/pg-core";
 import { user } from "./auth-schema";
+
+export const vendorStatusEnum = pgEnum("vendor_status", [
+  "pending",
+  "approved",
+  "rejected",
+]);
 
 export const vendor = pgTable("vendor", {
   id: text("id").primaryKey(),
@@ -11,7 +17,7 @@ export const vendor = pgTable("vendor", {
   storeSlug: text("store_slug").notNull().unique(), // for easy public linking
   description: text("description"),
   payoutDetails: text("payout_details"), // e.g., Stripe/Paystack account ID or bank details (sensitive data, simplified for schema)
-  isVerified: text("is_verified").default("pending").notNull(), // 'pending', 'approved', 'rejected'
+  isVerified: vendorStatusEnum("is_verified").default("pending").notNull(),
   createdAt: timestamp("created_at")
     .$defaultFn(() => new Date())
     .notNull(),
