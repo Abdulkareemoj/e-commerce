@@ -1,135 +1,257 @@
-# Turborepo starter
+# Multivendor E‑commerce Platform
 
-This Turborepo starter is maintained by the Turborepo core team.
+A modern multivendor e‑commerce platform built with **React Native (Expo)** for the mobile/web client and **Hono + Better Auth + Drizzle ORM + PostgreSQL** for the backend.
 
-## Using this example
+---
 
-Run the following command:
+## 🏗️ Architecture Overview
 
-```sh
-npx create-turbo@latest
+### Frontend (Mobile/Web)
+
+- **Framework**: React Native with Expo (runs on iOS, Android, and Web)
+- **Styling**: NativeWind (Tailwind CSS for RN)
+- **State**: Zustand for auth and global state
+- **Navigation**: Expo Router with file‑based routing
+- **Auth**: Better Auth Expo client with SecureStore session storage
+- **Icons**: Lucide React Native
+
+### Backend
+
+- **Runtime**: Node.js with Hono
+- **Database**: PostgreSQL with Drizzle ORM
+- **Auth**: Better Auth (email/password + OAuth: Google, Apple, Discord)
+- **Validation**: Zod
+- **Logging**: Pino with pretty printing
+- **Migrations**: Drizzle Kit
+
+---
+
+## 🚀 Quick Start
+
+### Prerequisites
+
+- Node.js 18+
+- pnpm
+- PostgreSQL (local or cloud)
+- Expo CLI (`npx expo install -g`)
+
+### 1. Clone & Install
+
+```bash
+git clone <repo-url>
+cd e-commerce
+pnpm install
+cd mobile && pnpm install
+cd ../backend && pnpm install
 ```
 
-## What's inside?
+### 2. Environment
 
-This Turborepo includes the following packages/apps:
+Create `.env` in `backend/`:
 
-### Apps and Packages
-
-- `docs`: a [Next.js](https://nextjs.org/) app
-- `web`: another [Next.js](https://nextjs.org/) app
-- `@repo/ui`: a stub React component library shared by both `web` and `docs` applications
-- `@repo/eslint-config`: `eslint` configurations (includes `eslint-config-next` and `eslint-config-prettier`)
-- `@repo/typescript-config`: `tsconfig.json`s used throughout the monorepo
-
-Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
-
-### Utilities
-
-This Turborepo has some additional tools already setup for you:
-
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
-
-### Build
-
-To build all apps and packages, run the following command:
-
-```
-cd my-turborepo
-
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo build
-
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo build
-yarn dlx turbo build
-pnpm exec turbo build
+```env
+DATABASE_URL=postgresql://user:password@localhost:5432/ecommerce
+BETTER_AUTH_EMAIL=noreply@yourapp.com
+GOOGLE_CLIENT_ID=your-google-client-id
+GOOGLE_CLIENT_SECRET=your-google-client-secret
+APPLE_CLIENT_ID=your-apple-client-id
+APPLE_CLIENT_SECRET=your-apple-client-secret
+DISCORD_CLIENT_ID=your-discord-client-id
+DISCORD_CLIENT_SECRET=your-discord-client-secret
 ```
 
-You can build a specific package by using a [filter](https://turborepo.com/docs/crafting-your-repository/running-tasks#using-filters):
+### 3. Database Setup
 
-```
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo build --filter=docs
-
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo build --filter=docs
-yarn exec turbo build --filter=docs
-pnpm exec turbo build --filter=docs
+```bash
+cd backend
+pnpm run db:generate
+pnpm run db:migrate
 ```
 
-### Develop
+### 4. Run Development Servers
 
-To develop all apps and packages, run the following command:
+```bash
+# Backend (port 8000)
+cd backend && pnpm run dev
 
-```
-cd my-turborepo
-
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo dev
-
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo dev
-yarn exec turbo dev
-pnpm exec turbo dev
+# Frontend (port 8081)
+cd mobile && npx expo start --tunnel
 ```
 
-You can develop a specific package by using a [filter](https://turborepo.com/docs/crafting-your-repository/running-tasks#using-filters):
+---
+
+## 📁 Project Structure
 
 ```
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo dev --filter=web
-
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo dev --filter=web
-yarn exec turbo dev --filter=web
-pnpm exec turbo dev --filter=web
+e-commerce/
+├─ backend/
+│  ├─ src/
+│  │  ├─ db/
+│  │  │  ├─ index.ts          # Drizzle instance & schema export
+│  │  │  └─ schema/           # Table definitions
+│  │  ├─ utils/
+│  │  │  └─ auth.ts           # Better Auth config
+│  │  └─ index.ts             # Hono server + middleware
+│  ├─ drizzle.config.ts        # Drizzle Kit config
+│  └─ drizzle/                # Generated migrations
+├─ mobile/
+│  ├─ app/
+│  │  ├─ (auth)/             # Auth screens (sign‑in, sign‑up)
+│  │  ├─ (admin)/             # Admin screens
+│  │  ├─ (vendor)/             # Vendor screens
+│  │  ├─ (user)/             # User screens
+│  │  └─ _layout.tsx         # Root layout
+│  ├─ lib/
+│  │  ├─ auth-client.ts       # Better Auth Expo client
+│  │  ├─ authStore.ts        # Zustand auth store
+│  │  └─ money.ts            # Currency helpers
+│  └─ package.json
+└─ README.md
 ```
 
-### Remote Caching
+---
 
-> [!TIP]
-> Vercel Remote Cache is free for all plans. Get started today at [vercel.com](https://vercel.com/signup?/signup?utm_source=remote-cache-sdk&utm_campaign=free_remote_cache).
+## 🔐 Authentication
 
-Turborepo can use a technique known as [Remote Caching](https://turborepo.com/docs/core-concepts/remote-caching) to share cache artifacts across machines, enabling you to share build caches with your team and CI/CD pipelines.
+- **Email/Password** with Better Auth sessions
+- **Social OAuth**: Google, Apple, Discord
+- **Roles**: `user`, `vendor`, `admin`
+- **Session storage**: SecureStore on native, cookies on web
+- **Redirects**: Role‑based after sign‑in
 
-By default, Turborepo will cache locally. To enable Remote Caching you will need an account with Vercel. If you don't have an account you can [create one](https://vercel.com/signup?utm_source=turborepo-examples), then enter the following commands:
+---
 
+## 🛒 E‑commerce Features (Schema)
+
+### Core Entities
+
+- **Users**: Auth + profile + roles
+- **Vendors**: Store profile, verification status, payout details
+- **Products**: Linked to vendors + categories
+- **Orders & OrderItems**: Multi‑vendor per order
+- **Addresses**: Shipping/billing per user
+- **Categories**: Hierarchical product categories
+
+### Relationships
+
+- `user` 1→1 `profile`
+- `user` 1→1 `vendor` (if role=vendor)
+- `vendor` 1→N `product`
+- `user` 1→N `order`
+- `order` 1→N `orderItem` (each with `vendorId`)
+
+---
+
+## 🛠️ Development Scripts
+
+### Backend
+
+```bash
+pnpm run dev          # Start dev server
+pnpm run build        # TypeScript build
+pnpm run start        # Run production build
+pnpm run db:generate  # Generate migration files
+pnpm run db:migrate   # Run migrations
+pnpm run db:push      # Push schema changes (dev)
+pnpm run db:studio    # Open Drizzle Studio
 ```
-cd my-turborepo
 
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo login
+### Frontend
 
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo login
-yarn exec turbo login
-pnpm exec turbo login
+```bash
+npx expo start        # Start Metro dev server
+npx expo start --tunnel  # Expose via tunnel (for mobile devices)
+npx expo run:android     # Run on Android
+npx expo run:ios         # Run on iOS
 ```
 
-This will authenticate the Turborepo CLI with your [Vercel account](https://vercel.com/docs/concepts/personal-accounts/overview).
+---
 
-Next, you can link your Turborepo to your Remote Cache by running the following command from the root of your Turborepo:
+## 📦 Key Dependencies
 
-```
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo link
+### Backend
 
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo link
-yarn exec turbo link
-pnpm exec turbo link
-```
+- `better-auth` – Auth core
+- `@better-auth/expo` – Expo integration
+- `drizzle-orm` – ORM
+- `drizzle-kit` – Migrations
+- `hono` – Web framework
+- `pg` – PostgreSQL driver
+- `zod` – Validation
+- `pino` – Logging
 
-## Useful Links
+### Frontend
 
-Learn more about the power of Turborepo:
+- `expo` – React Native toolchain
+- `expo-router` – File‑based routing
+- `native-base` or `nativewind` – UI/styling
+- `zustand` – State
+- `lucide-react-native` – Icons
+- `@better-auth/expo` – Auth client
 
-- [Tasks](https://turborepo.com/docs/crafting-your-repository/running-tasks)
-- [Caching](https://turborepo.com/docs/crafting-your-repository/caching)
-- [Remote Caching](https://turborepo.com/docs/core-concepts/remote-caching)
-- [Filtering](https://turborepo.com/docs/crafting-your-repository/running-tasks#using-filters)
-- [Configuration Options](https://turborepo.com/docs/reference/configuration)
-- [CLI Usage](https://turborepo.com/docs/reference/command-line-reference)
+---
+
+## 🔧 Configuration Notes
+
+- **CORS/Origins**: Backend trusts `exp://*` for Expo dev and `mobile://` for production builds.
+- **Dynamic baseURL**: Auth client auto‑detects LAN IP for native devices.
+- **Environment**: Use `.env.local` for secrets; never commit.
+
+---
+
+## 🧪 Testing & Debugging
+
+- **Better Auth debug**: Enabled in non‑production (`debug: true`).
+- **Database**: Use `pnpm run db:studio` to inspect tables.
+- **Logs**: Backend logs via Pino; frontend via Expo Metro.
+
+---
+
+## 📈 Next Steps / TODOs
+
+- [ ] Connect sign‑up screen to backend API
+- [ ] Implement vendor onboarding flow
+- [ ] Add product upload with images (S3/Supabase Storage)
+- [ ] Build checkout flow with multi‑vendor cart
+- [ ] Add order status tracking
+- [ ] Admin dashboard for vendor verification
+- [ ] Push notifications (Expo)
+
+---
+
+## 🤝 Contributing
+
+1. Fork the repo
+2. Create a feature branch
+3. Submit a PR with clear description
+
+---
+
+## 📄 License
+
+MIT License
+
+---
+
+## 🆘 Troubleshooting
+
+### Social sign‑in 500 / Drizzle tracing error
+
+- Ensure `verification` config in `backend/src/utils/auth.ts` is disabled or use a compatible Drizzle version.
+- Restart backend after config changes.
+
+### Expo dev origin errors
+
+- Ensure `exp://*` origins are in `trustedOrigins`.
+- Use `pnpm run dev` on backend bound to `0.0.0.0`.
+
+### Migration conflicts (enum already exists)
+
+- Drop dependent column first, then enum:
+  ```sql
+  ALTER TABLE vendor DROP COLUMN IF EXISTS is_verified;
+  DROP TYPE IF EXISTS vendor_status;
+  ```
+- Then re‑run migrations.
+
+---
