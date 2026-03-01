@@ -1,3 +1,4 @@
+import dotenv from "dotenv";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { emailOTP, oneTap, username } from "better-auth/plugins";
@@ -16,6 +17,10 @@ export const auth = betterAuth({
   database: drizzleAdapter(db, {
     provider: "pg",
     schema,
+    debugLogs: {
+      create: true,
+      update: true,
+    },
   }),
   trustedOrigins: [
     "http://localhost:8081",
@@ -70,7 +75,6 @@ export const auth = betterAuth({
               id: user.id,
               bio: "",
               location: "",
-              website: "",
             });
             console.log(`✅ Profile created for user ${user.id}`);
           } catch (err) {

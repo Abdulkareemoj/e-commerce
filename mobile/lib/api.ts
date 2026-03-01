@@ -2,7 +2,7 @@ import { getAccessToken, saveTokens, deleteTokens, getRefreshToken } from './sto
 import { useAuthStore } from './authStore';
 
 // NOTE: EXPO_PUBLIC_API_BASE_URL must be set in .env file for web/native builds
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || 'http://localhost:3000/api/v1';
+const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || 'http://localhost:8000/api';
 
 interface ApiRequestOptions extends RequestInit {
   auth?: boolean;

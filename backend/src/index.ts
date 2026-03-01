@@ -1,3 +1,6 @@
+import dotenv from "dotenv";
+
+dotenv.config({ path: "../../.env.local" });
 import { Hono } from "hono";
 import api from "./routes";
 import { auth } from "./utils/auth";
@@ -9,9 +12,6 @@ import { serve } from "@hono/node-server";
 import { cors } from "hono/cors";
 import { pinoLogger } from "hono-pino";
 import pino from "pino";
-import dotenv from "dotenv";
-
-dotenv.config({ path: ".env" });
 
 const port = Number(process.env.PORT) || 8000;
 const app = new Hono<{ Variables: AppVariables }>();
