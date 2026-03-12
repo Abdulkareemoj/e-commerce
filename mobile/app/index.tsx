@@ -1,11 +1,9 @@
-import { useColorScheme } from 'nativewind';
 import * as React from 'react';
-import { View, ActivityIndicator } from 'react-native';
+import { View, ActivityIndicator, Text } from 'react-native';
 import { Redirect } from 'expo-router';
 import { useAuthStore } from '@/lib/authStore';
 
 export default function Index() {
-  const { colorScheme } = useColorScheme();
   const { user, isAuthenticated, isLoading, initializeAuth } = useAuthStore();
 
   React.useEffect(() => {
@@ -20,19 +18,27 @@ export default function Index() {
     );
   }
 
-  // 1. If not logged in, go to Auth group
-  if (!isAuthenticated || !user) {
-    return <Redirect href="/(auth)/sign-in" />;
-  }
+  // Public landing: show general content; authenticated users get role-based quick links
+  return (
+    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24 }}>
+      <Text style={{ fontSize: 24, fontWeight: 'bold', marginBottom: 16 }}>
+        Welcome to the Marketplace
+      </Text>
+      <Text style={{ fontSize: 16, textAlign: 'center', marginBottom: 24 }}>
+        Browse products, manage your store, or explore your dashboard.
+      </Text>
 
-  // 2. If logged in, redirect based on role
-  switch (user.role) {
-    case 'admin':
-      return <Redirect href="/(admin)/(tabs)/dashboard" />;
-    case 'vendor':
-      return <Redirect href="/(vendor)/(tabs)/dashboard" />;
-    case 'user':
-    default:
-      return <Redirect href="/(user)/(tabs)/home" />;
-  }
+      {isAuthenticated && user ? (
+        <View style={{ gap: 12 }}>
+          {user.role === 'admin' && <Redirect href="/(admin)/(tabs)/dashboard" />}
+          {user.role === 'vendor' && <Redirect href="/(vendor)/(tabs)/dashboard" />}
+          {user.role === 'user' && <Redirect href="/(user)/(tabs)/home" />}
+        </View>
+      ) : (
+        <View style={{ gap: 12 }}>
+          <Redirect href="/(user)/(tabs)/home" />
+        </View>
+      )}
+    </View>
+  );
 }
