@@ -42,7 +42,7 @@ const MOCK_THREADS: {
 
 function MessageThreadCard({ thread }: { thread: (typeof MOCK_THREADS)[0] }) {
   return (
-    <Link href={`/(app)/messages/${thread.id}`} asChild>
+    <Link href={`/(user)/(tabs)/messages/${thread.id}`} asChild>
       <Pressable>
         <Card
           className={`flex-row gap-3 p-3 active:bg-muted/50 ${thread.unread ? 'border-2 border-primary' : ''}`}>
