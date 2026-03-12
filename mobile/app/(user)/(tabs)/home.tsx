@@ -2,12 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Icon } from '@/components/ui/icon';
 import { Text } from '@/components/ui/text';
-import { Menu } from 'lucide-react-native';
-import { useColorScheme } from 'nativewind';
 
-import { Image, type ImageStyle, View, ScrollView, Pressable, Platform } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-// import { LocationSearchHeader } from '@/components/LocationSearchHeader'; // Removed for Drawer header
+import {  View, ScrollView, Pressable, Platform } from 'react-native';
 import { ProductCard } from '@/components/ProductCard';
 import { Category, Product } from '@/types';
 import { Link } from 'expo-router';
@@ -106,7 +102,7 @@ function CategoryItem({ category }: { category: Category }) {
   const isActive = category.id === '1'; // Mock active state for 'All'
 
   return (
-    <Link href="/(app)/catalog" asChild>
+    <Link href={("/(app)/catalog" as any)} asChild>
       <Pressable className="flex-col items-center gap-1.5">
         <View
           className={`size-14 items-center justify-center rounded-full ${
@@ -144,8 +140,10 @@ export default function HomeScreen() {
   }, []);
 
   return (
-    <SafeAreaView className="flex-1 bg-background">
-      <ScrollView contentContainerClassName="p-4 gap-8">
+    <View style={{ flex: 1 }}>
+      <ScrollView
+        contentContainerClassName="p-4 gap-6"
+        showsVerticalScrollIndicator={false}>
         {/*  Featured/Flash Sale Banner */}
         <View className="h-40 w-full items-center justify-center rounded-xl bg-primary/10 p-4">
           <Text variant="h3" className="text-center text-primary">
@@ -160,7 +158,7 @@ export default function HomeScreen() {
             <Text variant="large" className="font-semibold">
               Shop by Category
             </Text>
-            <Link href="/(app)/catalog" asChild>
+            <Link href={("/(app)/catalog" as any)} asChild>
               <Button variant="link" size="sm">
                 <Text className="text-sm">See all</Text>
               </Button>
@@ -202,6 +200,6 @@ export default function HomeScreen() {
           )}
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
