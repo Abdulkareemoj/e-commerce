@@ -82,7 +82,7 @@ export default function ProfileScreen() {
             </Text>
             <Text className="text-sm text-muted-foreground">{displayEmail}</Text>
           </View>
-          <Link href="/(app)/profile/user-settings" asChild>
+          <Link href="/(user)/profile/user-settings" asChild>
             <Button variant="ghost" size="sm" className="ml-auto">
               <Icon as={User} size={20} />
             </Button>
