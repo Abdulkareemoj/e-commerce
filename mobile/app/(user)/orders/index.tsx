@@ -9,6 +9,7 @@ import { ScrollView, View, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { formatCurrency } from '@/lib/money';
 import { Link } from 'expo-router';
+import { useAuthStore } from '@/lib/authStore';
 
 // Mock Order Data
 const MOCK_ORDERS: {
@@ -58,7 +59,7 @@ function OrderCard({ order }: { order: (typeof MOCK_ORDERS)[0] }) {
   };
 
   return (
-    <Link href={`/(app)/orders/${order.id}`} asChild>
+    <Link href={`/(app)/orders/${order.id}` as any} asChild>
       <Pressable>
         <Card className="flex-col gap-3 p-4 active:bg-muted/50">
           <View className="flex-row items-start justify-between">
@@ -89,6 +90,32 @@ function OrderCard({ order }: { order: (typeof MOCK_ORDERS)[0] }) {
 }
 
 export default function OrdersScreen() {
+  const { isAuthenticated, user, isLoading, initializeAuth } = useAuthStore();
+
+  React.useEffect(() => {
+    initializeAuth();
+  }, []);
+
+  if (isLoading) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <Text>Loading...</Text>
+      </View>
+    );
+  }
+
+  // Require authentication and user role
+  if (!isAuthenticated || !user || user.role !== 'user') {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24 }}>
+        <Text>You must be signed in as a user to view orders.</Text>
+        <Link href="/(auth)/sign-in">
+          <Button variant="default">Sign In</Button>
+        </Link>
+      </View>
+    );
+  }
+
   return (
     <SafeAreaView className="flex-1 bg-background">
       <View className="border-b border-border p-4">
