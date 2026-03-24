@@ -17,9 +17,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { formatCurrency } from '@/lib/money';
 import { useCart } from '@/hooks/useCart';
 import { Pressable } from '@rn-primitives/slot';
-import { MOCK_PRODUCTS } from '@/app/(user)/(tabs)/home';
-
-const product = MOCK_PRODUCTS[0];
+import { useLocalSearchParams } from 'expo-router';
+import { api } from '@/lib/api';
+import { Product } from '@/types';
 
 const MOCK_REVIEWS = [
   { id: 1, user: 'Alice J.', rating: 5, comment: 'Amazing monitor, colors are vibrant!' },
@@ -141,24 +141,67 @@ function ProductReviews() {
 }
 
 export default function ProductDetailScreen() {
+  const { id } = useLocalSearchParams<{ id: string }>();
   const { width } = useWindowDimensions();
   const isWeb = width >= 1024; // Tailwind 'lg' breakpoint
   const { addItem } = useCart();
+  
+  const [product, setProduct] = React.useState<Product | null>(null);
+  const [loading, setLoading] = React.useState(true);
 
-  // Mock function for Add to Cart
+  React.useEffect(() => {
+    const fetchProduct = async () => {
+      try {
+        const data = await api.publicGet(`/products/${id}`);
+        if (data.product) {
+          const p = data.product;
+          setProduct({
+            ...p,
+            title: p.name,
+            priceCents: Math.round(parseFloat(p.price || 0) * 100),
+            currency: 'USD',
+            rating: 4.5,
+            attributes: {},
+          });
+        }
+      } catch (err) {
+        console.error("Failed to fetch product:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    if (id) fetchProduct();
+  }, [id]);
+
+  if (loading) {
+    return (
+      <SafeAreaView className="flex-1 bg-background justify-center items-center">
+        <Text>Loading product...</Text>
+      </SafeAreaView>
+    );
+  }
+
+  if (!product) {
+    return (
+      <SafeAreaView className="flex-1 bg-background justify-center items-center">
+        <Text>Product not found.</Text>
+      </SafeAreaView>
+    );
+  }
+
+  // Function for Add to Cart
   const handleAddToCart = async () => {
-    // For simplicity, we add 1 unit of the base product
-    await addItem(product.id, 1);
+    await addItem(product.id, 1, product.priceCents);
     console.log(`Added ${product.title} to cart.`);
-    // TODO: Show success toast
   };
 
-  // Mock product images (adding a few more for the carousel demo)
-  const mockImages = [
-    product.images[0],
-    'https://picsum.photos/seed/monitor-side/400/300',
-    'https://picsum.photos/seed/monitor-back/400/300',
-  ];
+  // Mock product images if empty
+  const mockImages = product.images && product.images.length > 0
+    ? product.images
+    : [
+        'https://picsum.photos/seed/monitor/400/300',
+        'https://picsum.photos/seed/monitor-side/400/300',
+      ];
 
   return (
     <SafeAreaView className="flex-1 bg-background">

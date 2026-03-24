@@ -102,7 +102,7 @@ function CategoryItem({ category }: { category: Category }) {
   const isActive = category.id === '1'; // Mock active state for 'All'
 
   return (
-    <Link href={("/(app)/catalog" as any)} asChild>
+    <Link href="/(user)/catalog" asChild>
       <Pressable className="flex-col items-center gap-1.5">
         <View
           className={`size-14 items-center justify-center rounded-full ${
@@ -122,21 +122,42 @@ function CategoryItem({ category }: { category: Category }) {
 
 export default function HomeScreen() {
   const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchProducts = async () => {
+    const fetchData = async () => {
       try {
-        const data = await api.publicGet('/products');
-        setProducts(data.products || []);
+        const [productsData, categoriesData] = await Promise.all([
+          api.publicGet('/products'),
+          api.publicGet('/products/categories')
+        ]);
+        
+        const mappedProducts = (productsData.products || []).map((p: any) => ({
+          ...p,
+          title: p.name,
+          priceCents: Math.round(parseFloat(p.price || 0) * 100),
+          currency: 'USD',
+          rating: 4.5, // Mock rating until DB supports reviews
+          attributes: {},
+        }));
+
+        const mappedCategories = (categoriesData.categories || []).map((c: any) => ({
+          id: c.id,
+          name: c.name,
+          icon: 'Shirt' // Default icon for now
+        }));
+
+        setProducts(mappedProducts);
+        setCategories(mappedCategories);
       } catch (err) {
-        setError('Failed to load products');
+        setError('Failed to load data');
       } finally {
         setLoading(false);
       }
     };
-    fetchProducts();
+    fetchData();
   }, []);
 
   return (
@@ -158,7 +179,7 @@ export default function HomeScreen() {
             <Text variant="large" className="font-semibold">
               Shop by Category
             </Text>
-            <Link href={("/(app)/catalog" as any)} asChild>
+            <Link href="/(user)/catalog" asChild>
               <Button variant="link" size="sm">
                 <Text className="text-sm">See all</Text>
               </Button>
@@ -168,7 +189,7 @@ export default function HomeScreen() {
             horizontal
             showsHorizontalScrollIndicator={false}
             contentContainerClassName="flex-row items-center justify-center gap-4">
-            {MOCK_CATEGORIES.map((cat) => (
+            {categories.map((cat) => (
               <CategoryItem key={cat.id} category={cat} />
             ))}
           </ScrollView>

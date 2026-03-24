@@ -9,7 +9,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
 import { useWindowDimensions } from 'react-native';
-import { MOCK_PRODUCTS } from '@/app/(user)/(tabs)/home';
+import { api } from '@/lib/api';
+import { Product } from '@/types';
 
 const MOCK_FILTERS = {
   categories: ['Electronics', 'Apparel', 'Home Goods', 'Books'],
@@ -62,6 +63,31 @@ export default function CatalogScreen() {
   const { width } = useWindowDimensions();
   const isWeb = width >= 1024; // Tailwind 'lg' breakpoint
 
+  const [products, setProducts] = React.useState<Product[]>([]);
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const res = await api.publicGet('/products');
+        const mappedProducts = (res.products || []).map((p: any) => ({
+          ...p,
+          title: p.name,
+          priceCents: Math.round(parseFloat(p.price || 0) * 100),
+          currency: 'USD',
+          rating: 4.5,
+          attributes: {},
+        }));
+        setProducts(mappedProducts);
+      } catch (err) {
+        console.error("Failed to load catalog", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProducts();
+  }, []);
+
   return (
     <SafeAreaView className="flex-1 bg-background">
       <View className="flex-1 flex-row">
@@ -92,13 +118,21 @@ export default function CatalogScreen() {
 
           {/* Product Grid */}
           <ScrollView contentContainerClassName="p-4">
-            <View className="flex-row flex-wrap justify-between gap-y-4">
-              {MOCK_PRODUCTS.concat(MOCK_PRODUCTS).map((product, index) => (
-                <View key={index} className="w-[48%] sm:w-[32%] lg:w-[23%]">
-                  <ProductCard product={product} />
-                </View>
-              ))}
-            </View>
+            {loading ? (
+              <Text className="text-muted-foreground">Loading catalog...</Text>
+            ) : (
+              <View className="flex-row flex-wrap justify-between gap-y-4">
+                {products.length === 0 ? (
+                  <Text className="text-muted-foreground">No products available.</Text>
+                ) : (
+                  products.map((product, index) => (
+                    <View key={product.id || index} className="w-[48%] sm:w-[32%] lg:w-[23%]">
+                      <ProductCard product={product} />
+                    </View>
+                  ))
+                )}
+              </View>
+            )}
           </ScrollView>
         </View>
       </View>

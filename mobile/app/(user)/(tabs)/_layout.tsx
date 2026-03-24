@@ -4,7 +4,6 @@ import { Menu, ShoppingBag, Home, Heart, Search, User, ListCollapse } from 'luci
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, DrawerActions } from '@react-navigation/native';
 import { Icon } from '@/components/ui/icon';
-import { cn } from '@/lib/utils';
 import { useRef, useEffect } from 'react';
 
 // ─── Custom Header ────────────────────────────────────────────────────
@@ -190,7 +189,7 @@ function CustomTabBar() {
           key={item.name}
           item={item}
           focused={currentTab === item.name}
-          onPress={() => router.push(`/${item.name}` as any)}
+          onPress={() => router.push(`/${item.name}` )}
         />
       ))}
     </View>

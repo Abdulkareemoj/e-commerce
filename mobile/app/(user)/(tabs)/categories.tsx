@@ -9,7 +9,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
 import { useWindowDimensions } from 'react-native';
-import { MOCK_PRODUCTS } from '@/app/(user)/(tabs)/home';
+import { api } from '@/lib/api';
+import { Product } from '@/types';
 
 const MOCK_FILTERS = {
   categories: ['Electronics', 'Apparel', 'Home Goods', 'Books'],
@@ -59,6 +60,31 @@ function WebFilterSidebar() {
 export default function CategoriesScreen() {
   const { width } = useWindowDimensions();
   const isWeb = width >= 1024;
+  
+  const [products, setProducts] = React.useState<Product[]>([]);
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const data = await api.publicGet('/products');
+        const mappedProducts = (data.products || []).map((p: any) => ({
+          ...p,
+          title: p.name,
+          priceCents: Math.round(parseFloat(p.price || 0) * 100),
+          currency: 'USD',
+          rating: 4.5,
+          attributes: {},
+        }));
+        setProducts(mappedProducts);
+      } catch (err) {
+        console.error("Failed to fetch products:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProducts();
+  }, []);
 
   return (
     <SafeAreaView className="flex-1 bg-background">
@@ -80,11 +106,17 @@ export default function CategoriesScreen() {
           </View>
           <ScrollView contentContainerClassName="p-4">
             <View className="flex-row flex-wrap justify-between gap-y-4">
-              {MOCK_PRODUCTS.concat(MOCK_PRODUCTS).map((product, index) => (
-                <View key={index} className="w-[48%] sm:w-[32%] lg:w-[23%]">
-                  <ProductCard product={product} />
-                </View>
-              ))}
+              {loading ? (
+                <Text className="p-4 text-muted-foreground">Loading products...</Text>
+              ) : products.length > 0 ? (
+                products.map((product) => (
+                  <View key={product.id} className="w-[48%] sm:w-[32%] lg:w-[23%]">
+                    <ProductCard product={product} />
+                  </View>
+                ))
+              ) : (
+                <Text className="p-4 text-muted-foreground">No products found.</Text>
+              )}
             </View>
           </ScrollView>
         </View>
