@@ -95,7 +95,7 @@ function CustomDrawerContent(props: any) {
                   className={isActive ? 'text-amber-400' : 'text-zinc-500'}
                 />
               )}
-              onPress={() => router.push(item.route as any)}
+              onPress={() => router.push(item.route )}
               labelStyle={{
                 color: isActive ? '#fbbf24' : '#d4d4d8',
                 fontWeight: isActive ? '600' : '400',
@@ -115,7 +115,7 @@ function CustomDrawerContent(props: any) {
       {/* ── Sign Out ── */}
       <View className="px-5 pb-9 pt-4 border-t border-zinc-900">
         <TouchableOpacity
-          onPress={() => router.replace('/(auth)/login' as any)}
+          onPress={() => router.replace('/(auth)/sign-in')}
           activeOpacity={0.7}
           className="flex-row items-center gap-2.5">
           <Icon as={LogOut} size={19} className="text-red-500" />

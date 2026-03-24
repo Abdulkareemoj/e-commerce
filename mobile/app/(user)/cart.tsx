@@ -9,6 +9,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { formatCurrency } from '@/lib/money';
 import { Link } from 'expo-router';
 import { useCart } from '@/hooks/useCart';
+import { useAuthStore } from '@/lib/authStore';
 
 // Mock fixed costs (since we don't have a full backend calculation)
 const SHIPPING_CENTS = 500; // $5.00
@@ -16,7 +17,8 @@ const TAX_RATE = 0.08;
 
 // --- Components ---
 
-function OrderSummary({ subtotalCents, isSticky = false }) {
+function OrderSummary({ subtotalCents, isSticky = false }: { subtotalCents: number; isSticky?: boolean }) {
+  const { isAuthenticated } = useAuthStore();
   const shippingCents = SHIPPING_CENTS;
   const taxCents = Math.round(subtotalCents * TAX_RATE);
   const totalCents = subtotalCents + shippingCents + taxCents;
@@ -52,11 +54,19 @@ function OrderSummary({ subtotalCents, isSticky = false }) {
         </Text>
       </View>
 
-      <Link href="/(user)/(tabs)/checkout" asChild>
-        <Button className="mt-2 w-full">
-          <Text>Proceed to Checkout</Text>
-        </Button>
-      </Link>
+      {isAuthenticated ? (
+        <Link href="/(user)/checkout" asChild>
+          <Button className="mt-2 w-full">
+            <Text>Proceed to Checkout</Text>
+          </Button>
+        </Link>
+      ) : (
+        <Link href="/(auth)/sign-in"  asChild>
+          <Button className="mt-2 w-full">
+            <Text>Sign in to Checkout</Text>
+          </Button>
+        </Link>
+      )}
     </Card>
   );
 }
@@ -83,7 +93,7 @@ export default function CartScreen() {
         <Text className="mb-6 text-center text-muted-foreground">
           Looks like you haven't added anything to your cart yet.
         </Text>
-        <Link href="/(user)/(tabs)/catalog" asChild>
+        <Link href="/(user)/catalog"asChild>
           <Button>
             <Text>Start Shopping</Text>
           </Button>

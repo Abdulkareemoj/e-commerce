@@ -9,6 +9,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Separator } from '@/components/ui/separator';
 import { ProductCard } from '@/components/ProductCard';
 import { MOCK_PRODUCTS } from '@/app/(user)/(tabs)/home';
+import { api } from '@/lib/api';
+import { Product } from '@/types';
 
 // Mock Search Data
 const MOCK_RECENT_SEARCHES = ['4K monitor', 'wireless headphones', 'mechanical keyboard'];
@@ -17,13 +19,32 @@ const MOCK_POPULAR_PRODUCTS = MOCK_PRODUCTS.slice(0, 2);
 export default function SearchScreen() {
   const [searchText, setSearchText] = React.useState('');
   const [isSearching, setIsSearching] = React.useState(false);
+  const [loading, setLoading] = React.useState(false);
+  const [searchResults, setSearchResults] = React.useState<Product[]>([]);
 
-  const handleSearch = () => {
-    if (searchText.trim()) {
+  const handleSearch = async (term = searchText) => {
+    if (term.trim()) {
       setIsSearching(true);
-      // In a real app, this would trigger an API call
+      setLoading(true);
+      try {
+        const res = await api.publicGet(`/products?search=${encodeURIComponent(term)}`);
+        const mappedProducts = (res.products || []).map((p: any) => ({
+          ...p,
+          title: p.name,
+          priceCents: Math.round(parseFloat(p.price || 0) * 100),
+          currency: 'USD',
+          rating: 4.5,
+          attributes: {},
+        }));
+        setSearchResults(mappedProducts);
+      } catch (err) {
+        console.error("Search failed", err);
+      } finally {
+        setLoading(false);
+      }
     } else {
       setIsSearching(false);
+      setSearchResults([]);
     }
   };
 
@@ -67,7 +88,7 @@ export default function SearchScreen() {
                   className="flex-row items-center gap-2 rounded-md p-1 active:bg-muted/50"
                   onPress={() => {
                     setSearchText(term);
-                    handleSearch();
+                    handleSearch(term);
                   }}>
                   <Icon as={Clock} size={16} className="text-muted-foreground" />
                   <Text className="text-base">{term}</Text>
@@ -95,15 +116,19 @@ export default function SearchScreen() {
           /* Search Results */
           <View className="gap-4">
             <Text variant="large" className="font-semibold">
-              Results for "{searchText}" ({MOCK_PRODUCTS.length} items)
+              Results for "{searchText}" ({searchResults.length} items)
             </Text>
-            <View className="flex-row flex-wrap justify-between gap-y-4">
-              {MOCK_PRODUCTS.map((product, index) => (
-                <View key={index} className="w-[48%] sm:w-[32%] lg:w-[23%]">
-                  <ProductCard product={product} />
-                </View>
-              ))}
-            </View>
+            {loading ? (
+              <Text className="text-muted-foreground p-4">Searching...</Text>
+            ) : (
+              <View className="flex-row flex-wrap justify-between gap-y-4">
+                {searchResults.map((product) => (
+                  <View key={product.id} className="w-[48%] sm:w-[32%] lg:w-[23%]">
+                    <ProductCard product={product} />
+                  </View>
+                ))}
+              </View>
+            )}
           </View>
         )}
       </ScrollView>

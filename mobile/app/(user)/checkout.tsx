@@ -7,6 +7,9 @@ import * as React from 'react';
 import { ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Separator } from '@/components/ui/separator';
+import { useCart } from '@/hooks/useCart';
+import { api } from '@/lib/api';
+import { router } from 'expo-router';
 
 // Mock Checkout Steps
 const CHECKOUT_STEPS: {
@@ -45,6 +48,33 @@ function StepIndicator({ step }: { step: (typeof CHECKOUT_STEPS)[0] }) {
 }
 
 export default function CheckoutScreen() {
+  const { cartItems, clearCart } = useCart();
+  const [loading, setLoading] = React.useState(false);
+
+  const handleCheckout = async () => {
+    if (cartItems.length === 0) return;
+    setLoading(true);
+    try {
+      const payload = {
+        items: cartItems.map((item) => ({
+          productId: item.productId,
+          qty: item.qty,
+          priceCents: item.priceCents,
+        })),
+      };
+      
+      const res = await api.post('/user/orders', payload);
+      if (res.orderId) {
+        await clearCart();
+        router.replace('/(user)/orders');
+      }
+    } catch (error) {
+      console.error('Checkout failed:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <SafeAreaView className="flex-1 bg-background">
       <View className="border-b border-border p-4">
@@ -75,8 +105,8 @@ export default function CheckoutScreen() {
           <Text className="text-muted-foreground">
             Please select your preferred shipping option for this order.
           </Text>
-          <Button className="w-full">
-            <Text>Continue to Payment</Text>
+          <Button className="w-full" onPress={handleCheckout} disabled={loading || cartItems.length === 0}>
+            <Text>{loading ? 'Processing...' : 'Place Order'}</Text>
           </Button>
         </Card>
       </ScrollView>
