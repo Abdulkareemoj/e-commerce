@@ -1,19 +1,26 @@
+import * as React from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { ScrollView, View } from 'react-native';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Text } from '@/components/ui/text';
+import { FormInput } from '@/components/ui/form-input';
+import { FieldSet } from '@/components/ui/field';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/lib/authStore';
 import { router, useLocalSearchParams } from 'expo-router';
 import { AlertCircle, CheckCircle2 } from 'lucide-react-native';
-import * as React from 'react';
-import { ScrollView, type TextStyle, View } from 'react-native';
 
 const RESEND_CODE_INTERVAL_SECONDS = 30;
 
-const TABULAR_NUMBERS_STYLE: TextStyle = { fontVariant: ['tabular-nums'] };
+const codeSchema = z.object({
+  code: z.string().min(1, 'Verification code is required'),
+});
+
+type CodeData = z.infer<typeof codeSchema>;
 
 function useCountdown(seconds = 30) {
   const [countdown, setCountdown] = React.useState(seconds);
@@ -21,18 +28,11 @@ function useCountdown(seconds = 30) {
 
   const startCountdown = React.useCallback(() => {
     setCountdown(seconds);
-
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-    }
-
+    if (intervalRef.current) clearInterval(intervalRef.current);
     intervalRef.current = setInterval(() => {
       setCountdown((prev) => {
         if (prev <= 1) {
-          if (intervalRef.current) {
-            clearInterval(intervalRef.current);
-            intervalRef.current = null;
-          }
+          if (intervalRef.current) { clearInterval(intervalRef.current); intervalRef.current = null; }
           return 0;
         }
         return prev - 1;
@@ -42,12 +42,7 @@ function useCountdown(seconds = 30) {
 
   React.useEffect(() => {
     startCountdown();
-
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
-    };
+    return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
   }, [startCountdown]);
 
   return { countdown, restartCountdown: startCountdown };
@@ -56,12 +51,16 @@ function useCountdown(seconds = 30) {
 export default function VerifyEmailScreen() {
   const { countdown, restartCountdown } = useCountdown(RESEND_CODE_INTERVAL_SECONDS);
   const { email } = useLocalSearchParams<{ email?: string }>();
-  const [code, setCode] = React.useState('');
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [success, setSuccess] = React.useState<string | null>(null);
 
-  async function onSubmit() {
+  const { control, handleSubmit } = useForm<CodeData>({
+    resolver: zodResolver(codeSchema),
+    defaultValues: { code: '' },
+  });
+
+  const onSubmit = React.useCallback(async (data: CodeData) => {
     if (!email) {
       setError('Email is missing from the request. Please try signing up again.');
       return;
@@ -70,18 +69,17 @@ export default function VerifyEmailScreen() {
     setError(null);
     setSuccess(null);
     try {
-      const response = await api.publicPost('/auth/verify-email', { email, token: code });
-      // On success, log the user in and navigate to the home screen.
-      useAuthStore.getState().setAuth(response.user, response.accessToken, response.refreshToken);
+      const response = await api.publicPost('/auth/verify-email', { email, token: data.code });
+      useAuthStore.getState().setAuth(response.user);
       router.replace('/(app)/(tabs)/home');
     } catch (err: any) {
-      setError(err.message || 'An unexpected error occurred. Please try again.');
+      setError(err.message || 'An unexpected error occurred.');
     } finally {
       setIsSubmitting(false);
     }
-  }
+  }, [email]);
 
-  async function onResend() {
+  const onResend = React.useCallback(async () => {
     if (!email) {
       setError('Email is missing from the request. Please try signing up again.');
       return;
@@ -95,7 +93,7 @@ export default function VerifyEmailScreen() {
     } catch (err: any) {
       setError(err.message || 'Failed to resend code. Please try again.');
     }
-  }
+  }, [email, restartCountdown]);
 
   return (
     <ScrollView
@@ -124,45 +122,27 @@ export default function VerifyEmailScreen() {
                   <AlertDescription>{success}</AlertDescription>
                 </Alert>
               )}
-              <View className="gap-6">
-                <View className="gap-1.5">
-                  <Label htmlFor="code">Verification code</Label>
-                  <Input
-                    id="code"
-                    autoCapitalize="none"
-                    returnKeyType="send"
-                    keyboardType="numeric"
-                    autoComplete="sms-otp"
-                    textContentType="oneTimeCode"
-                    onSubmitEditing={onSubmit}
-                    value={code}
-                    onChangeText={setCode}
-                  />
-                  <Button variant="link" size="sm" disabled={countdown > 0} onPress={onResend}>
-                    <Text className="text-center text-xs">
-                      Didn&apos;t receive the code? Resend{' '}
-                      {countdown > 0 ? (
-                        <Text className="text-xs" style={TABULAR_NUMBERS_STYLE}>
-                          ({countdown})
-                        </Text>
-                      ) : null}
-                    </Text>
-                  </Button>
-                </View>
-                <View className="gap-3">
-                  <Button className="w-full" onPress={onSubmit} disabled={isSubmitting}>
-                    <Text>Continue</Text>
-                  </Button>
-                  <Button
-                    variant="link"
-                    className="mx-auto"
-                    onPress={() => {
-                      router.back();
-                    }}>
-                    <Text>Cancel</Text>
-                  </Button>
-                </View>
-              </View>
+              <FieldSet>
+                <FormInput
+                  control={control}
+                  name="code"
+                  label="Verification code"
+                  keyboardType="number-pad"
+                  autoCapitalize="none"
+                />
+                <Button variant="link" size="sm" disabled={countdown > 0} onPress={onResend}>
+                  <Text className="text-center text-xs">
+                    Didn&apos;t receive the code? Resend{' '}
+                    {countdown > 0 ? `(${countdown})` : null}
+                  </Text>
+                </Button>
+                <Button className="w-full" onPress={handleSubmit(onSubmit)} disabled={isSubmitting}>
+                  <Text>{isSubmitting ? 'Verifying...' : 'Continue'}</Text>
+                </Button>
+                <Button variant="link" className="mx-auto" onPress={() => router.back()}>
+                  <Text>Cancel</Text>
+                </Button>
+              </FieldSet>
             </CardContent>
           </Card>
         </View>

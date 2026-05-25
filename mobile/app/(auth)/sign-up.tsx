@@ -1,46 +1,53 @@
+import * as React from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { Pressable, ScrollView, View } from 'react-native';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Text } from '@/components/ui/text';
-import { router } from 'expo-router';
-import * as React from 'react';
-import { Pressable, TextInput, View, ScrollView } from 'react-native';
+import { FormInput } from '@/components/ui/form-input';
+import { FieldSet } from '@/components/ui/field';
 import { useAuthStore } from '@/lib/authStore';
+import { router } from 'expo-router';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react-native';
 import { signUp, getSession } from '@/lib/auth-client';
 
+const signUpSchema = z.object({
+  name: z.string().min(1, 'Name is required'),
+  email: z.string().email('Enter a valid email'),
+  password: z.string().min(6, 'Password must be at least 6 characters'),
+});
+
+type SignUpData = z.infer<typeof signUpSchema>;
+
 export default function SignUpScreen() {
-  const [email, setEmail] = React.useState('');
-  const [password, setPassword] = React.useState('');
-  const [name, setName] = React.useState('');
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
 
-  const passwordInputRef = React.useRef<TextInput>(null);
+  const { control, handleSubmit } = useForm<SignUpData>({
+    resolver: zodResolver(signUpSchema),
+    defaultValues: { name: '', email: '', password: '' },
+  });
 
-  function onEmailSubmitEditing() {
-    passwordInputRef.current?.focus();
-  }
-
-  async function onSubmit() {
+  const onSubmit = React.useCallback(async (data: SignUpData) => {
     setIsSubmitting(true);
     setError(null);
     try {
-      const result = await signUp.email({ name, email, password });
+      const result = await signUp.email({ name: data.name, email: data.email, password: data.password });
       if (result?.error) {
         throw new Error(result.error.message || 'Unable to sign up.');
       }
 
-      const { data } = await getSession();
-      if (!data?.user) {
+      const { data: session } = await getSession();
+      if (!session?.user) {
         throw new Error('Signed up, but failed to load session.');
       }
 
-      useAuthStore.getState().setAuth(data.user as any);
+      useAuthStore.getState().setAuth(session.user as any);
 
-      const role = (data.user as any)?.role;
+      const role = (session.user as any)?.role;
       if (role === 'admin') {
         router.replace('/(admin)/(tabs)/dashboard');
       } else if (role === 'vendor') {
@@ -48,13 +55,14 @@ export default function SignUpScreen() {
       } else {
         router.replace('/(user)/(tabs)/home');
       }
-    } catch (error: any) {
-      console.error('Sign up error:', error.message);
-      setError(error.message || 'An unexpected error occurred. Please try again.');
+    } catch (err: any) {
+      console.error('Sign up error:', err.message);
+      setError(err.message || 'An unexpected error occurred.');
     } finally {
       setIsSubmitting(false);
     }
-  }
+  }, []);
+
   return (
     <ScrollView
       keyboardShouldPersistTaps="handled"
@@ -80,59 +88,35 @@ export default function SignUpScreen() {
                   </AlertDescription>
                 </Alert>
               )}
-              <View className="gap-6">
-                <View className="gap-1.5">
-                  <Label htmlFor="name">Name</Label>
-                  <Input
-                    id="name"
-                    placeholder="John Doe"
-                    autoComplete="name"
-                    autoCapitalize="words"
-                    returnKeyType="next"
-                    submitBehavior="submit"
-                    value={name}
-                    onChangeText={setName}
-                  />
-                </View>
-                <View className="gap-1.5">
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    placeholder="m@example.com"
-                    keyboardType="email-address"
-                    autoComplete="email"
-                    autoCapitalize="none"
-                    onSubmitEditing={onEmailSubmitEditing}
-                    returnKeyType="next"
-                    submitBehavior="submit"
-                    value={email}
-                    onChangeText={setEmail}
-                  />
-                </View>
-                <View className="gap-1.5">
-                  <View className="flex-row items-center">
-                    <Label htmlFor="password">Password</Label>
-                  </View>
-                  <Input
-                    ref={passwordInputRef}
-                    id="password"
-                    secureTextEntry
-                    returnKeyType="send"
-                    onSubmitEditing={onSubmit}
-                    value={password}
-                    onChangeText={setPassword}
-                  />
-                </View>
-                <Button className="w-full" onPress={onSubmit} disabled={isSubmitting}>
+              <FieldSet>
+                <FormInput
+                  control={control}
+                  name="name"
+                  label="Name"
+                  placeholder="John Doe"
+                  autoCapitalize="words"
+                />
+                <FormInput
+                  control={control}
+                  name="email"
+                  label="Email"
+                  placeholder="m@example.com"
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                />
+                <FormInput
+                  control={control}
+                  name="password"
+                  label="Password"
+                  secureTextEntry
+                />
+                <Button className="w-full" onPress={handleSubmit(onSubmit)} disabled={isSubmitting}>
                   <Text>{isSubmitting ? 'Creating Account...' : 'Continue'}</Text>
                 </Button>
-              </View>
+              </FieldSet>
               <View className="flex flex-row items-center justify-center gap-2 text-sm">
                 <Text>Already have an account?</Text>
-                <Pressable
-                  onPress={() => {
-                    router.push('/(auth)/sign-in');
-                  }}>
+                <Pressable onPress={() => router.push('/(auth)/sign-in')}>
                   <Text className="text-sm underline underline-offset-4">Sign In</Text>
                 </Pressable>
               </View>
