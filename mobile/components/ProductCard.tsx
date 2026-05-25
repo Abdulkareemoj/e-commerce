@@ -5,10 +5,11 @@ import { Text } from '@/components/ui/text';
 import { formatCurrency } from '@/lib/money';
 import { Product } from '@/types';
 import { Link } from 'expo-router';
-import { Heart, ShoppingCart } from 'lucide-react-native';
+import { Heart, ShoppingCart, Star } from 'lucide-react-native';
 import React from 'react';
-import { Image, View, Platform } from 'react-native';
+import { Image, View, Platform, Pressable } from 'react-native';
 import { useCart } from '@/hooks/useCart';
+import { useWishlist } from '@/hooks/useWishlist';
 
 interface ProductCardProps {
   product: Product;
@@ -16,112 +17,108 @@ interface ProductCardProps {
   categories?: string[];
 }
 
-// Mock Rating Component (since we don't have a dedicated one yet)
-function Rating({ rating }: { rating: number }) {
-  const fullStars = Math.floor(rating);
-  const emptyStars = 5 - fullStars;
-  const stars = [];
-
-  for (let i = 0; i < fullStars; i++) {
-    stars.push(
-      <Text key={`full-${i}`} className="text-yellow-500">
-        ★
-      </Text>
-    );
-  }
-  for (let i = 0; i < emptyStars; i++) {
-    stars.push(
-      <Text key={`empty-${i}`} className="text-muted-foreground/50">
-        ★
-      </Text>
-    );
-  }
-
-  return <View className="flex-row">{stars}</View>;
+function Rating({ rating }: { rating: number | null }) {
+  const fullStars = rating ? Math.floor(rating) : 0;
+  return (
+    <View className="flex-row items-center gap-1">
+      <View className="flex-row">
+        {[...Array(5)].map((_, i) => (
+          <Icon
+            key={i}
+            as={Star}
+            size={12}
+            className={i < fullStars ? 'text-amber-400' : 'text-muted-foreground/30'}
+          />
+        ))}
+      </View>
+      {rating !== null && (
+        <Text className="text-xs text-muted-foreground">{rating.toFixed(1)}</Text>
+      )}
+    </View>
+  );
 }
 
 export function ProductCard({ product, isSale = false, categories = [] }: ProductCardProps) {
   const { addItem } = useCart();
+  const { isWishlisted, toggle } = useWishlist();
 
-  // Mock function for adding to cart
   const handleAddToCart = async (e: any) => {
-    e.preventDefault(); // Prevent navigation when clicking the button inside the Link
+    e.preventDefault();
     e.stopPropagation();
-
-    // For simplicity, we add 1 unit of the base product
     await addItem(product.id, 1);
-    console.log(`Added ${product.title} to cart.`);
-    // TODO: Show success toast
   };
 
-  // Mock function for toggling favorite status
   const handleToggleFavorite = (e: any) => {
     e.preventDefault();
     e.stopPropagation();
-    console.log(`Toggling favorite status for ${product.title}.`);
-    // TODO: Integrate useFavorites hook here
+    toggle(product.id);
   };
 
   return (
-    <Link href={`/(app)/product/${product.id}`} asChild>
-      <Card
-        className={`w-full flex-col justify-between p-0 ${Platform.OS === 'web' ? 'shadow-sm' : 'shadow-none'}`}>
-        <View className="relative">
-          {/* SALE Badge */}
-          {isSale && (
-            <View className="absolute left-3 top-3 z-10 rounded-sm bg-red-500 px-2 py-1">
-              <Text className="text-xs font-bold text-white">SALE</Text>
-            </View>
-          )}
-          {/* Product Image */}
-          <Image
-            source={{ uri: product.images[0] }}
-            // Larger, centered product image on web; slightly smaller on native
-            style={{
-              width: '100%',
-              height: Platform.OS === 'web' ? 200 : 160,
-              borderTopLeftRadius: 12,
-              borderTopRightRadius: 12,
-            }}
-            className={Platform.OS === 'web' ? 'bg-muted/50' : 'bg-muted/50'}
-            resizeMode="cover"
-          />
-          {/* Favorite Button */}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="absolute right-2 top-2 size-8 rounded-full bg-background/70"
-            onPress={handleToggleFavorite}>
-            <Icon as={Heart} className="text-primary" size={16} />
-          </Button>
-        </View>
+    <Link href={`/(user)/product/${product.id}`} asChild>
+      <Pressable
+        className={`w-full ${Platform.OS === 'web' ? 'hover:scale-[1.02] active:scale-[0.98]' : ''} transition-transform duration-200`}>
+        <Card className="w-full flex-col justify-between overflow-hidden p-0">
+          <View className="relative">
+            {isSale && (
+              <View className="absolute left-3 top-3 z-10 rounded-lg bg-gradient-to-r from-rose-500 to-pink-500 px-2.5 py-1 shadow-lg shadow-rose-500/30">
+                <Text className="text-[10px] font-bold uppercase tracking-wide text-white">
+                  Sale
+                </Text>
+              </View>
+            )}
+            <Image
+              source={{ uri: product.images[0] }}
+              style={{
+                width: '100%',
+                height: Platform.OS === 'web' ? 180 : 140,
+              }}
+              className="bg-muted"
+              resizeMode="cover"
+            />
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute right-2 top-2 size-8 rounded-full bg-background/80 shadow-sm backdrop-blur-sm active:bg-background"
+              onPress={handleToggleFavorite}>
+              <Icon as={Heart} className={isWishlisted(product.id) ? 'fill-rose-500 text-rose-500' : 'text-foreground'} size={16} />
+            </Button>
+          </View>
 
-        <CardContent className="flex-col gap-2 p-3">
-          <Text className="line-clamp-2 text-sm font-semibold">{product.title}</Text>
-          <Rating rating={product.rating} />
-          <Text className="text-lg font-bold text-primary">
-            {formatCurrency(product.priceCents, product.currency)}
-          </Text>
-          {/* Category Tags */}
-          {categories && categories.length > 0 && (
-            <View className="flex-row flex-wrap gap-1">
-              {categories.map((cat, idx) => (
-                <View key={idx} className="rounded-full bg-primary/10 px-2 py-1">
-                  <Text className="text-xs font-medium text-primary">{cat}</Text>
-                </View>
-              ))}
+          <CardContent className="flex-col gap-2 p-3.5">
+            <Text className="line-clamp-2 text-sm font-medium leading-snug tracking-tight">
+              {product.title}
+            </Text>
+            <Rating rating={product.rating} />
+            <View className="flex-row items-baseline justify-between">
+              <Text className="text-base font-bold text-primary">
+                {formatCurrency(product.priceCents, product.currency)}
+              </Text>
+              {isSale && (
+                <Text className="text-xs text-muted-foreground line-through">
+                  {formatCurrency(Math.round(product.priceCents * 1.5), product.currency)}
+                </Text>
+              )}
             </View>
-          )}
-          {/* Divider Line */}
-        </CardContent>
+            {categories && categories.length > 0 && (
+              <View className="flex-row flex-wrap gap-1.5 pt-1">
+                {categories.slice(0, 2).map((cat, idx) => (
+                  <View key={idx} className="rounded-full bg-accent px-2.5 py-0.5">
+                    <Text className="text-[10px] font-medium text-accent-foreground">{cat}</Text>
+                  </View>
+                ))}
+              </View>
+            )}
+          </CardContent>
 
-        <CardFooter className="p-3 pt-0">
-          <Button className="flex-1" size="sm" onPress={handleAddToCart}>
-            <Icon as={ShoppingCart} size={16} />
-            <Text>Add to Cart</Text>
-          </Button>
-        </CardFooter>
-      </Card>
+          <CardFooter className="p-3 pt-0">
+            <Button className="flex-1" size="sm" onPress={handleAddToCart}>
+              <Icon as={ShoppingCart} size={14} />
+              <Text className="text-xs font-medium">Add to Cart</Text>
+            </Button>
+          </CardFooter>
+        </Card>
+      </Pressable>
     </Link>
   );
 }

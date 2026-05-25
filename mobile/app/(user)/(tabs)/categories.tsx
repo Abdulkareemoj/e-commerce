@@ -75,6 +75,10 @@ export default function CategoriesScreen() {
           currency: 'USD',
           rating: 4.5,
           attributes: {},
+          variants: (p.variants || []).map((v: any) => ({
+            ...v,
+            priceCents: v.price ? Math.round(parseFloat(v.price) * 100) : null,
+          })),
         }));
         setProducts(mappedProducts);
       } catch (err) {
@@ -101,6 +105,7 @@ export default function CategoriesScreen() {
               </Button>
               <Button variant="outline" size="sm" className="hidden sm:flex">
                 <Icon as={Grid} size={16} />
+                <Text className="sr-only">Grid view</Text>
               </Button>
             </View>
           </View>

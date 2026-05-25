@@ -10,6 +10,7 @@ import {
 import { relations } from "drizzle-orm";
 import { vendor } from "./vendor-schema";
 import { category } from "./category-schema";
+import { productVariant } from "./product-variant-schema";
 
 export const product = pgTable("product", {
   id: text("id").primaryKey(),
@@ -22,7 +23,7 @@ export const product = pgTable("product", {
   price: numeric("price", { precision: 10, scale: 2 }).notNull(),
   stock: integer("stock").notNull().default(0),
   categoryId: text("category_id").references(() => category.id),
-  images: text("images").array(), // Array of image URLs cos obviously its more than one image
+  images: text("images").array(),
   isAvailable: boolean("is_available").default(true).notNull(),
   createdAt: timestamp("created_at")
     .$defaultFn(() => new Date())
@@ -32,9 +33,10 @@ export const product = pgTable("product", {
     .notNull(),
 });
 
-export const productRelations = relations(product, ({ one }) => ({
+export const productRelations = relations(product, ({ one, many }) => ({
   vendor: one(vendor, {
     fields: [product.vendorId],
     references: [vendor.id],
   }),
+  variants: many(productVariant),
 }));

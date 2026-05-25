@@ -8,6 +8,19 @@ export interface User {
   role: Role;
 }
 
+export interface ProductVariant {
+  id: string;
+  productId: string;
+  name: string;
+  sku: string;
+  priceCents: number | null;
+  stock: number;
+  attributes: Record<string, string> | null;
+  image: string | null;
+  sortOrder: number;
+  isAvailable: boolean;
+}
+
 export interface Product {
   id: string;
   title: string;
@@ -18,8 +31,9 @@ export interface Product {
   vendorId: string;
   categoryId: string;
   stock: number;
-  rating: number;
+  rating: number | null;
   attributes: Record<string, string>;
+  variants: ProductVariant[];
   createdAt: string;
 }
 
@@ -27,7 +41,7 @@ export interface Vendor {
   id: string;
   name: string;
   avatarUrl?: string;
-  rating: number;
+  rating: number | null;
   location: string;
   verified: boolean;
 }
@@ -81,6 +95,32 @@ export interface PaymentMethod {
   last4: string;
   brand: string;
   expiry: string;
+}
+
+export interface Review {
+  id: string;
+  productId: string;
+  userId: string;
+  rating: number;
+  title?: string;
+  body?: string;
+  isVerifiedPurchase: string;
+  createdAt: string;
+  updatedAt: string;
+  user: {
+    id: string;
+    name: string;
+    image?: string;
+  };
+}
+
+export interface AppliedCoupon {
+  id: string;
+  code: string;
+  description?: string;
+  discountType: 'percentage' | 'fixed';
+  discountValue: string;
+  discountCents: number;
 }
 
 export interface Category {
