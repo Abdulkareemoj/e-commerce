@@ -112,6 +112,7 @@ export default function CatalogScreen() {
               {/* View Toggle (Placeholder) */}
               <Button variant="outline" size="sm" className="hidden sm:flex">
                 <Icon as={Grid} size={16} />
+                <Text className="sr-only">Grid view</Text>
               </Button>
             </View>
           </View>

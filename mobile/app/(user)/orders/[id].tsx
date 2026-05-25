@@ -1,12 +1,23 @@
 import { Text } from '@/components/ui/text';
+import { Badge } from '@/components/ui/badge';
+import { Card } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
 import { Link, useLocalSearchParams } from 'expo-router';
 import React from 'react';
-import { View } from 'react-native';
+import { View, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button } from '@/components/ui/button';
 import { useAuthStore } from '@/lib/authStore';
 import { api } from '@/lib/api';
 import { formatCurrency } from '@/lib/money';
+
+const STATUS_COLORS: Record<string, string> = {
+  pending: 'text-amber-500',
+  accepted: 'text-blue-500',
+  shipped: 'text-indigo-500',
+  delivered: 'text-green-500',
+  cancelled: 'text-destructive',
+};
 
 export default function OrderDetailScreen() {
   const { id } = useLocalSearchParams();
@@ -38,7 +49,7 @@ export default function OrderDetailScreen() {
 
   if (isLoading || fetching) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+      <View className="flex-1 items-center justify-center">
         <Text>Loading...</Text>
       </View>
     );
@@ -46,18 +57,16 @@ export default function OrderDetailScreen() {
 
   if (!isAuthenticated || !user || user.role !== 'user') {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24 }}>
+      <View className="flex-1 items-center justify-center p-6">
         <Text className="text-center mb-4">You must be signed in to view order details.</Text>
-        <Button variant="default">
-          <Link href="/(auth)/sign-in">Sign In</Link>
-        </Button>
+        <Link href="/(auth)/sign-in" asChild><Button variant="default"><Text>Sign In</Text></Button></Link>
       </View>
     );
   }
 
   if (!order) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+      <View className="flex-1 items-center justify-center">
         <Text className="text-muted-foreground">Order not found.</Text>
       </View>
     );
@@ -65,25 +74,59 @@ export default function OrderDetailScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-background">
-      <View className="flex-1 p-4">
-        <Text variant="h2" className="mb-2 font-bold">
-          Order Detail
-        </Text>
-        <Text className="text-muted-foreground mb-4">ID: {order.id}</Text>
-
-        <View className="bg-card p-4 rounded-lg border border-border mb-4">
-             <Text className="font-semibold text-lg mb-2">Summary</Text>
-             <Text>Status: {order.status}</Text>
-             <Text>Total: {formatCurrency(Math.round(parseFloat(order.totalAmount || 0) * 100), 'USD')}</Text>
-             <Text>Date: {new Date(order.createdAt).toLocaleDateString()}</Text>
+      <View className="flex-1 p-4 gap-4">
+        <View>
+          <Text variant="h2" className="font-bold">Order Detail</Text>
+          <Text className="text-xs text-muted-foreground mt-1">ID: {order.id}</Text>
         </View>
 
-        <Text variant="h4" className="font-semibold mb-2">Items</Text>
+        <Card className="gap-3 p-4">
+          <View className="flex-row items-center justify-between">
+            <Text className="font-semibold">Status</Text>
+            <Text className={`text-sm font-medium capitalize ${STATUS_COLORS[order.status] || ''}`}>
+              {order.status}
+            </Text>
+          </View>
+          <View className="flex-row items-center justify-between">
+            <Text className="text-muted-foreground">Total</Text>
+            <Text className="font-bold">{formatCurrency(Math.round(parseFloat(order.totalAmount || 0) * 100), 'USD')}</Text>
+          </View>
+          {order.trackingNumber && (
+            <View className="flex-row items-center justify-between">
+              <Text className="text-muted-foreground">Tracking</Text>
+              <Text className="text-sm font-medium">{order.trackingNumber}</Text>
+            </View>
+          )}
+          <View className="flex-row items-center justify-between">
+            <Text className="text-muted-foreground">Placed</Text>
+            <Text className="text-sm">{new Date(order.createdAt).toLocaleDateString()}</Text>
+          </View>
+          {order.couponCode && (
+            <View className="flex-row items-center justify-between">
+              <Text className="text-muted-foreground">Coupon</Text>
+              <Badge variant="outline"><Text className="text-xs">{order.couponCode}</Text></Badge>
+            </View>
+          )}
+        </Card>
+
+        <Text className="font-semibold">Items</Text>
         {order.items?.map((item: any) => (
-           <View key={item.id} className="flex-row justify-between mb-2 pb-2 border-b border-border">
-             <Text>Product ID: {item.productId?.slice(0, 8)}</Text>
-             <Text className="font-medium">{item.quantity}x @ {formatCurrency(Math.round(parseFloat(item.price || 0) * 100), 'USD')}</Text>
-           </View>
+          <Card key={item.id} className="flex-row gap-3 overflow-hidden p-0">
+            <Image
+              source={{ uri: item.product?.images?.[0] || 'https://picsum.photos/seed/order/100' }}
+              className="size-20 bg-muted"
+              resizeMode="cover"
+            />
+            <View className="flex-1 justify-center gap-1 py-3 pr-3">
+              <Text className="text-sm font-medium">{item.product?.name || 'Product'}</Text>
+              <Text className="text-xs text-muted-foreground">
+                {item.quantity}x @ {formatCurrency(Math.round(parseFloat(item.price || 0) * 100), 'USD')}
+              </Text>
+              <Text className={`text-xs font-medium capitalize ${STATUS_COLORS[item.status] || ''}`}>
+                {item.status || 'pending'}
+              </Text>
+            </View>
+          </Card>
         ))}
       </View>
     </SafeAreaView>
