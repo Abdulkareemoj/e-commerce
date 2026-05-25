@@ -1,95 +1,236 @@
-import { CartItem } from '@/types';
+import { CartItem, AppliedCoupon } from '@/types';
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { api } from '@/lib/api';
+import { useAuthStore } from '@/lib/authStore';
 
-// --- Zustand Store Definition ---
+export interface HydratedCartItem extends CartItem {
+  title?: string;
+  image?: string;
+}
+
+export interface CouponState {
+  coupon: AppliedCoupon | null;
+  couponLoading: boolean;
+  couponError: string | null;
+  validateCoupon: (code: string) => Promise<void>;
+  removeCoupon: () => void;
+}
 
 interface CartState {
-  cartItems: CartItem[];
+  cartItems: HydratedCartItem[];
   cartTotalCents: number;
   isLoading: boolean;
-  addItem: (productId: string, qty: number, priceCents?: number) => Promise<void>;
+  sessionToken: string | null;
+  coupon: AppliedCoupon | null;
+  couponLoading: boolean;
+  couponError: string | null;
+
+  addItem: (productId: string, qty: number, priceCents?: number, variantId?: string) => Promise<void>;
   removeItem: (itemId: string) => Promise<void>;
   updateItemQuantity: (itemId: string, qty: number) => Promise<void>;
   clearCart: () => Promise<void>;
+  loadCart: () => Promise<void>;
+  mergeGuestCart: () => Promise<void>;
+  validateCoupon: (code: string) => Promise<void>;
+  removeCoupon: () => void;
 }
 
-// Helper function to calculate total
-const calculateTotal = (items: CartItem[]): number => {
+const calculateSubtotal = (items: HydratedCartItem[]): number => {
   return items.reduce((sum, item) => sum + item.priceCents * item.qty, 0);
 };
 
-// Mock function to fetch product price (since we don't have a backend)
-const getProductPrice = (productId: string): number => {
-  // In a real app, this would be an API call or a lookup in a product cache.
-  // For now, we'll use a mock price based on the ID.
-  const basePrice = parseInt(productId.split('-')[1] || '100', 10) * 100;
-  return basePrice; // Price in cents
-};
+function getSessionHeaders(token: string | null): Record<string, string> {
+  if (!token) return {};
+  return { 'X-Session-Token': token };
+}
+
+function generateId(): string {
+  return `cart-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+}
 
 export const useCart = create<CartState>()(
   persist(
     (set, get) => ({
       cartItems: [],
       cartTotalCents: 0,
-      isLoading: true, // Set to true initially for persistence hydration
+      isLoading: true,
+      sessionToken: null,
+      coupon: null,
+      couponLoading: false,
+      couponError: null,
 
-      addItem: async (productId, qty, priceCents) => {
-        const { cartItems } = get();
-        const existingItem = cartItems.find((item) => item.productId === productId);
-
-        const finalPriceCents = priceCents || getProductPrice(productId);
-
-        let newItems: CartItem[];
-        if (existingItem) {
-          // Update quantity of existing item
-          newItems = cartItems.map((item) =>
-            item.id === existingItem.id ? { ...item, qty: item.qty + qty } : item
-          );
-        } else {
-          // Add new item
-          const newItem: CartItem = {
-            id: `cart-${Date.now()}`, // Unique cart item ID
-            productId,
-            qty,
-            priceCents: finalPriceCents,
-            // variantId: 'default', // Add variant logic here if needed
-          };
-          newItems = [...cartItems, newItem];
+      loadCart: async () => {
+        const { sessionToken } = get();
+        const user = useAuthStore.getState().user;
+        if (!user && !sessionToken) {
+          set({ isLoading: false });
+          return;
         }
 
-        set({
-          cartItems: newItems,
-          cartTotalCents: calculateTotal(newItems),
-        });
+        try {
+          const res = user
+            ? await api.get('/cart')
+            : await api.publicGet('/cart', {
+                headers: getSessionHeaders(sessionToken) as any,
+              });
+          if (res?.items) {
+            const items: HydratedCartItem[] = res.items.map((i: any) => ({
+              id: i.id,
+              productId: i.productId,
+              variantId: i.variantId,
+              qty: i.quantity,
+              priceCents: i.priceCents,
+              title: i.title,
+              image: i.image,
+            }));
+            set({
+              cartItems: items,
+              cartTotalCents: calculateSubtotal(items),
+              isLoading: false,
+            });
+          } else {
+            set({ isLoading: false });
+          }
+        } catch (err) {
+          console.error('Failed to load cart:', err);
+          set({ isLoading: false });
+        }
+      },
+
+      addItem: async (productId, qty, priceCents, variantId) => {
+        const { sessionToken } = get();
+        let token = sessionToken;
+        if (!token) {
+          token = `guest-${Date.now()}-${Math.random().toString(36).slice(2, 12)}`;
+          set({ sessionToken: token });
+        }
+
+        const user = useAuthStore.getState().user;
+
+        try {
+          if (user) {
+            await api.post('/cart/add', { productId, variantId, quantity: qty, priceCents });
+          } else {
+            await api.publicPost('/cart/add', { productId, variantId, quantity: qty, priceCents }, {
+              headers: getSessionHeaders(token) as any,
+            });
+          }
+
+          await get().loadCart();
+        } catch (err) {
+          console.error('Failed to add item to cart:', err);
+        }
       },
 
       removeItem: async (itemId) => {
-        const newItems = get().cartItems.filter((item) => item.id !== itemId);
-        set({
-          cartItems: newItems,
-          cartTotalCents: calculateTotal(newItems),
-        });
+        const { sessionToken } = get();
+        const user = useAuthStore.getState().user;
+
+        try {
+          if (user) {
+            await api.delete(`/cart/item/${itemId}`);
+          } else {
+            await api.publicRequest(`/cart/item/${itemId}`, {
+              method: 'DELETE',
+              headers: getSessionHeaders(sessionToken) as any,
+            });
+          }
+          await get().loadCart();
+        } catch (err) {
+          console.error('Failed to remove item:', err);
+        }
       },
 
       updateItemQuantity: async (itemId, qty) => {
-        const newItems = get().cartItems.map((item) =>
-          item.id === itemId ? { ...item, qty } : item
-        );
-        set({
-          cartItems: newItems,
-          cartTotalCents: calculateTotal(newItems),
-        });
+        const { sessionToken } = get();
+        const user = useAuthStore.getState().user;
+
+        try {
+          if (qty < 1) {
+            await get().removeItem(itemId);
+            return;
+          }
+
+          if (user) {
+            await api.put(`/cart/item/${itemId}`, { quantity: qty });
+          } else {
+            await api.publicRequest(`/cart/item/${itemId}`, {
+              method: 'PUT',
+              body: { quantity: qty },
+              headers: getSessionHeaders(sessionToken) as any,
+            });
+          }
+          await get().loadCart();
+        } catch (err) {
+          console.error('Failed to update quantity:', err);
+        }
       },
 
       clearCart: async () => {
-        set({ cartItems: [], cartTotalCents: 0 });
+        const { sessionToken } = get();
+        const user = useAuthStore.getState().user;
+
+        try {
+          if (user) {
+            await api.delete('/cart/clear');
+          } else {
+            await api.publicRequest('/cart/clear', {
+              method: 'DELETE',
+              headers: getSessionHeaders(sessionToken) as any,
+            });
+          }
+          set({ cartItems: [], cartTotalCents: 0 });
+        } catch (err) {
+          console.error('Failed to clear cart:', err);
+        }
+      },
+
+      mergeGuestCart: async () => {
+        const { sessionToken } = get();
+        if (!sessionToken) return;
+
+        try {
+          await api.post('/cart/merge', { sessionToken });
+          set({ sessionToken: null });
+          await get().loadCart();
+        } catch (err) {
+          console.error('Failed to merge cart:', err);
+        }
+      },
+
+      validateCoupon: async (code) => {
+        const { cartItems } = get();
+        set({ couponLoading: true, couponError: null });
+
+        try {
+          const subtotalCents = calculateSubtotal(cartItems);
+          const res = await api.publicGet(`/coupons/validate?code=${encodeURIComponent(code)}&subtotalCents=${subtotalCents}`);
+
+          if (res.valid) {
+            set({ coupon: res.coupon, couponLoading: false, couponError: null });
+          } else {
+            set({ coupon: null, couponLoading: false, couponError: res.error || 'Invalid coupon' });
+          }
+        } catch (err: any) {
+          set({ coupon: null, couponLoading: false, couponError: err.message || 'Failed to validate coupon' });
+        }
+      },
+
+      removeCoupon: () => {
+        set({ coupon: null, couponLoading: false, couponError: null });
       },
     }),
     {
-      name: 'ecom-cart-storage', // unique name
+      name: 'ecom-cart-storage',
       storage: createJSONStorage(() => AsyncStorage),
+      partialize: (state) => ({
+        sessionToken: state.sessionToken,
+        cartItems: state.cartItems,
+        cartTotalCents: state.cartTotalCents,
+        coupon: state.coupon,
+      }),
       onRehydrateStorage: () => (state) => {
         if (state) {
           state.isLoading = false;
