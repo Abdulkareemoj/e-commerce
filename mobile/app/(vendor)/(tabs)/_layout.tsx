@@ -1,7 +1,7 @@
 import React from 'react';
 import { Icon } from '@/components/ui/icon';
 import { Tabs } from 'expo-router';
-import { LayoutGrid, Package, ShoppingCart, MessageSquare, BarChart3 } from 'lucide-react-native';
+import { LayoutGrid, Package, ShoppingCart, MessageSquare, BarChart3, AlertTriangle } from 'lucide-react-native';
 
 import { Platform } from 'react-native';
 
@@ -90,19 +90,20 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
+        name="inventory"
+        options={{
+          title: 'Inventory',
+          tabBarIcon: ({ focused }) => <TabBarIcon name={AlertTriangle} focused={focused} />,
+        }}
+      />
+      <Tabs.Screen
         name="messages"
         options={{
           title: 'Messages',
           tabBarIcon: ({ focused }) => <TabBarIcon name={MessageSquare} focused={focused} />,
         }}
       />
-      <Tabs.Screen
-        name="analytics"
-        options={{
-          title: 'Analytics',
-          tabBarIcon: ({ focused }) => <TabBarIcon name={BarChart3} focused={focused} />,
-        }}
-      />
+    
     </Tabs>
   );
 }
