@@ -12,27 +12,24 @@ interface User {
 interface AuthState {
   user: User | null;
   accessToken: string | null;
-  refreshToken: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  setAuth: (user: User, accessToken?: string | null, refreshToken?: string | null) => void;
+  setAuth: (user: User, accessToken?: string | null) => void;
   clearAuth: () => Promise<void>;
   initializeAuth: () => Promise<void>;
-  setAccessToken: (token: string) => void;
+  refreshToken: () => Promise<string | null>;
 }
 
-export const useAuthStore = create<AuthState>((set) => ({
+export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   accessToken: null,
-  refreshToken: null,
   isAuthenticated: false,
   isLoading: true,
 
-  setAuth: (user, accessToken, refreshToken) => {
+  setAuth: (user, accessToken) => {
     set({
       user,
       accessToken: accessToken ?? null,
-      refreshToken: refreshToken ?? null,
       isAuthenticated: true,
       isLoading: false,
     });
@@ -43,14 +40,20 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({
       user: null,
       accessToken: null,
-      refreshToken: null,
       isAuthenticated: false,
       isLoading: false,
     });
   },
 
-  setAccessToken: (token: string) => {
-    set({ accessToken: token });
+  refreshToken: async () => {
+    const { data } = await getSession();
+    if (data?.session?.token) {
+      const token = data.session.token;
+      set({ accessToken: token, user: data.user as User, isAuthenticated: true });
+      return token;
+    }
+    set({ user: null, accessToken: null, isAuthenticated: false });
+    return null;
   },
 
   initializeAuth: async () => {
@@ -61,7 +64,6 @@ export const useAuthStore = create<AuthState>((set) => ({
         set({
           user: data.user as User,
           accessToken: (data.session as any)?.token ?? null,
-          refreshToken: null,
           isAuthenticated: true,
           isLoading: false,
         });

@@ -1,4 +1,3 @@
-import { getAccessToken, saveTokens, deleteTokens, getRefreshToken } from './storage';
 import { useAuthStore } from './authStore';
 
 // NOTE: EXPO_PUBLIC_API_BASE_URL must be set in .env file for web/native builds
@@ -12,7 +11,6 @@ interface ApiRequestOptions extends RequestInit {
 async function fetchWithAuth(endpoint: string, options: ApiRequestOptions = {}) {
   const url = `${API_BASE_URL}${endpoint}`;
   const headers: Record<string, string> = {
-    // Explicitly define headers as a Record
     'Content-Type': 'application/json',
     ...(options.headers as Record<string, string>),
   };
@@ -30,44 +28,16 @@ async function fetchWithAuth(endpoint: string, options: ApiRequestOptions = {}) 
 
   let response = await fetch(url, config);
 
-  // Handle 401 Unauthorized - attempt token refresh
+  // Handle 401 Unauthorized — attempt session refresh via Better Auth
   if (response.status === 401 && options.auth) {
-    const refreshToken = useAuthStore.getState().refreshToken;
-    if (refreshToken) {
-      try {
-        const refreshResponse = await fetch(`${API_BASE_URL}/auth/refresh`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ refreshToken }),
-        });
-
-        if (refreshResponse.ok) {
-          const data = await refreshResponse.json();
-          const { user, accessToken, refreshToken: newRefreshToken } = data; // Assuming refresh endpoint returns user and new tokens
-          useAuthStore.getState().setAuth(user, accessToken, newRefreshToken);
-          await saveTokens(accessToken, newRefreshToken);
-
-          // Retry the original request with the new token
-          headers['Authorization'] = `Bearer ${accessToken}`;
-          config.headers = headers; // Ensure config.headers is updated with new Authorization
-          response = await fetch(url, config);
-        } else {
-          // Refresh failed, force logout
-          useAuthStore.getState().clearAuth();
-          await deleteTokens();
-          throw new Error('Session expired. Please log in again.');
-        }
-      } catch (error) {
-        // If refresh fails or network error occurs during refresh
-        useAuthStore.getState().clearAuth();
-        await deleteTokens();
-        throw new Error('Session expired. Please log in again.');
-      }
+    const token = await useAuthStore.getState().refreshToken();
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+      config.headers = headers;
+      response = await fetch(url, config);
     } else {
-      // No refresh token available, force logout
       useAuthStore.getState().clearAuth();
-      await deleteTokens();
-      throw new Error('Authentication required.');
+      throw new Error('Session expired. Please log in again.');
     }
   }
 
@@ -94,13 +64,16 @@ export const api = {
     fetchWithAuth(endpoint, { ...options, method: 'GET', auth: true }),
   post: (endpoint: string, body: any, options?: ApiRequestOptions) =>
     fetchWithAuth(endpoint, { ...options, method: 'POST', body, auth: true }),
+  put: (endpoint: string, body: any, options?: ApiRequestOptions) =>
+    fetchWithAuth(endpoint, { ...options, method: 'PUT', body, auth: true }),
   patch: (endpoint: string, body: any, options?: ApiRequestOptions) =>
     fetchWithAuth(endpoint, { ...options, method: 'PATCH', body, auth: true }),
   delete: (endpoint: string, options?: ApiRequestOptions) =>
     fetchWithAuth(endpoint, { ...options, method: 'DELETE', auth: true }),
-  // Public methods (no auth required)
   publicPost: (endpoint: string, body: any, options?: ApiRequestOptions) =>
     fetchWithAuth(endpoint, { ...options, method: 'POST', body, auth: false }),
   publicGet: (endpoint: string, options?: ApiRequestOptions) =>
     fetchWithAuth(endpoint, { ...options, method: 'GET', auth: false }),
+  publicRequest: (endpoint: string, options?: ApiRequestOptions) =>
+    fetchWithAuth(endpoint, { ...options, auth: false }),
 };

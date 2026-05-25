@@ -1,6 +1,6 @@
 import { createAuthClient } from 'better-auth/react';
 import { expoClient } from '@better-auth/expo/client';
-import { adminClient, emailOTPClient, usernameClient } from 'better-auth/client/plugins';
+import { adminClient, usernameClient } from 'better-auth/client/plugins';
 import * as SecureStore from 'expo-secure-store';
 import Constants from 'expo-constants';
 import { Platform } from 'react-native';
@@ -26,7 +26,6 @@ export const authClient = createAuthClient({
       storage: SecureStore,
     }),
     adminClient(),
-    emailOTPClient(),
     usernameClient(),
   ],
 });
@@ -40,6 +39,5 @@ export const {
   forgetPassword,
   resetPassword,
   isUsernameAvailable,
-  sendVerificationEmail,
   requestPasswordReset,
 } = authClient;
