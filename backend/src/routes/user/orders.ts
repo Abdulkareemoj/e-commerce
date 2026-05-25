@@ -72,4 +72,31 @@ ordersUser.post("/", async (c) => {
   }
 });
 
+ordersUser.get("/:id", async (c) => {
+  const user = (c as any).get("user") as any;
+  if (!user) return c.json({ error: "Unauthorized" }, 401);
+
+  try {
+    const ord = await db.query.order.findFirst({
+      where: and(eq(order.id, c.req.param("id")), eq(order.userId, user.id)),
+      with: {
+        items: {
+          with: {
+            product: {
+              columns: { id: true, name: true, images: true },
+            },
+          },
+        },
+      },
+    });
+
+    if (!ord) return c.json({ error: "Order not found" }, 404);
+
+    return c.json({ order: ord });
+  } catch (error) {
+    console.error("Error fetching order:", error);
+    return c.json({ error: "Failed to fetch order" }, 500);
+  }
+});
+
 export default ordersUser;
