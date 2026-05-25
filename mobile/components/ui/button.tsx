@@ -5,45 +5,44 @@ import { Platform, Pressable } from 'react-native';
 
 const buttonVariants = cva(
   cn(
-    'group shrink-0 flex-row items-center justify-center gap-2 rounded-md shadow-none',
+    'group shrink-0 flex-row items-center justify-center gap-2 rounded-xl shadow-sm',
     Platform.select({
-      web: "aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive whitespace-nowrap outline-none transition-all focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none [&_svg:not([class*='size-'])]:size-4 [&_svg]:pointer-events-none [&_svg]:shrink-0",
+      web: "aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive whitespace-nowrap outline-none transition-all duration-200 focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none [&_svg:not([class*='size-'])]:size-4 [&_svg]:pointer-events-none [&_svg]:shrink-0",
     })
   ),
   {
     variants: {
       variant: {
         default: cn(
-          'bg-primary shadow-sm shadow-black/5 active:bg-primary/90',
-          Platform.select({ web: 'hover:bg-primary/90' })
+          'bg-primary shadow-lg shadow-primary/25 active:scale-[0.98] active:shadow-md',
+          Platform.select({
+            web: 'hover:scale-[1.02] hover:shadow-xl hover:shadow-primary/30 active:scale-[0.98]',
+          })
         ),
         destructive: cn(
-          'bg-destructive shadow-sm shadow-black/5 active:bg-destructive/90 dark:bg-destructive/60',
+          'bg-destructive shadow-sm shadow-destructive/25 active:scale-[0.98] active:bg-destructive/90',
           Platform.select({
-            web: 'hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40',
+            web: 'hover:bg-destructive/90 hover:shadow-lg hover:shadow-destructive/30 active:scale-[0.98]',
           })
         ),
         outline: cn(
-          'border border-border bg-background shadow-sm shadow-black/5 active:bg-accent dark:border-input dark:bg-input/30 dark:active:bg-input/50',
+          'border-2 border-border bg-background shadow-sm shadow-black/5 active:scale-[0.98] active:bg-accent/50',
           Platform.select({
-            web: 'hover:bg-accent dark:hover:bg-input/50',
+            web: 'hover:border-primary/50 hover:bg-accent/50 hover:shadow-md active:scale-[0.98]',
           })
         ),
         secondary: cn(
-          'bg-secondary shadow-sm shadow-black/5 active:bg-secondary/80',
-          Platform.select({ web: 'hover:bg-secondary/80' })
+          'bg-secondary shadow-sm shadow-black/5 active:scale-[0.98] active:bg-secondary/80',
+          Platform.select({ web: 'hover:bg-secondary/90 hover:shadow-md active:scale-[0.98]' })
         ),
-        ghost: cn(
-          'active:bg-accent dark:active:bg-accent/50',
-          Platform.select({ web: 'hover:bg-accent dark:hover:bg-accent/50' })
-        ),
+        ghost: cn('active:bg-accent/50', Platform.select({ web: 'hover:bg-accent/30' })),
         link: '',
       },
       size: {
-        default: cn('h-10 px-4 py-2 sm:h-9', Platform.select({ web: 'has-[>svg]:px-3' })),
-        sm: cn('h-9 gap-1.5 rounded-md px-3 sm:h-8', Platform.select({ web: 'has-[>svg]:px-2.5' })),
-        lg: cn('h-11 rounded-md px-6 sm:h-10', Platform.select({ web: 'has-[>svg]:px-4' })),
-        icon: 'h-10 w-10 sm:h-9 sm:w-9',
+        default: cn('h-11 px-5 py-2.5 sm:h-10', Platform.select({ web: 'has-[>svg]:px-4' })),
+        sm: cn('h-10 gap-2 rounded-lg px-4 sm:h-9', Platform.select({ web: 'has-[>svg]:px-3' })),
+        lg: cn('h-13 rounded-xl px-8 py-3.5 sm:h-11', Platform.select({ web: 'has-[>svg]:px-5' })),
+        icon: 'h-11 w-11 rounded-xl sm:h-10 sm:w-10',
       },
     },
     defaultVariants: {
