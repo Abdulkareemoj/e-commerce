@@ -1,7 +1,7 @@
 import React from 'react';
 import { Icon } from '@/components/ui/icon';
 import { Tabs } from 'expo-router';
-import { LayoutGrid, Users, Store, Package, ShoppingCart, BarChart3 } from 'lucide-react-native';
+import { LayoutGrid, Store, Wallet, BarChart3 } from 'lucide-react-native';
 
 import { Platform } from 'react-native';
 
@@ -20,49 +20,32 @@ export default function TabsLayout() {
   return (
     <Tabs
       screenOptions={{
-        headerShown: false, // Headers handled by the parent Drawer/Stack
+        headerShown: false,
         tabBarActiveTintColor: 'hsl(var(--primary))',
         tabBarInactiveTintColor: 'hsl(var(--muted-foreground))',
         tabBarStyle: {
           backgroundColor: 'hsl(var(--background))',
           borderTopWidth: 0,
           ...Platform.select({
-            web: {
-              height: 60,
-              boxShadow: '0px -1px 4px rgba(0, 0, 0, 0.05)',
-            },
+            web: { height: 60, boxShadow: '0px -1px 4px rgba(0, 0, 0, 0.05)' },
             native: {
-              // Increase the bar height slightly and add bottom padding so icons
-              // sit higher above the pill. Keep shadows/elevation removed.
               height: 72,
               paddingBottom: 14,
               paddingTop: 6,
               shadowColor: 'transparent',
               shadowOpacity: 0,
               shadowRadius: 0,
-              shadowOffset: {
-                height: 0,
-                width: 0,
-              },
+              shadowOffset: { height: 0, width: 0 },
               elevation: 0,
             },
           }),
         },
         tabBarIconStyle: {
-          ...Platform.select({
-            native: {
-              paddingTop: 15,
-              marginBottom: 5,
-            },
-            web: {
-              paddingTop: 4,
-            },
-          }),
+          ...Platform.select({ native: { paddingTop: 15, marginBottom: 5 }, web: { paddingTop: 4 } }),
         },
         tabBarLabelStyle: {
           fontSize: 12,
           fontWeight: '600',
-          // Pull labels closer to the icons on native platforms
           marginTop: Platform.select({ native: -6, web: 0 }),
           marginBottom: Platform.select({ native: 8, web: 0 }),
         },
@@ -76,13 +59,6 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
-        name="users"
-        options={{
-          title: 'Users',
-          tabBarIcon: ({ focused }) => <TabBarIcon name={Users} focused={focused} />,
-        }}
-      />
-      <Tabs.Screen
         name="vendors"
         options={{
           title: 'Vendors',
@@ -90,17 +66,10 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
-        name="products"
+        name="payouts"
         options={{
-          title: 'Products',
-          tabBarIcon: ({ focused }) => <TabBarIcon name={Package} focused={focused} />,
-        }}
-      />
-      <Tabs.Screen
-        name="orders"
-        options={{
-          title: 'Orders',
-          tabBarIcon: ({ focused }) => <TabBarIcon name={ShoppingCart} focused={focused} />,
+          title: 'Payouts',
+          tabBarIcon: ({ focused }) => <TabBarIcon name={Wallet} focused={focused} />,
         }}
       />
       <Tabs.Screen
