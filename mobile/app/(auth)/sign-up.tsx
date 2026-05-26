@@ -53,7 +53,7 @@ export default function SignUpScreen() {
       } else if (role === 'vendor') {
         router.replace('/(vendor)/(tabs)/dashboard');
       } else {
-        router.replace('/(user)/(tabs)/home');
+        router.replace('/(auth)/onboarding');
       }
     } catch (err: any) {
       console.error('Sign up error:', err.message);

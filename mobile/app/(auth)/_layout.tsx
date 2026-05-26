@@ -1,7 +1,7 @@
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import React from 'react';
-import { useColorScheme } from 'nativewind';
+import { useUniwind } from 'uniwind';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export {
@@ -10,7 +10,8 @@ export {
 } from 'expo-router';
 
 export default function AuthLayout() {
-  const { colorScheme } = useColorScheme();
+  const { theme } = useUniwind();
+  const colorScheme = theme === 'dark' ? 'dark' : 'light';
 
   return (
     <SafeAreaView style={{ flex: 1 }}>
@@ -21,6 +22,7 @@ export default function AuthLayout() {
         <Stack.Screen name="forgot-password" options={{ headerShown: false }} />
         <Stack.Screen name="reset-password" options={{ headerShown: false }} />
         <Stack.Screen name="verify-email" options={{ headerShown: false }} />
+        <Stack.Screen name="onboarding" options={{ headerShown: false }} />
       </Stack>
     </SafeAreaView>
   );
