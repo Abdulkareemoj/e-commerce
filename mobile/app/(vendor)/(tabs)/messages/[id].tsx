@@ -4,14 +4,14 @@ import { useState, useEffect } from 'react';
 import { api } from '@/lib/api';
 import { useConversations } from '@/hooks/useConversations';
 
-export default function UserConversationScreen() {
+export default function VendorConversationScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const [header, setHeader] = useState<{
     name: string;
     subtitle?: string;
     avatarUrl?: string | null;
-    icon: 'store';
+    icon: 'user';
   }>();
 
   useEffect(() => {
@@ -20,14 +20,14 @@ export default function UserConversationScreen() {
 
   useEffect(() => {
     if (!id) return;
-    api.get(`/user/messaging/${id}`).then((res) => {
+    api.get(`/vendor/messaging/${id}`).then((res) => {
       const conv = res.conversation;
-      if (conv?.vendor) {
+      if (conv?.user) {
         setHeader({
-          name: conv.vendor.storeName || conv.vendor.user?.name || 'Vendor',
+          name: conv.user.name || 'Unknown Buyer',
           subtitle: conv.subject || undefined,
-          avatarUrl: conv.vendor.user?.image || null,
-          icon: 'store',
+          avatarUrl: conv.user.image || null,
+          icon: 'user',
         });
       }
     }).catch(console.error);
@@ -38,7 +38,7 @@ export default function UserConversationScreen() {
   return (
     <ConversationView
       conversationId={id}
-      isVendor={false}
+      isVendor
       header={header}
       onBack={() => router.back()}
     />

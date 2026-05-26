@@ -1,78 +1,96 @@
-import { Button } from '@/components/ui/button';
+import React, { useEffect } from 'react';
 import { Text } from '@/components/ui/text';
-import { Card } from '@/components/ui/card';
-import { Icon } from '@/components/ui/icon';
-import { MessageSquare, Plus } from 'lucide-react-native';
-import * as React from 'react';
-import { ScrollView, View, Pressable } from 'react-native';
+import { ChatListItem } from '@/components/messages/ChatListItem';
+import { View, ScrollView, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { MessageSquare } from 'lucide-react-native';
+import { Icon } from '@/components/ui/icon';
+import { useRouter } from 'expo-router';
+import { useAuthStore } from '@/lib/authStore';
+import { Button } from '@/components/ui/button';
 import { Link } from 'expo-router';
+import { useConversations } from '@/hooks/useConversations';
 
-// Mock Message Threads
-const MOCK_THREADS: {
-  id: number;
-  sender: string;
-  lastMessage: string;
-  time: string;
-  unread: boolean;
-}[] = [
-  {
-    id: 1,
-    sender: 'Support Team',
-    lastMessage: 'Your refund has been processed.',
-    time: '10m ago',
-    unread: true,
-  },
-  {
-    id: 2,
-    sender: 'Order ORD-1001',
-    lastMessage: 'The item is out for delivery.',
-    time: '1h ago',
-    unread: false,
-  },
-  {
-    id: 3,
-    sender: 'Shipping Inquiry',
-    lastMessage: 'We are looking into your request.',
-    time: 'Yesterday',
-    unread: false,
-  },
-];
+export default function UserMessagesScreen() {
+  const router = useRouter();
+  const { conversations, isLoading, fetchConversations } = useConversations();
+  const { isAuthenticated, user, isLoading: authLoading, initializeAuth } = useAuthStore();
 
-function MessageThreadCard({ thread }: { thread: (typeof MOCK_THREADS)[0] }) {
+  React.useEffect(() => {
+    initializeAuth();
+  }, []);
+
+  useEffect(() => {
+    if (isAuthenticated && user?.role === 'user') {
+      useConversations.getState().startPolling('user', 10000);
+    }
+    return () => useConversations.getState().stopPolling();
+  }, [isAuthenticated, user]);
+
+  if (authLoading) {
+    return (
+      <SafeAreaView className="flex-1 items-center justify-center bg-background">
+        <Text className="text-muted-foreground">Loading...</Text>
+      </SafeAreaView>
+    );
+  }
+
+  if (!isAuthenticated || !user || user.role !== 'user') {
+    return (
+      <SafeAreaView className="flex-1 bg-background">
+        <View className="flex-1 items-center justify-center p-6 gap-4">
+          <Icon as={MessageSquare} size={40} className="text-muted-foreground" />
+          <Text className="text-center text-muted-foreground">
+            Sign in as a buyer to view your messages.
+          </Text>
+          <Link href="/(auth)/sign-in" asChild>
+            <Button variant="default">
+              <Text>Sign In</Text>
+            </Button>
+          </Link>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   return (
-    <Link href={`/(user)/(tabs)/messages/${thread.id}`} asChild>
-      <Pressable>
-        <Card
-          className={`flex-row gap-3 p-3 active:bg-muted/50 ${thread.unread ? 'border-2 border-primary' : ''}`}>
-          <Avatar alt={thread.sender} className="size-12">
-            <AvatarFallback className="bg-secondary">
-              <Icon as={MessageSquare} size={20} className="text-foreground" />
-            </AvatarFallback>
-          </Avatar>
-          <View className="flex-1 justify-center">
-            <View className="flex-row items-center justify-between">
-              <Text className={`text-base font-semibold ${thread.unread ? 'text-primary' : ''}`}>
-                {thread.sender}
-              </Text>
-              <Text className="text-xs text-muted-foreground">{thread.time}</Text>
-            </View>
-            <Text className="line-clamp-1 text-sm text-muted-foreground">{thread.lastMessage}</Text>
+    <SafeAreaView className="flex-1 bg-background" edges={['top']}>
+      <View className="border-b border-border/50 px-4 py-3">
+        <Text variant="h3" className="font-bold">
+          Messages
+        </Text>
+      </View>
+      <ScrollView
+        className="flex-1"
+        refreshControl={
+          <RefreshControl
+            refreshing={isLoading}
+            onRefresh={() => fetchConversations('user')}
+          />
+        }>
+        {conversations.length === 0 ? (
+          <View className="mt-20 items-center gap-2">
+            <Icon as={MessageSquare} size={32} className="text-muted-foreground" />
+            <Text className="text-muted-foreground">No conversations yet.</Text>
           </View>
-        </Card>
-      </Pressable>
-    </Link>
-  );
-}
-
-export default function MessagesScreen() {
-  return (
-    <SafeAreaView className="flex-1 bg-background">
-      <ScrollView contentContainerClassName="p-4 gap-4">
-        {MOCK_THREADS.map((thread) => (
-          <MessageThreadCard key={thread.id} thread={thread} />
-        ))}
+        ) : (
+          conversations.map((conv) => (
+            <ChatListItem
+              key={conv.id}
+              name={conv.vendor?.name || conv.vendor?.storeName || 'Unknown Store'}
+              subtitle={conv.subject || conv.vendor?.storeName || undefined}
+              lastMessage={conv.lastMessage?.content || null}
+              timestamp={conv.updatedAt}
+              unread={conv.unread}
+              avatarUrl={conv.vendor?.image || null}
+              icon="store"
+              onPress={() => {
+                useConversations.getState().markConversationRead(conv.id);
+                router.push(`/messages/${conv.id}` as any);
+              }}
+            />
+          ))
+        )}
       </ScrollView>
     </SafeAreaView>
   );

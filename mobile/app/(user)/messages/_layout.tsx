@@ -2,5 +2,9 @@ import { Stack } from 'expo-router';
 import React from 'react';
 
 export default function MessagesLayout() {
-  return <Stack screenOptions={{ headerShown: true, title: 'Messages' }} />;
+  return (
+    <Stack screenOptions={{ headerShown: true, title: 'Messages' }}>
+      <Stack.Screen name="[id]" options={{ headerShown: false }} />
+    </Stack>
+  );
 }
