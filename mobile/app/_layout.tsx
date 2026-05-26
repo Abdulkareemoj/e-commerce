@@ -1,11 +1,11 @@
 import '@/global.css';
 
 import { NAV_THEME } from '@/lib/theme';
-import { ThemeProvider } from '@react-navigation/native';
+import { ThemeProvider } from 'expo-router/react-navigation';
 import { PortalHost } from '@rn-primitives/portal';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useColorScheme } from 'nativewind';
+import { useUniwind } from 'uniwind';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export {
@@ -14,11 +14,12 @@ export {
 } from 'expo-router';
 
 export default function RootLayout() {
-  const { colorScheme } = useColorScheme();
+  const { theme } = useUniwind();
+  const colorScheme = theme === 'dark' ? 'dark' : 'light';
 
   return (
     <SafeAreaView style={{ flex: 1 }}>
-      <ThemeProvider value={NAV_THEME[colorScheme ?? 'light']}>
+      <ThemeProvider value={NAV_THEME[colorScheme]}>
         <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
         <Stack screenOptions={{ headerShown: false }}>
           {/* The index route handles the initial redirect logic */}

@@ -1,5 +1,6 @@
 import * as React from 'react';
-import { View, ActivityIndicator, Text } from 'react-native';
+import { Text } from '@/components/ui/text';
+import { View, ActivityIndicator } from 'react-native';
 import { Redirect } from 'expo-router';
 import { useAuthStore } from '@/lib/authStore';
 
@@ -12,33 +13,40 @@ export default function Index() {
 
   if (isLoading) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+      <View className="bg-background flex-1 items-center justify-center">
         <ActivityIndicator size="large" />
       </View>
     );
   }
 
-  // Public landing: show general content; authenticated users get role-based quick links
-  return (
-    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24 }}>
-      <Text style={{ fontSize: 24, fontWeight: 'bold', marginBottom: 16 }}>
-        Welcome to the Marketplace
-      </Text>
-      <Text style={{ fontSize: 16, textAlign: 'center', marginBottom: 24 }}>
-        Browse products, manage your store, or explore your dashboard.
-      </Text>
+  if (!isAuthenticated || !user) {
+    // Unauthenticated: send to guest/user home (read-only browse)
+    return <Redirect href="/(user)/(tabs)/home" />;
+  }
 
-      {isAuthenticated && user ? (
-        <View style={{ gap: 12 }}>
-          {user.role === 'admin' && <Redirect href="/(admin)/(tabs)/dashboard" />}
-          {user.role === 'vendor' && <Redirect href="/(vendor)/(tabs)/dashboard" />}
-          {user.role === 'user' && <Redirect href="/(user)/(tabs)/home" />}
-        </View>
-      ) : (
-        <View style={{ gap: 12 }}>
-          <Redirect href="/(user)/(tabs)/home" />
-        </View>
-      )}
-    </View>
-  );
+  // New user who hasn't picked a role yet
+  if (!user.onboardingComplete) {
+    return <Redirect href="/(auth)/onboarding" />;
+  }
+
+  // Role-based routing
+  if (user.role === 'admin') {
+    return <Redirect href="/(admin)/(tabs)/dashboard" />;
+  }
+
+  if (user.role === 'vendor') {
+    // Vendor awaiting admin approval
+    if (user.vendorStatus === 'pending') {
+      return <Redirect href="/(vendor)/pending" />;
+    }
+    // Vendor whose application was rejected
+    if (user.vendorStatus === 'rejected') {
+      return <Redirect href="/(vendor)/rejected" />;
+    }
+    // Approved vendor
+    return <Redirect href="/(vendor)/(tabs)/dashboard" />;
+  }
+
+  // Default: regular user
+  return <Redirect href="/(user)/(tabs)/home" />;
 }
