@@ -1,6 +1,9 @@
 import dotenv from "dotenv";
+import { dirname } from "path";
+import { fileURLToPath } from "url";
 
-dotenv.config({ path: "../../.env.local" });
+const __dirname = dirname(fileURLToPath(import.meta.url));
+dotenv.config({ path: `${__dirname}/../.env.local` });
 import { Hono } from "hono";
 import api from "./routes";
 import { auth } from "./utils/auth";
