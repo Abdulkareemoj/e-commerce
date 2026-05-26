@@ -1,3 +1,5 @@
+import { LucideIcon } from "lucide-react-native";
+
 export type Role = 'user' | 'vendor' | 'admin';
 
 export interface User {
@@ -126,5 +128,5 @@ export interface AppliedCoupon {
 export interface Category {
   id: string;
   name: string;
-  icon: string; // Lucide icon name
+  icon: LucideIcon;
 }
