@@ -1,11 +1,11 @@
-# Minimal Template
+# Minimal Uniwind Template
 
 This is a [React Native](https://reactnative.dev/) project built with [Expo](https://expo.dev/) and [React Native Reusables](https://reactnativereusables.com).
 
-It was initialized using the following command:
+It was initialized using the following command, then the `Minimal (Uniwind)` template was selected when prompted:
 
 ```bash
-npx @react-native-reusables/cli@latest init -t admin
+npx @react-native-reusables/cli@latest init
 ```
 
 ## Getting Started
@@ -45,7 +45,7 @@ If you don't specify any component names, you'll be prompted to select which com
 ## Project Features
 
 - ⚛️ Built with [Expo Router](https://expo.dev/router)
-- 🎨 Styled with [Tailwind CSS](https://tailwindcss.com/) via [Nativewind](https://www.nativewind.dev/)
+- 🎨 Styled with [Tailwind CSS](https://tailwindcss.com/) via [Uniwind](https://uniwind.dev/)
 - 📦 UI powered by [React Native Reusables](https://github.com/founded-labs/react-native-reusables)
 - 🚀 New Architecture enabled
 - 🔥 Edge to Edge enabled
@@ -57,7 +57,7 @@ To dive deeper into the technologies used:
 
 - [React Native Docs](https://reactnative.dev/docs/getting-started)
 - [Expo Docs](https://docs.expo.dev/)
-- [Nativewind Docs](https://www.nativewind.dev/)
+- [Uniwind Docs](https://docs.uniwind.dev/)
 - [React Native Reusables](https://reactnativereusables.com)
 
 ## Deploy with EAS
