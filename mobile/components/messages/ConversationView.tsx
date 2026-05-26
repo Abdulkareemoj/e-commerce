@@ -2,7 +2,7 @@ import { useEffect, useState, useRef, useCallback } from 'react';
 import { Text } from '@/components/ui/text';
 import { ConversationHeader } from './ConversationHeader';
 import { MessageBubble } from './MessageBubble';
-import { MessageComposer } from './MessageComposer';
+import { MessageComposer, type PickedAsset } from './MessageComposer';
 import type { MessageItem } from './types';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/lib/authStore';
@@ -66,7 +66,7 @@ export function ConversationView({
     }
   }, [loading, messages.length]);
 
-  const handleSend = async (content: string) => {
+  const handleSend = async (content: string, _assets?: PickedAsset[]) => {
     if (sending) return;
     setSending(true);
     try {
@@ -87,7 +87,7 @@ export function ConversationView({
 
   if (loading) {
     return (
-      <SafeAreaView className="flex-1 bg-background">
+      <SafeAreaView className="bg-background flex-1">
         <ConversationHeader
           name={header?.name || 'Conversation'}
           subtitle="Loading..."
@@ -103,7 +103,7 @@ export function ConversationView({
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-background" edges={['top']}>
+    <SafeAreaView className="bg-background flex-1" edges={['top']}>
       <ConversationHeader
         name={header?.name || 'Conversation'}
         subtitle={header?.subtitle}
