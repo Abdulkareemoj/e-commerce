@@ -7,6 +7,8 @@ interface User {
   email: string;
   role: 'user' | 'vendor' | 'admin';
   image?: string | null;
+  vendorStatus?: 'pending' | 'approved' | 'rejected' | null;
+  onboardingComplete?: boolean;
 }
 
 interface AuthState {
@@ -18,6 +20,7 @@ interface AuthState {
   clearAuth: () => Promise<void>;
   initializeAuth: () => Promise<void>;
   refreshToken: () => Promise<string | null>;
+  updateUser: (updates: Partial<User>) => void;
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
@@ -33,6 +36,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       isAuthenticated: true,
       isLoading: false,
     });
+  },
+
+  // Patch user fields without a full re-auth (e.g. after onboarding completes)
+  updateUser: (updates) => {
+    const current = get().user;
+    if (!current) return;
+    set({ user: { ...current, ...updates } });
   },
 
   clearAuth: async () => {
@@ -70,7 +80,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       } else {
         set({ user: null, accessToken: null, isAuthenticated: false, isLoading: false });
       }
-    } catch (error) {
+    } catch {
       set({ user: null, accessToken: null, isAuthenticated: false, isLoading: false });
     }
   },

@@ -1,7 +1,7 @@
 import dotenv from "dotenv";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { emailOTP, oneTap, username } from "better-auth/plugins";
+import { username } from "better-auth/plugins";
 import { admin } from "better-auth/plugins/admin";
 import { expo } from "@better-auth/expo";
 
@@ -14,6 +14,7 @@ const from = process.env.BETTER_AUTH_EMAIL;
 
 export const auth = betterAuth({
   appName: "ecommerce",
+  baseURL: process.env.BETTER_AUTH_BASE_URL!,
   database: drizzleAdapter(db, {
     provider: "pg",
     schema,
@@ -27,8 +28,6 @@ export const auth = betterAuth({
     "mobile://",
     ...(process.env.NODE_ENV !== "production"
       ? [
-          "exp://",
-          "exp://**",
           "exp://*/*",
           "exp://10.0.0.*:*/*",
           "exp://192.168.*.*:*/*",
@@ -62,21 +61,18 @@ export const auth = betterAuth({
       displayUsernameNormalization: (display) => display.trim(),
     }),
     expo(),
-
-    oneTap(),
-    // emailOTP(),
   ],
   databaseHooks: {
     user: {
       create: {
-        after: async (user) => {
+        after: async ({ data }) => {
           try {
             await db.insert(profile).values({
-              id: user.id,
+              id: data.id,
               bio: "",
               location: "",
             });
-            console.log(`✅ Profile created for user ${user.id}`);
+            console.log(`✅ Profile created for user ${data.id}`);
           } catch (err) {
             console.error("❌ Failed to create profile:", err);
           }
@@ -104,11 +100,34 @@ export const auth = betterAuth({
   // },
   emailAndPassword: {
     enabled: true,
+    async sendResetPassword({ user, url }, request) {
+      console.log(`🔐 Password reset requested for ${user.email}: ${url}`);
+    },
   },
   account: {
     accountLinking: {
-      trustedProviders: ["google", "discord", "foreum"],
+      trustedProviders: ["google", "discord"],
     },
+  },
+  session: {
+    cookieCache: {
+      enabled: true,
+      maxAge: 300,
+    },
+  },
+  rateLimit: {
+    customRules: [
+      {
+        path: "/sign-in/email",
+        window: 60,
+        max: 5,
+      },
+      {
+        path: "/sign-up/email",
+        window: 60,
+        max: 3,
+      },
+    ],
   },
   socialProviders: {
     google: {

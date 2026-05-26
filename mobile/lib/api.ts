@@ -1,7 +1,20 @@
 import { useAuthStore } from './authStore';
+import Constants from 'expo-constants';
+import { Platform } from 'react-native';
 
-// NOTE: EXPO_PUBLIC_API_BASE_URL must be set in .env file for web/native builds
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || 'http://localhost:8000/api';
+function getDefaultApiBaseUrl() {
+  if (Platform.OS === 'web') {
+    return 'http://localhost:8000/api';
+  }
+
+  const hostUri = Constants.expoConfig?.hostUri;
+  const debuggerHost = (Constants as any).manifest?.debuggerHost as string | undefined;
+  const host = (hostUri || debuggerHost)?.split(':')[0];
+
+  return `http://${host || 'localhost'}:8000/api`;
+}
+
+const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || getDefaultApiBaseUrl();
 
 interface ApiRequestOptions extends RequestInit {
   auth?: boolean;
