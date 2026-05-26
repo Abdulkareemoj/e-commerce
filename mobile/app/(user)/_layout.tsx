@@ -1,12 +1,10 @@
 import { Drawer } from 'expo-router/drawer';
-import { DrawerContentScrollView, DrawerItem } from '@react-navigation/drawer';
-import { View, Text, TouchableOpacity } from 'react-native';
+import { Text } from '@/components/ui/text';
+import { View, TouchableOpacity, ScrollView, Pressable } from 'react-native';
 import { useRouter, usePathname } from 'expo-router';
 import {
   Store,
   Receipt,
-  Heart,
-  MapPin,
   Bell,
   Settings,
   Star,
@@ -18,11 +16,18 @@ import {
 import { Icon } from '@/components/ui/icon';
 import { Separator } from '@/components/ui/separator';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useAuthStore } from '@/lib/authStore';
+
+export {
+  // Catch any errors thrown by the Layout component.
+  ErrorBoundary,
+} from 'expo-router';
 
 // ─── Custom Drawer Content ────────────────────────────────────────────────────
-function CustomDrawerContent(props: any) {
+function CustomDrawerContent() {
   const router = useRouter();
   const pathname = usePathname();
+  const { user, isAuthenticated, clearAuth } = useAuthStore();
 
   const navItems = [
     { label: 'Catalog', icon: LayoutGrid, route: '/(user)/(tabs)/categories' },
@@ -30,99 +35,104 @@ function CustomDrawerContent(props: any) {
     { label: 'Messages', icon: MessageSquare, route: '/(user)/messages' },
     { label: 'Notifications', icon: Bell, route: '/(user)/notification' },
     { label: 'Settings', icon: Settings, route: '/(user)/settings' },
-  ] as const;
+  ];
+
+  const handleLogout = () => {
+    clearAuth();
+    router.replace('/(auth)/sign-in');
+  };
 
   return (
-    <DrawerContentScrollView
-      {...props}
-      scrollEnabled={false}
+    <ScrollView
+      contentContainerStyle={{ flex: 1, paddingBottom: 20 }}
       className="bg-zinc-950"
-      contentContainerStyle={{ flex: 1 }}>
+      showsVerticalScrollIndicator={false}>
       {/* ── Profile Header ── */}
-      <View className="px-5 pt-9 pb-5 border-zinc-900">
+      <View className="border-zinc-900 px-5 pt-9 pb-5">
         {/* Avatar */}
-        <View className="w-[60px] h-[60px] rounded-full bg-amber-400 items-center justify-center mb-3">
-          <Text className="text-zinc-950 text-[22px] font-bold">JD</Text>
+        <View className="mb-3 h-[60px] w-[60px] items-center justify-center rounded-full bg-amber-400">
+          {user ? (
+            <Text className="text-[22px] font-bold text-zinc-950">
+              {user.name?.charAt(0) ?? '?'}
+            </Text>
+          ) : (
+            <Text className="text-[22px] font-bold text-zinc-950">JD</Text>
+          )}
         </View>
 
-        <Text numberOfLines={1} className="text-white text-[17px] font-semibold tracking-tight">
-          Jane Doe
-        </Text>
-        <Text numberOfLines={1} className="text-zinc-500 text-[13px] mt-0.5">jane@example.com</Text>
+        {isAuthenticated && user ? (
+          <>
+            <Text numberOfLines={1} className="text-[17px] font-semibold tracking-tight text-white">
+              {user.name}
+            </Text>
+            <Text numberOfLines={1} className="mt-0.5 text-[13px] text-zinc-500">
+              {user.email}
+            </Text>
+          </>
+        ) : (
+          <>
+            <Text numberOfLines={1} className="text-[17px] font-semibold tracking-tight text-white">
+              Jane Doe
+            </Text>
+            <Text numberOfLines={1} className="mt-0.5 text-[13px] text-zinc-500">
+              jane@example.com
+            </Text>
+          </>
+        )}
 
         {/* Gold badge */}
-        <View className="mt-2.5 self-start flex-row items-center gap-1.5 bg-amber-400/10 px-2.5 py-1 rounded-full">
+        <View className="mt-2.5 flex-row items-center gap-1.5 self-start rounded-full bg-amber-400/10 px-2.5 py-1">
           <Icon as={Star} size={11} className="text-amber-400" />
-          <Text className="text-amber-400 text-[11px] font-semibold">Gold Member</Text>
+          <Text className="text-[11px] font-semibold text-amber-400">Gold Member</Text>
         </View>
       </View>
- <Separator className="my-4" />
+      <Separator className="my-4" />
       {/* ── Nav Items ── */}
-      <View className="flex-1 pt-2 px-2">
-        <DrawerItem
-          label="Shop"
-          icon={({ size }) => (
-            <Icon
-              as={Store}
-              size={size}
-              className={pathname === '/home' || pathname === '/' ? 'text-amber-400' : 'text-zinc-500'}
-            />
-          )}
+      <View className="flex-1 px-2 pt-2">
+        <Pressable
           onPress={() => router.push('/(user)/(tabs)/home')}
-          labelStyle={{
-            color: pathname === '/home' || pathname === '/' ? '#fbbf24' : '#d4d4d8',
-            fontWeight: pathname === '/home' || pathname === '/' ? '600' : '400',
-            fontSize: 14,
-            marginLeft: 8,
-          }}
-          style={{
-            borderRadius: 10,
-            backgroundColor: (pathname === '/home' || pathname === '/') ? 'rgba(251,191,36,0.08)' : 'transparent',
-            marginBottom: 2,
-          }}
-        />
+          className={`flex-row items-center gap-3 px-4 py-2 ${pathname === '/home' || pathname === '/' ? 'bg-amber-400/10' : ''} rounded`}>
+          <Icon
+            as={Store}
+            size={20}
+            className={
+              pathname === '/home' || pathname === '/' ? 'text-amber-400' : 'text-zinc-500'
+            }
+          />
+          <Text className="text-base font-medium">
+            {pathname === '/home' || pathname === '/' ? 'Shop' : 'Shop'}
+          </Text>
+        </Pressable>
 
         {navItems.map((item) => {
-          const isActive = pathname.startsWith(item.route.replace('/(user)', ''));
+          const isActive = pathname.startsWith(item.route);
           return (
-            <DrawerItem
+            <Pressable
               key={item.route}
-              label={item.label}
-              icon={({ size }) => (
-                <Icon
-                  as={item.icon}
-                  size={size}
-                  className={isActive ? 'text-amber-400' : 'text-zinc-500'}
-                />
-              )}
-              onPress={() => router.push(item.route )}
-              labelStyle={{
-                color: isActive ? '#fbbf24' : '#d4d4d8',
-                fontWeight: isActive ? '600' : '400',
-                fontSize: 14,
-                marginLeft: 12,
-              }}
-              style={{
-                borderRadius: 10,
-                backgroundColor: isActive ? 'rgba(251,191,36,0.08)' : 'transparent',
-                marginBottom: 2,
-              }}
-            />
+              onPress={() => router.push(item.route)}
+              className={`flex-row items-center gap-3 px-4 py-2 ${isActive ? 'bg-amber-400/10' : ''} rounded`}>
+              <Icon
+                as={item.icon}
+                size={20}
+                className={isActive ? 'text-amber-400' : 'text-zinc-500'}
+              />
+              <Text className="text-base font-medium">{item.label}</Text>
+            </Pressable>
           );
         })}
       </View>
 
       {/* ── Sign Out ── */}
-      <View className="px-5 pb-9 pt-4 border-t border-zinc-900">
+      <View className="border-t border-zinc-900 px-5 pt-4 pb-9">
         <TouchableOpacity
-          onPress={() => router.replace('/(auth)/sign-in')}
+          onPress={handleLogout}
           activeOpacity={0.7}
           className="flex-row items-center gap-2.5">
           <Icon as={LogOut} size={19} className="text-red-500" />
-          <Text className="text-red-400 text-sm font-medium">Sign Out</Text>
+          <Text className="text-sm font-medium text-red-400">Sign Out</Text>
         </TouchableOpacity>
       </View>
-    </DrawerContentScrollView>
+    </ScrollView>
   );
 }
 
@@ -134,14 +144,14 @@ function DrawerHeader({ title }: { title: string }) {
   return (
     <View
       style={{ paddingTop: insets.top }}
-      className="bg-zinc-950 border-b border-zinc-900 pb-3 flex-row items-center px-4">
+      className="flex-row items-center border-b border-zinc-900 bg-zinc-950 px-4 pb-3">
       <TouchableOpacity
         onPress={() => router.back()}
         activeOpacity={0.7}
-        className="w-10 h-10 rounded-xl bg-zinc-900 items-center justify-center mr-3">
+        className="mr-3 h-10 w-10 items-center justify-center rounded-xl bg-zinc-900">
         <Icon as={ArrowLeft} size={20} className="text-zinc-200" />
       </TouchableOpacity>
-      <Text numberOfLines={1} className="text-white text-lg font-bold tracking-tight">
+      <Text numberOfLines={1} className="text-lg font-bold tracking-tight text-white">
         {title}
       </Text>
     </View>
@@ -152,7 +162,7 @@ function DrawerHeader({ title }: { title: string }) {
 export default function UserLayout() {
   return (
     <Drawer
-      drawerContent={(props) => <CustomDrawerContent {...props} />}
+      drawerContent={CustomDrawerContent}
       screenOptions={{
         headerShown: true,
         header: ({ options }) => (
@@ -182,6 +192,7 @@ export default function UserLayout() {
           title: 'All Products',
         }}
       />
+
       <Drawer.Screen
         name="messages"
         options={{
@@ -190,6 +201,7 @@ export default function UserLayout() {
           title: 'Inbox',
         }}
       />
+
       <Drawer.Screen
         name="orders"
         options={{
@@ -198,6 +210,7 @@ export default function UserLayout() {
           title: 'Order History',
         }}
       />
+
       <Drawer.Screen
         name="notification"
         options={{
@@ -206,6 +219,7 @@ export default function UserLayout() {
           title: 'Alerts',
         }}
       />
+
       <Drawer.Screen
         name="settings"
         options={{
@@ -214,6 +228,7 @@ export default function UserLayout() {
           title: 'Preferences',
         }}
       />
+
       <Drawer.Screen
         name="search"
         options={{
@@ -222,6 +237,7 @@ export default function UserLayout() {
           title: 'Find Products',
         }}
       />
+
       <Drawer.Screen
         name="product/[id]"
         options={{
@@ -230,6 +246,7 @@ export default function UserLayout() {
           title: 'Details',
         }}
       />
+
       <Drawer.Screen
         name="cart"
         options={{

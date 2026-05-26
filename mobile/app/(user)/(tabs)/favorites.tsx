@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Text } from '@/components/ui/text';
 import { Icon } from '@/components/ui/icon';
@@ -6,24 +6,47 @@ import { Heart } from 'lucide-react-native';
 import { ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ProductCard } from '@/components/ProductCard';
-import { MOCK_PRODUCTS } from '@/app/(user)/(tabs)/home';
-
-const MOCK_FAVORITES = MOCK_PRODUCTS.concat(MOCK_PRODUCTS.slice(0, 1));
+import { useWishlist } from '@/hooks/useWishlist';
+import { Link } from 'expo-router';
+import { ArrowRight } from 'lucide-react-native';
 
 export default function FavoritesScreen() {
-  if (MOCK_FAVORITES.length === 0) {
+  const { items, isLoading, loadWishlist } = useWishlist();
+
+  useEffect(() => {
+    loadWishlist();
+  }, [loadWishlist]);
+
+  if (isLoading) {
     return (
       <SafeAreaView className="flex-1 items-center justify-center bg-background p-4">
-        <Icon as={Heart} size={48} className="mb-4 text-muted-foreground" />
-        <Text variant="h3" className="mb-2">
-          No Favorites Yet
-        </Text>
-        <Text className="mb-6 text-center text-muted-foreground">
-          Tap the heart icon on products you love to save them here.
-        </Text>
-        <Button>
-          <Text>Browse Products</Text>
-        </Button>
+        <Text className="text-muted-foreground">Loading wishlist...</Text>
+      </SafeAreaView>
+    );
+  }
+
+  if (items.length === 0) {
+    return (
+      <SafeAreaView className="flex-1 items-center justify-center bg-background p-4">
+        <View className="items-center gap-4">
+          <View className="size-20 items-center justify-center rounded-full bg-muted">
+            <Icon as={Heart} size={32} className="text-muted-foreground" />
+          </View>
+          <View className="items-center gap-2">
+            <Text variant="h3" className="font-bold tracking-tight">
+              No Favorites Yet
+            </Text>
+            <Text className="text-center text-muted-foreground">
+              Tap the heart icon on products you love to save them here.
+            </Text>
+          </View>
+          <Link href="/(user)/catalog" asChild>
+            <Button className="mt-2">
+              <Text className="font-semibold">Browse Products</Text>
+              <Icon as={ArrowRight} size={18} />
+            </Button>
+          </Link>
+        </View>
       </SafeAreaView>
     );
   }
@@ -32,9 +55,9 @@ export default function FavoritesScreen() {
     <SafeAreaView className="flex-1 bg-background">
       <ScrollView contentContainerClassName="p-4">
         <View className="flex-row flex-wrap justify-between gap-y-4">
-          {MOCK_FAVORITES.map((product, index) => (
-            <View key={index} className="w-[48%] sm:w-[32%] lg:w-[23%]">
-              <ProductCard product={product} />
+          {items.map((item) => (
+            <View key={item.id} className="w-[48%] sm:w-[32%] lg:w-[23%]">
+              <ProductCard product={item.product} />
             </View>
           ))}
         </View>

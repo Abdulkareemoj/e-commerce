@@ -49,7 +49,9 @@ function OrderCard({ order }: { order: any }) {
               <Text variant="h3" className="font-bold text-primary">
                 {formatCurrency(Math.round(parseFloat(order.totalAmount || 0) * 100), 'USD')}
               </Text>
-              <Text className="text-sm text-muted-foreground">Items</Text>
+              <Text className="text-sm text-muted-foreground">
+                {order.trackingNumber ? `Tracking: ${order.trackingNumber}` : ''}
+              </Text>
             </View>
             <Icon as={ChevronRight} size={24} className="text-muted-foreground" />
           </View>
@@ -88,7 +90,7 @@ export default function OrdersScreen() {
 
   if (isLoading || fetching) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+      <View className="flex-1 items-center justify-center">
         <Text>Loading Orders...</Text>
       </View>
     );
@@ -97,11 +99,9 @@ export default function OrdersScreen() {
   // Require authentication and user role
   if (!isAuthenticated || !user || user.role !== 'user') {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24 }}>
-        <Text>You must be signed in as a user to view orders.</Text>
-           <Button variant="default"> <Link href="/(auth)/sign-in">
-      Sign In
-        </Link></Button>
+      <View className="flex-1 items-center justify-center p-6">
+        <Text className="mb-4 text-center">You must be signed in as a user to view orders.</Text>
+           <Link href="/(auth)/sign-in" asChild><Button variant="default"><Text>Sign In</Text></Button></Link>
       </View>
     );
   }

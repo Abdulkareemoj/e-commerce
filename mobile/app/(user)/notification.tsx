@@ -15,7 +15,7 @@ export default function NotificationsScreen() {
 
   if (isLoading) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+      <View className="flex-1 items-center justify-center">
         <Text>Loading...</Text>
       </View>
     );
@@ -23,11 +23,9 @@ export default function NotificationsScreen() {
 
   if (!isAuthenticated || !user || user.role !== 'user') {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24 }}>
+      <View className="flex-1 items-center justify-center p-6">
         <Text className="text-center mb-4">You must be signed in to view notifications.</Text>
-        <Button variant="default">
-          <Link href="/(auth)/sign-in">Sign In</Link>
-        </Button>
+        <Link href="/(auth)/sign-in" asChild><Button variant="default"><Text>Sign In</Text></Button></Link>
       </View>
     );
   }

@@ -3,12 +3,13 @@ import { Text } from '@/components/ui/text';
 import { Icon } from '@/components/ui/icon';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
-import { useColorScheme } from 'nativewind';
+import { Uniwind, useUniwind } from 'uniwind';
 import { Moon, Sun, Lock, Globe, ChevronRight } from 'lucide-react-native';
 import * as React from 'react';
 import { ScrollView, View, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Link } from 'expo-router';
+import { useAuthStore } from '@/lib/authStore';
 
 // --- Components ---
 
@@ -23,8 +24,8 @@ function SettingItem({
   icon: React.ComponentProps<typeof Icon>['as'];
   action: 'link' | 'switch' | 'button';
 }) {
-  const { colorScheme, setColorScheme } = useColorScheme();
-  const isDarkMode = colorScheme === 'dark';
+  const { theme } = useUniwind();
+  const isDarkMode = theme === 'dark';
 
   const renderAction = () => {
     switch (action) {
@@ -32,7 +33,7 @@ function SettingItem({
         return (
           <Switch
             checked={isDarkMode}
-            onCheckedChange={() => setColorScheme(isDarkMode ? 'light' : 'dark')}
+            onCheckedChange={() => Uniwind.setTheme(isDarkMode ? 'light' : 'dark')}
           />
         );
       case 'link':
@@ -66,6 +67,8 @@ function SettingItem({
 }
 
 export default function SettingsScreen() {
+  const { user } = useAuthStore();
+
   return (
     <SafeAreaView className="flex-1 bg-background">
       <View className="border-b border-border p-4">
@@ -74,6 +77,21 @@ export default function SettingsScreen() {
         </Text>
       </View>
       <ScrollView contentContainerClassName="p-4 gap-6">
+        {/* Profile Summary */}
+        {user && (
+          <View className="flex-row items-center gap-4 rounded-xl bg-muted/30 p-4">
+            <View className="size-12 items-center justify-center rounded-full bg-primary/20">
+              <Text className="text-xl font-bold text-primary">
+                {user.name?.[0]?.toUpperCase() || 'U'}
+              </Text>
+            </View>
+            <View className="flex-1">
+              <Text className="text-lg font-bold">{user.name}</Text>
+              <Text className="text-sm text-muted-foreground">{user.email}</Text>
+            </View>
+          </View>
+        )}
+
         {/* Appearance */}
         <View className="gap-2">
           <Text variant="large" className="font-semibold text-muted-foreground">
@@ -116,10 +134,10 @@ export default function SettingsScreen() {
           <Text variant="large" className="font-semibold text-muted-foreground">
             Legal & Info
           </Text>
-          <Link href="/(app)/settings/privacy" asChild>
+          <Link href="/(user)/settings/privacy" asChild>
             <SettingItem title="Privacy Policy" icon={Lock} action="link" />
           </Link>
-          <Link href="/(app)/settings/terms" asChild>
+          <Link href="/(user)/settings/terms" asChild>
             <SettingItem title="Terms of Service" icon={Lock} action="link" />
           </Link>
           <Text className="mt-4 text-center text-xs text-muted-foreground">App Version 1.0.0</Text>

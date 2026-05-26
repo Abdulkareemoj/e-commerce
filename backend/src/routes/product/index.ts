@@ -2,12 +2,11 @@ import { Hono } from "hono";
 import { db } from "@/db";
 import { product } from "@/db/schema/product-schema";
 import { category } from "@/db/schema/category-schema";
-import { eq, desc, and } from "drizzle-orm";
+import { review } from "@/db/schema/review-schema";
+import { eq, desc, and, sql } from "drizzle-orm";
 
 const productPublicRoutes = new Hono();
 
-// GET /api/products
-// Fetch all public products, with optional ?categoryId= & ?search= filtering
 productPublicRoutes.get("/", async (c) => {
   try {
     const categoryId = c.req.query("categoryId");
@@ -31,6 +30,9 @@ productPublicRoutes.get("/", async (c) => {
             id: true,
             storeName: true,
           }
+        },
+        variants: {
+          orderBy: (v, { asc }) => [asc(v.sortOrder)],
         }
       }
     });
@@ -42,8 +44,6 @@ productPublicRoutes.get("/", async (c) => {
   }
 });
 
-// GET /api/products/categories
-// Fetch all categories
 productPublicRoutes.get("/categories", async (c) => {
   try {
     const categories = await db.select().from(category).orderBy(category.name);
@@ -54,8 +54,6 @@ productPublicRoutes.get("/categories", async (c) => {
   }
 });
 
-// GET /api/products/:id
-// Fetch single product by ID
 productPublicRoutes.get("/:id", async (c) => {
   const id = c.req.param("id");
   try {
@@ -67,6 +65,9 @@ productPublicRoutes.get("/:id", async (c) => {
             id: true,
             storeName: true,
           }
+        },
+        variants: {
+          orderBy: (v, { asc }) => [asc(v.sortOrder)],
         }
       }
     });
@@ -74,10 +75,46 @@ productPublicRoutes.get("/:id", async (c) => {
     if (!prod) {
       return c.json({ error: "Product not found" }, 404);
     }
-    return c.json({ product: prod });
+
+    const avgResult = await db
+      .select({ avg: sql<number>`ROUND(AVG(${review.rating})::numeric, 1)` })
+      .from(review)
+      .where(eq(review.productId, id));
+
+    const avgRating = avgResult[0]?.avg ?? null;
+
+    return c.json({ product: { ...prod, avgRating, rating: avgRating } });
   } catch (error) {
     console.error(`Error fetching product ${id}:`, error);
     return c.json({ error: "Failed to fetch product" }, 500);
+  }
+});
+
+productPublicRoutes.get("/:id/reviews", async (c) => {
+  const id = c.req.param("id");
+  try {
+    const reviews = await db.query.review.findMany({
+      where: eq(review.productId, id),
+      orderBy: [desc(review.createdAt)],
+      with: {
+        user: {
+          columns: { id: true, name: true, image: true },
+        },
+      },
+    });
+
+    const avgResult = await db
+      .select({ avg: sql<number>`ROUND(AVG(${review.rating})::numeric, 1)` })
+      .from(review)
+      .where(eq(review.productId, id));
+
+    const avgRating = avgResult[0]?.avg ?? null;
+    const totalReviews = reviews.length;
+
+    return c.json({ reviews, avgRating, totalReviews });
+  } catch (error) {
+    console.error(`Error fetching reviews for product ${id}:`, error);
+    return c.json({ error: "Failed to fetch reviews" }, 500);
   }
 });
 

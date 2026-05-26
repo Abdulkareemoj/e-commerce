@@ -1,8 +1,9 @@
 import { useRouter, Tabs, usePathname } from 'expo-router';
-import { View, Text, TouchableOpacity, Animated, Pressable } from 'react-native';
+import { Text } from '@/components/ui/text';
+import { View, TouchableOpacity, Animated, Pressable } from 'react-native';
 import { Menu, ShoppingBag, Home, Heart, Search, User, ListCollapse } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useNavigation, DrawerActions } from '@react-navigation/native';
+import { useNavigation, DrawerActions } from 'expo-router/react-navigation';
 import { Icon } from '@/components/ui/icon';
 import { useRef, useEffect } from 'react';
 
@@ -124,10 +125,10 @@ function AnimatedTabItem({
       onPress={onPress}
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
-      style={{ flex: 1, alignItems: 'center' }}>
+      className="flex-1 items-center">
       <Animated.View style={{ alignItems: 'center', gap: 4, transform: [{ scale }] }}>
         {/* Icon + pill */}
-        <View style={{ width: 44, height: 28, alignItems: 'center', justifyContent: 'center' }}>
+        <View className="w-11 h-7 items-center justify-center">
           {/* Animated pill background */}
           <Animated.View
             style={{
@@ -175,15 +176,9 @@ function CustomTabBar() {
   return (
     <View
       style={{
-        backgroundColor: '#09090b',
-        borderTopWidth: 1,
-        borderTopColor: '#18181b',
         paddingBottom: insets.bottom + 8,
-        paddingTop: 10,
-        paddingHorizontal: 8,
-        flexDirection: 'row',
-        alignItems: 'center',
-      }}>
+      }}
+      className="bg-zinc-950 border-t border-zinc-900 pt-2.5 px-2 flex-row items-center">
       {TAB_ITEMS.map((item) => (
         <AnimatedTabItem
           key={item.name}

@@ -5,13 +5,15 @@ import { Switch } from '@/components/ui/switch';
 import { Text } from '@/components/ui/text';
 import { router } from 'expo-router';
 import { MoonStarIcon, SunIcon, LogOut } from 'lucide-react-native';
-import { useColorScheme } from 'nativewind';
+import { Uniwind, useUniwind } from 'uniwind';
 import React from 'react';
 import { ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function SettingsScreen() {
-  const { colorScheme, toggleColorScheme } = useColorScheme();
+  const { theme } = useUniwind();
+  const isDark = theme === 'dark';
+  const toggleColorScheme = () => Uniwind.setTheme(isDark ? 'light' : 'dark');
 
   const handleSignOut = () => {
     // TODO: Implement actual sign out logic here later (e.g., using better-auth)
@@ -32,10 +34,10 @@ export default function SettingsScreen() {
           <CardContent className="gap-4">
             <View className="flex-row items-center justify-between">
               <View className="flex-row items-center gap-3">
-                <Icon as={colorScheme === 'dark' ? MoonStarIcon : SunIcon} size={20} />
+                <Icon as={isDark ? MoonStarIcon : SunIcon} size={20} />
                 <Text>Dark Mode</Text>
               </View>
-              <Switch checked={colorScheme === 'dark'} onCheckedChange={toggleColorScheme} />
+              <Switch checked={isDark} onCheckedChange={toggleColorScheme} />
             </View>
           </CardContent>
         </Card>
