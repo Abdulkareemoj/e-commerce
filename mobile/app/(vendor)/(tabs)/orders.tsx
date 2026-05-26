@@ -3,7 +3,7 @@ import { Text } from '@/components/ui/text';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { View, ScrollView, Pressable } from 'react-native';
+import { View, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { api } from '@/lib/api';
 import { formatCurrency } from '@/lib/money';
@@ -115,13 +115,13 @@ export default function VendorOrdersScreen() {
   return (
     <SafeAreaView className="flex-1 bg-background">
       <ScrollView contentContainerClassName="p-4 gap-4">
-        <Text variant="h2" className="font-bold">Manage Orders</Text>
+        <Text variant="h2" className="font-bold">
+          Manage Orders
+        </Text>
         {orders.length === 0 ? (
-          <Text className="text-center text-muted-foreground mt-10">No orders yet.</Text>
+          <Text className="mt-10 text-center text-muted-foreground">No orders yet.</Text>
         ) : (
-          orders.map((order) => (
-            <OrderCard key={order.id} order={order} onUpdate={fetchOrders} />
-          ))
+          orders.map((order) => <OrderCard key={order.id} order={order} onUpdate={fetchOrders} />)
         )}
       </ScrollView>
     </SafeAreaView>

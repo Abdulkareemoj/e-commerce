@@ -3,7 +3,7 @@ import { Icon } from '@/components/ui/icon';
 import { Text } from '@/components/ui/text';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { View, ScrollView, RefreshControl, Pressable } from 'react-native';
+import { View, ScrollView, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { api } from '@/lib/api';
 import { formatCurrency } from '@/lib/money';
@@ -115,7 +115,7 @@ export default function DashboardScreen() {
           <Text variant="large" className="font-semibold">
             Recent Orders
           </Text>
-          {(!stats?.recentOrders || stats.recentOrders.length === 0) ? (
+          {!stats?.recentOrders || stats.recentOrders.length === 0 ? (
             <Card className="p-4">
               <Text className="text-sm text-muted-foreground">No orders yet.</Text>
             </Card>
@@ -124,9 +124,7 @@ export default function DashboardScreen() {
               <Card key={order.id} className="p-4">
                 <View className="flex-row items-center justify-between">
                   <View className="gap-1">
-                    <Text className="text-sm font-medium">
-                      Order #{order.id.slice(0, 8)}
-                    </Text>
+                    <Text className="text-sm font-medium">Order #{order.id.slice(0, 8)}</Text>
                     <Text className="text-xs text-muted-foreground">
                       {new Date(order.createdAt).toLocaleDateString()} -{' '}
                       {formatCurrency(Math.round(parseFloat(order.totalAmount || '0') * 100))}

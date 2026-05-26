@@ -1,7 +1,14 @@
 import React from 'react';
 import { Icon } from '@/components/ui/icon';
 import { Tabs } from 'expo-router';
-import { LayoutGrid, Package, ShoppingCart, MessageSquare, BarChart3, AlertTriangle } from 'lucide-react-native';
+import {
+  LayoutGrid,
+  Package,
+  ShoppingCart,
+  MessageSquare,
+  BarChart3,
+  AlertTriangle,
+} from 'lucide-react-native';
 
 import { Platform } from 'react-native';
 
@@ -20,7 +27,7 @@ export default function TabsLayout() {
   return (
     <Tabs
       screenOptions={{
-        headerShown: false, // Headers handled by the parent Drawer/Stack
+        headerShown: false,
         tabBarActiveTintColor: 'hsl(var(--primary))',
         tabBarInactiveTintColor: 'hsl(var(--muted-foreground))',
         tabBarStyle: {
@@ -32,8 +39,6 @@ export default function TabsLayout() {
               boxShadow: '0px -1px 4px rgba(0, 0, 0, 0.05)',
             },
             native: {
-              // Increase the bar height slightly and add bottom padding so icons
-              // sit higher above the pill. Keep shadows/elevation removed.
               height: 72,
               paddingBottom: 14,
               paddingTop: 6,
@@ -62,7 +67,7 @@ export default function TabsLayout() {
         tabBarLabelStyle: {
           fontSize: 12,
           fontWeight: '600',
-          // Pull labels closer to the icons on native platforms
+
           marginTop: Platform.select({ native: -6, web: 0 }),
           marginBottom: Platform.select({ native: 8, web: 0 }),
         },
@@ -103,7 +108,6 @@ export default function TabsLayout() {
           tabBarIcon: ({ focused }) => <TabBarIcon name={MessageSquare} focused={focused} />,
         }}
       />
-    
     </Tabs>
   );
 }
