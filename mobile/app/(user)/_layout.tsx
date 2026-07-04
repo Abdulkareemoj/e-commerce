@@ -1,36 +1,49 @@
 import { Drawer } from 'expo-router/drawer';
+import { Stack } from 'expo-router';
 import { Text } from '@/components/ui/text';
-import { View, TouchableOpacity, ScrollView, Pressable } from 'react-native';
+import {
+  View,
+  TouchableOpacity,
+  ScrollView,
+  Pressable,
+  useWindowDimensions,
+  Platform,
+} from 'react-native';
 import { useRouter, usePathname } from 'expo-router';
 import {
   Store,
   Receipt,
   Bell,
   Settings,
-  Star,
   LogOut,
   MessageSquare,
   LayoutGrid,
   ArrowLeft,
+  Home,
+  Heart,
+  User,
+  ShoppingBag,
 } from 'lucide-react-native';
 import { Icon } from '@/components/ui/icon';
 import { Separator } from '@/components/ui/separator';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuthStore } from '@/lib/authStore';
+import { AppSidebar } from '@/components/layout/AppSidebar';
 
 export {
   // Catch any errors thrown by the Layout component.
   ErrorBoundary,
 } from 'expo-router';
 
-// ─── Custom Drawer Content ────────────────────────────────────────────────────
 function CustomDrawerContent() {
   const router = useRouter();
   const pathname = usePathname();
   const { user, isAuthenticated, clearAuth } = useAuthStore();
 
   const navItems = [
+    { label: 'Shop', icon: Home, route: '/(user)/(tabs)/home' },
     { label: 'Catalog', icon: LayoutGrid, route: '/(user)/(tabs)/categories' },
+    { label: 'Favorites', icon: Heart, route: '/(user)/(tabs)/favorites' },
     { label: 'My Orders', icon: Receipt, route: '/(user)/orders' },
     { label: 'Messages', icon: MessageSquare, route: '/(user)/messages' },
     { label: 'Notifications', icon: Bell, route: '/(user)/notification' },
@@ -45,98 +58,77 @@ function CustomDrawerContent() {
   return (
     <ScrollView
       contentContainerStyle={{ flex: 1, paddingBottom: 20 }}
-      className="bg-zinc-950"
+      className="bg-card"
       showsVerticalScrollIndicator={false}>
-      {/* ── Profile Header ── */}
-      <View className="border-zinc-900 px-5 pt-9 pb-5">
-        {/* Avatar */}
-        <View className="mb-3 h-[60px] w-[60px] items-center justify-center rounded-full bg-amber-400">
+      <View className="border-border border-b px-5 pt-12 pb-5">
+        <View className="bg-primary mb-3 size-14 items-center justify-center rounded-full">
           {user ? (
-            <Text className="text-[22px] font-bold text-zinc-950">
-              {user.name?.charAt(0) ?? '?'}
+            <Text className="text-primary-foreground text-xl font-bold">
+              {user.name?.charAt(0).toUpperCase() ?? '?'}
             </Text>
           ) : (
-            <Text className="text-[22px] font-bold text-zinc-950">JD</Text>
+            <Text className="text-primary-foreground text-xl font-bold">G</Text>
           )}
         </View>
 
         {isAuthenticated && user ? (
           <>
-            <Text numberOfLines={1} className="text-[17px] font-semibold tracking-tight text-white">
+            <Text numberOfLines={1} className="text-foreground text-lg font-bold">
               {user.name}
             </Text>
-            <Text numberOfLines={1} className="mt-0.5 text-[13px] text-zinc-500">
+            <Text numberOfLines={1} className="text-muted-foreground mt-0.5 text-sm">
               {user.email}
             </Text>
           </>
         ) : (
-          <>
-            <Text numberOfLines={1} className="text-[17px] font-semibold tracking-tight text-white">
-              Jane Doe
+          <Pressable onPress={() => router.push('/(auth)/sign-in')}>
+            <Text numberOfLines={1} className="text-foreground text-lg font-bold">
+              Sign In
             </Text>
-            <Text numberOfLines={1} className="mt-0.5 text-[13px] text-zinc-500">
-              jane@example.com
+            <Text numberOfLines={1} className="text-muted-foreground mt-0.5 text-sm">
+              Tap to access your account
             </Text>
-          </>
+          </Pressable>
         )}
-
-        {/* Gold badge */}
-        <View className="mt-2.5 flex-row items-center gap-1.5 self-start rounded-full bg-amber-400/10 px-2.5 py-1">
-          <Icon as={Star} size={11} className="text-amber-400" />
-          <Text className="text-[11px] font-semibold text-amber-400">Gold Member</Text>
-        </View>
       </View>
-      <Separator className="my-4" />
-      {/* ── Nav Items ── */}
-      <View className="flex-1 px-2 pt-2">
-        <Pressable
-          onPress={() => router.push('/(user)/(tabs)/home')}
-          className={`flex-row items-center gap-3 px-4 py-2 ${pathname === '/home' || pathname === '/' ? 'bg-amber-400/10' : ''} rounded`}>
-          <Icon
-            as={Store}
-            size={20}
-            className={
-              pathname === '/home' || pathname === '/' ? 'text-amber-400' : 'text-zinc-500'
-            }
-          />
-          <Text className="text-base font-medium">
-            {pathname === '/home' || pathname === '/' ? 'Shop' : 'Shop'}
-          </Text>
-        </Pressable>
 
+      <View className="flex-1 px-3 pt-3">
         {navItems.map((item) => {
-          const isActive = pathname.startsWith(item.route);
+          const isActive = pathname.includes(item.route.split('/').pop() || '');
           return (
             <Pressable
               key={item.route}
               onPress={() => router.push(item.route)}
-              className={`flex-row items-center gap-3 px-4 py-2 ${isActive ? 'bg-amber-400/10' : ''} rounded`}>
+              className={`mb-1 flex-row items-center gap-3 rounded-xl px-3 py-2.5 ${
+                isActive ? 'bg-primary/10' : 'active:bg-secondary/50'
+              }`}>
               <Icon
                 as={item.icon}
-                size={20}
-                className={isActive ? 'text-amber-400' : 'text-zinc-500'}
+                size={18}
+                className={isActive ? 'text-primary' : 'text-muted-foreground'}
               />
-              <Text className="text-base font-medium">{item.label}</Text>
+              <Text
+                className={`text-sm font-medium ${isActive ? 'text-primary' : 'text-foreground'}`}>
+                {item.label}
+              </Text>
             </Pressable>
           );
         })}
       </View>
 
-      {/* ── Sign Out ── */}
-      <View className="border-t border-zinc-900 px-5 pt-4 pb-9">
+      <View className="border-border border-t px-5 pt-4 pb-6">
         <TouchableOpacity
           onPress={handleLogout}
           activeOpacity={0.7}
-          className="flex-row items-center gap-2.5">
-          <Icon as={LogOut} size={19} className="text-red-500" />
-          <Text className="text-sm font-medium text-red-400">Sign Out</Text>
+          className="active:bg-destructive/5 flex-row items-center gap-2.5 rounded-xl p-2">
+          <Icon as={LogOut} size={18} className="text-destructive" />
+          <Text className="text-destructive text-sm font-medium">Sign Out</Text>
         </TouchableOpacity>
       </View>
     </ScrollView>
   );
 }
 
-// ─── Drawer Header Component ──────────────────────────────────────────────
 function DrawerHeader({ title }: { title: string }) {
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -144,22 +136,21 @@ function DrawerHeader({ title }: { title: string }) {
   return (
     <View
       style={{ paddingTop: insets.top }}
-      className="flex-row items-center border-b border-zinc-900 bg-zinc-950 px-4 pb-3">
+      className="border-border bg-card flex-row items-center border-b px-5 pb-3">
       <TouchableOpacity
         onPress={() => router.back()}
         activeOpacity={0.7}
-        className="mr-3 h-10 w-10 items-center justify-center rounded-xl bg-zinc-900">
-        <Icon as={ArrowLeft} size={20} className="text-zinc-200" />
+        className="bg-secondary mr-3 size-10 items-center justify-center rounded-xl">
+        <Icon as={ArrowLeft} size={18} className="text-foreground" />
       </TouchableOpacity>
-      <Text numberOfLines={1} className="text-lg font-bold tracking-tight text-white">
+      <Text numberOfLines={1} className="text-foreground text-lg font-bold">
         {title}
       </Text>
     </View>
   );
 }
 
-// ─── Root Drawer Layout ───────────────────────────────────────────────────────
-export default function UserLayout() {
+function MobileLayout() {
   return (
     <Drawer
       drawerContent={CustomDrawerContent}
@@ -168,13 +159,12 @@ export default function UserLayout() {
         header: ({ options }) => (
           <DrawerHeader title={(options.title || options.drawerLabel || 'Untitled') as string} />
         ),
-        drawerStyle: { backgroundColor: '#09090b', width: 285 },
+        drawerStyle: { backgroundColor: 'hsl(0 0% 100%)', width: 280 },
         drawerType: 'slide',
-        overlayColor: 'rgba(0,0,0,0.55)',
+        overlayColor: 'rgba(0,0,0,0.4)',
         swipeEdgeWidth: 50,
-        sceneStyle: { backgroundColor: '#09090b' },
+        sceneStyle: { backgroundColor: 'hsl(240 5% 96%)' },
       }}>
-      {/* Tabs are the main shell - No header here as Tabs has its own */}
       <Drawer.Screen
         name="(tabs)"
         options={{
@@ -257,4 +247,41 @@ export default function UserLayout() {
       />
     </Drawer>
   );
+}
+
+function WebLayout() {
+  return (
+    <Stack
+      screenOptions={{
+        headerShown: false,
+      }}>
+      <Stack.Screen name="(tabs)" />
+      <Stack.Screen name="catalog" />
+      <Stack.Screen name="messages" />
+      <Stack.Screen name="orders" />
+      <Stack.Screen name="notification" />
+      <Stack.Screen name="settings" />
+      <Stack.Screen name="search" />
+      <Stack.Screen name="product/[id]" />
+      <Stack.Screen name="cart" />
+    </Stack>
+  );
+}
+
+export default function UserLayout() {
+  const { width } = useWindowDimensions();
+  const isWeb = width >= 1024;
+
+  if (isWeb) {
+    return (
+      <View className="bg-background flex-1 flex-row">
+        <AppSidebar role="user" />
+        <View className="flex-1">
+          <WebLayout />
+        </View>
+      </View>
+    );
+  }
+
+  return <MobileLayout />;
 }

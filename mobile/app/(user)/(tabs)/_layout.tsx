@@ -1,173 +1,85 @@
 import { useRouter, Tabs, usePathname } from 'expo-router';
 import { Text } from '@/components/ui/text';
-import { View, TouchableOpacity, Animated, Pressable } from 'react-native';
-import { Menu, ShoppingBag, Home, Heart, Search, User, ListCollapse } from 'lucide-react-native';
+import { View, TouchableOpacity, Pressable, useWindowDimensions } from 'react-native';
+import { Menu, ShoppingBag, Home, Heart, Search, User, LayoutGrid } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, DrawerActions } from 'expo-router/react-navigation';
 import { Icon } from '@/components/ui/icon';
-import { useRef, useEffect } from 'react';
+import { useCart } from '@/hooks/useCart';
 
-// ─── Custom Header ────────────────────────────────────────────────────
-function TabHeader({ title }: { title: string }) {
+function TabHeader() {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { totalItems } = useCart();
+
   return (
     <View
-      style={{ paddingTop: insets.top + 2 }}
-      className="relative pb-3.5 px-5 bg-zinc-950 border-b border-zinc-900 flex-row items-center justify-between">
-      <View
-        className="absolute left-0 right-0 items-center justify-center"
-        style={{ top: insets.top + 2, bottom: 14 }}
-        pointerEvents="none">
-        <Text className="text-white text-[17px] font-bold tracking-tight">
-          {title}
-        </Text>
-      </View>
-
+      style={{ paddingTop: insets.top + 4 }}
+      className="bg-card flex-row items-center justify-between px-5 pb-3">
       <TouchableOpacity
         onPress={() => navigation.dispatch(DrawerActions.toggleDrawer())}
         activeOpacity={0.7}
-        className="w-10 h-10 rounded-xl bg-zinc-900 items-center justify-center">
-        <Icon as={Menu} size={20} className="text-zinc-200" />
+        className="bg-secondary size-10 items-center justify-center rounded-xl">
+        <Icon as={Menu} size={20} className="text-foreground" />
       </TouchableOpacity>
 
-      <View className="flex flex-row gap-2">
+      <Text className="text-foreground text-lg font-bold">Shop</Text>
+
+      <View className="flex-row gap-2">
         <TouchableOpacity
           activeOpacity={0.7}
-          onPress={() => router.push('/cart')}
-          className="w-10 h-10 rounded-xl bg-zinc-900 items-center justify-center">
-          <View>
-            <Icon as={ShoppingBag} size={20} className="text-zinc-200" />
-            <View className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-amber-400 items-center justify-center">
-              <Text className="text-zinc-950 text-[9px] font-bold">3</Text>
-            </View>
-          </View>
+          onPress={() => router.push('/search')}
+          className="bg-secondary size-10 items-center justify-center rounded-xl">
+          <Icon as={Search} size={20} className="text-foreground" />
         </TouchableOpacity>
 
         <TouchableOpacity
           activeOpacity={0.7}
-          onPress={() => router.push('/search')}
-          className="w-10 h-10 rounded-xl bg-zinc-900 items-center justify-center">
-          <Icon as={Search} size={20} className="text-zinc-200" />
+          onPress={() => router.push('/cart')}
+          className="bg-secondary size-10 items-center justify-center rounded-xl">
+          <View>
+            <Icon as={ShoppingBag} size={20} className="text-foreground" />
+            {totalItems > 0 && (
+              <View className="bg-primary absolute -top-1.5 -right-1.5 size-4 items-center justify-center rounded-full">
+                <Text className="text-primary-foreground text-[9px] font-bold">
+                  {totalItems > 99 ? '99+' : totalItems}
+                </Text>
+              </View>
+            )}
+          </View>
         </TouchableOpacity>
       </View>
     </View>
   );
 }
 
-// ─── Animated Tab Item ────────────────────────────────────────────────
 const TAB_ITEMS = [
   { name: 'home', icon: Home, label: 'Home' },
-  { name: 'categories', icon: ListCollapse, label: 'Categories' },
+  { name: 'categories', icon: LayoutGrid, label: 'Categories' },
   { name: 'favorites', icon: Heart, label: 'Favorites' },
   { name: 'profile', icon: User, label: 'Profile' },
 ] as const;
 
-function AnimatedTabItem({
-  item,
+function TabBarIcon({
+  name,
   focused,
-  onPress,
 }: {
-  item: (typeof TAB_ITEMS)[number];
+  name: (typeof TAB_ITEMS)[number]['icon'];
   focused: boolean;
-  onPress: () => void;
 }) {
-  const scale = useRef(new Animated.Value(1)).current;
-  const pillOpacity = useRef(new Animated.Value(focused ? 1 : 0)).current;
-  const pillScale = useRef(new Animated.Value(focused ? 1 : 0.7)).current;
-  const labelOpacity = useRef(new Animated.Value(focused ? 1 : 0.5)).current;
-
-  useEffect(() => {
-    Animated.parallel([
-      Animated.spring(pillOpacity, {
-        toValue: focused ? 1 : 0,
-        useNativeDriver: true,
-        tension: 80,
-        friction: 10,
-      }),
-      Animated.spring(pillScale, {
-        toValue: focused ? 1 : 0.7,
-        useNativeDriver: true,
-        tension: 80,
-        friction: 10,
-      }),
-      Animated.timing(labelOpacity, {
-        toValue: focused ? 1 : 0.45,
-        duration: 180,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  }, [focused]);
-
-  const handlePressIn = () => {
-    Animated.spring(scale, {
-      toValue: 0.88,
-      useNativeDriver: true,
-      tension: 200,
-      friction: 10,
-    }).start();
-  };
-
-  const handlePressOut = () => {
-    Animated.spring(scale, {
-      toValue: 1,
-      useNativeDriver: true,
-      tension: 200,
-      friction: 10,
-    }).start();
-  };
-
-  const iconColor = focused ? '#fbbf24' : '#71717a'; // amber-400 : zinc-500
-
   return (
-    <Pressable
-      onPress={onPress}
-      onPressIn={handlePressIn}
-      onPressOut={handlePressOut}
-      className="flex-1 items-center">
-      <Animated.View style={{ alignItems: 'center', gap: 4, transform: [{ scale }] }}>
-        {/* Icon + pill */}
-        <View className="w-11 h-7 items-center justify-center">
-          {/* Animated pill background */}
-          <Animated.View
-            style={{
-              position: 'absolute',
-              width: 44,
-              height: 28,
-              borderRadius: 14,
-              backgroundColor: 'rgba(251,191,36,0.15)',
-              opacity: pillOpacity,
-              transform: [{ scaleX: pillScale }],
-            }}
-          />
-          <Icon as={item.icon} size={20} color={iconColor} />
-        </View>
-
-        {/* Label */}
-        <Animated.Text
-          style={{
-            opacity: labelOpacity,
-            fontSize: 12,
-            fontWeight: focused ? '600' : '400',
-            color: focused ? '#fbbf24' : '#71717a',
-            letterSpacing: -0.2,
-          }}>
-          {item.label}
-        </Animated.Text>
-      </Animated.View>
-    </Pressable>
+    <Icon as={name} size={22} className={focused ? 'text-primary' : 'text-muted-foreground'} />
   );
 }
 
-// ─── Custom Tab Bar ───────────────────────────────────────────────────
 function CustomTabBar() {
   const router = useRouter();
   const pathname = usePathname();
   const insets = useSafeAreaInsets();
 
   const getCurrentTab = () => {
-    const segment = pathname.split('/').pop() ?? '';
+    const segment = pathname.split('/').filter(Boolean).pop() ?? '';
     return TAB_ITEMS.find((t) => t.name === segment)?.name ?? 'home';
   };
 
@@ -175,44 +87,48 @@ function CustomTabBar() {
 
   return (
     <View
-      style={{
-        paddingBottom: insets.bottom + 8,
-      }}
-      className="bg-zinc-950 border-t border-zinc-900 pt-2.5 px-2 flex-row items-center">
-      {TAB_ITEMS.map((item) => (
-        <AnimatedTabItem
-          key={item.name}
-          item={item}
-          focused={currentTab === item.name}
-          onPress={() => router.push(`/${item.name}` )}
-        />
-      ))}
+      style={{ paddingBottom: insets.bottom + 4 }}
+      className="border-border bg-card border-t pt-2 pb-1">
+      <View className="flex-row items-center justify-around px-2">
+        {TAB_ITEMS.map((item) => {
+          const focused = currentTab === item.name;
+          return (
+            <Pressable
+              key={item.name}
+              onPress={() => router.push(`/${item.name}`)}
+              className="flex-1 items-center py-1">
+              <View className="items-center gap-0.5">
+                <TabBarIcon name={item.icon} focused={focused} />
+                <Text
+                  className={`text-[10px] ${
+                    focused ? 'text-primary font-semibold' : 'text-muted-foreground font-medium'
+                  }`}>
+                  {item.label}
+                </Text>
+              </View>
+              {focused && <View className="bg-primary absolute -top-0.5 h-0.5 w-5 rounded-full" />}
+            </Pressable>
+          );
+        })}
+      </View>
     </View>
   );
 }
 
-// ─── Tabs Layout ──────────────────────────────────────────────────────
 export default function TabsLayout() {
+  const { width } = useWindowDimensions();
+  const isWeb = width >= 1024;
+
   return (
     <Tabs
-      tabBar={() => <CustomTabBar />}
-      screenOptions={({ route }) => ({
-        header: () => <TabHeader title={getTitleForRoute(route.name)} />,
-      })}>
+      tabBar={isWeb ? () => null : () => <CustomTabBar />}
+      screenOptions={{
+        header: isWeb ? () => null : () => <TabHeader />,
+      }}>
       <Tabs.Screen name="home" />
       <Tabs.Screen name="categories" />
       <Tabs.Screen name="favorites" />
       <Tabs.Screen name="profile" />
     </Tabs>
   );
-}
-
-function getTitleForRoute(routeName: string): string {
-  const map: Record<string, string> = {
-    home: '🛍 Shop',
-    categories: 'Categories',
-    favorites: 'Favorites',
-    profile: 'Profile',
-  };
-  return map[routeName] ?? 'Shop';
 }

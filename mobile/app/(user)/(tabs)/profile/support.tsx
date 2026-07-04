@@ -13,8 +13,7 @@ import { ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Input } from '@/components/ui/input';
 
-// Mock FAQ Data
-const MOCK_FAQ = [
+const FAQ = [
   {
     id: 'faq-1',
     question: 'How do I track my order?',
@@ -56,15 +55,15 @@ function ContactOption({
           {title}
         </Text>
       </View>
-      <Text className="text-left text-sm text-muted-foreground">{description}</Text>
+      <Text className="text-muted-foreground text-left text-sm">{description}</Text>
     </Button>
   );
 }
 
 export default function SupportScreen() {
   return (
-    <SafeAreaView className="flex-1 bg-background">
-      <View className="border-b border-border p-4">
+    <SafeAreaView className="bg-background flex-1">
+      <View className="border-border border-b p-4">
         <Text variant="h2" className="font-bold">
           Help & Support
         </Text>
@@ -107,7 +106,7 @@ export default function SupportScreen() {
             Frequently Asked Questions
           </Text>
           <Accordion type="single" collapsible className="w-full">
-            {MOCK_FAQ.map((item) => (
+            {FAQ.map((item) => (
               <AccordionItem key={item.id} value={item.id}>
                 <AccordionTrigger>
                   <Text className="font-medium">{item.question}</Text>

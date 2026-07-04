@@ -1,74 +1,33 @@
-import { Button } from '@/components/ui/button';
 import { Icon } from '@/components/ui/icon';
 import { Text } from '@/components/ui/text';
 import { ProductCard } from '@/components/ProductCard';
-import { Grid } from 'lucide-react-native';
+import { CategoryChips } from '@/components/CategoryChips';
 import * as React from 'react';
-import { ScrollView, View } from 'react-native';
+import { ScrollView, View, Platform, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Separator } from '@/components/ui/separator';
 import { useWindowDimensions } from 'react-native';
 import { api } from '@/lib/api';
-import { Product } from '@/types';
-
-const MOCK_FILTERS = {
-  categories: ['Electronics', 'Apparel', 'Home Goods', 'Books'],
-  brands: ['Brand A', 'Brand B', 'Brand C'],
-  priceRanges: ['Under $50', '$50 - $100', '$100 - $500', 'Over $500'],
-};
-
-function FilterSection({ title, options }: { title: string; options: string[] }) {
-  return (
-    <View className="gap-3">
-      <Text variant="h4" className="font-semibold">
-        {title}
-      </Text>
-      <View className="gap-2">
-        {options.map((option) => (
-          <View key={option} className="flex-row items-center gap-2">
-            <Checkbox id={option} checked={false} onCheckedChange={() => {}} />
-            <Text nativeID={option} className="text-sm">
-              {option}
-            </Text>
-          </View>
-        ))}
-      </View>
-      <Separator className="my-2" />
-    </View>
-  );
-}
-
-function WebFilterSidebar() {
-  return (
-    <View className="hidden w-64 flex-col gap-4 border-r border-border p-4 lg:flex">
-      <Text variant="h3" className="font-bold">
-        Filters
-      </Text>
-      <ScrollView showsVerticalScrollIndicator={false}>
-        <FilterSection title="Category" options={MOCK_FILTERS.categories} />
-        <FilterSection title="Brand" options={MOCK_FILTERS.brands} />
-        <FilterSection title="Price" options={MOCK_FILTERS.priceRanges} />
-        <Button variant="outline" className="mt-4">
-          <Text>Clear Filters</Text>
-        </Button>
-      </ScrollView>
-    </View>
-  );
-}
+import { Product, Category } from '@/types';
+import { Skeleton } from '@/components/ui/skeleton';
+import { SlidersHorizontal } from 'lucide-react-native';
 
 export default function CategoriesScreen() {
   const { width } = useWindowDimensions();
   const isWeb = width >= 1024;
-  
+
   const [products, setProducts] = React.useState<Product[]>([]);
+  const [categories, setCategories] = React.useState<Category[]>([]);
   const [loading, setLoading] = React.useState(true);
+  const [selectedCategory, setSelectedCategory] = React.useState<string | null>(null);
 
   React.useEffect(() => {
-    const fetchProducts = async () => {
+    const fetchData = async () => {
       try {
-        const data = await api.publicGet('/products');
-        const mappedProducts = (data.products || []).map((p: any) => ({
+        const [productsData, categoriesData] = await Promise.all([
+          api.publicGet('/products'),
+          api.publicGet('/products/categories'),
+        ]);
+        const mappedProducts = (productsData.products || []).map((p: any) => ({
           ...p,
           title: p.name,
           priceCents: Math.round(parseFloat(p.price || 0) * 100),
@@ -80,47 +39,101 @@ export default function CategoriesScreen() {
             priceCents: v.price ? Math.round(parseFloat(v.price) * 100) : null,
           })),
         }));
+        const mappedCategories = (categoriesData.categories || []).map((c: any) => ({
+          id: c.id,
+          name: c.name,
+          slug: c.slug,
+        }));
         setProducts(mappedProducts);
+        setCategories(mappedCategories);
       } catch (err) {
-        console.error("Failed to fetch products:", err);
+        console.error('Failed to fetch products:', err);
       } finally {
         setLoading(false);
       }
     };
-    fetchProducts();
+    fetchData();
   }, []);
 
   return (
-    <SafeAreaView className="flex-1 bg-background">
+    <SafeAreaView className="bg-background flex-1">
       <View className="flex-1 flex-row">
-        {isWeb && <WebFilterSidebar />}
-        <View className="flex-1">
-          <View className="flex-row items-center justify-between border-b border-border p-4">
-            <Text variant="h2" className="font-bold">
-              Catalog
-            </Text>
-            <View className="flex-row gap-2">
-              <Button variant="outline" size="sm">
-                <Text>Sort: Best Match</Text>
-              </Button>
-              <Button variant="outline" size="sm" className="hidden sm:flex">
-                <Icon as={Grid} size={16} />
-                <Text className="sr-only">Grid view</Text>
-              </Button>
+        {isWeb && (
+          <View className="border-border bg-card hidden w-64 flex-col gap-4 border-r p-4 lg:flex">
+            <Text className="text-foreground text-lg font-bold">Filters</Text>
+            <View className="gap-4">
+              <View className="gap-2">
+                <Text className="text-foreground text-sm font-semibold">Category</Text>
+                <View className="gap-1">
+                  {categories.map((cat) => (
+                    <Pressable
+                      key={cat.id}
+                      onPress={() =>
+                        setSelectedCategory(selectedCategory === cat.id ? null : cat.id)
+                      }
+                      className={`rounded-xl px-3 py-2 ${
+                        selectedCategory === cat.id ? 'bg-primary/10' : ''
+                      }`}>
+                      <Text
+                        className={`text-sm ${
+                          selectedCategory === cat.id
+                            ? 'text-primary font-medium'
+                            : 'text-muted-foreground'
+                        }`}>
+                        {cat.name}
+                      </Text>
+                    </Pressable>
+                  ))}
+                </View>
+              </View>
             </View>
           </View>
-          <ScrollView contentContainerClassName="p-4">
-            <View className="flex-row flex-wrap justify-between gap-y-4">
+        )}
+
+        <View className="flex-1">
+          <View className="border-border bg-card flex-row items-center justify-between border-b px-5 py-3">
+            <Text className="text-foreground text-lg font-bold">Catalog</Text>
+            <View className="flex-row items-center gap-2">
+              <Pressable className="bg-secondary flex-row items-center gap-1.5 rounded-xl px-3 py-2">
+                <Icon as={SlidersHorizontal} size={14} className="text-foreground" />
+                <Text className="text-foreground text-sm font-medium">Filters</Text>
+              </Pressable>
+            </View>
+          </View>
+
+          <View className="px-1 py-3">
+            <CategoryChips
+              categories={categories}
+              selectedId={selectedCategory}
+              onSelect={(cat) => setSelectedCategory(cat?.id ?? null)}
+            />
+          </View>
+
+          <ScrollView contentContainerClassName="px-5 pb-8">
+            <View className="flex-row flex-wrap justify-between gap-3">
               {loading ? (
-                <Text className="p-4 text-muted-foreground">Loading products...</Text>
+                [...Array(6)].map((_, i) => (
+                  <View key={i} className="bg-card shadow-card w-[48%] gap-2 rounded-2xl">
+                    <Skeleton className="h-40 w-full rounded-t-2xl" />
+                    <View className="gap-1.5 p-3">
+                      <Skeleton className="h-4 w-3/4 rounded-md" />
+                      <Skeleton className="h-3 w-1/2 rounded-md" />
+                      <Skeleton className="h-4 w-1/3 rounded-md" />
+                    </View>
+                  </View>
+                ))
               ) : products.length > 0 ? (
                 products.map((product) => (
-                  <View key={product.id} className="w-[48%] sm:w-[32%] lg:w-[23%]">
+                  <View
+                    key={product.id}
+                    className={Platform.OS === 'web' ? 'w-[31%] lg:w-[23%]' : 'w-[48%]'}>
                     <ProductCard product={product} />
                   </View>
                 ))
               ) : (
-                <Text className="p-4 text-muted-foreground">No products found.</Text>
+                <View className="w-full items-center justify-center py-12">
+                  <Text className="text-muted-foreground">No products found.</Text>
+                </View>
               )}
             </View>
           </ScrollView>

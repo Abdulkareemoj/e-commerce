@@ -3,12 +3,11 @@ import { Button } from '@/components/ui/button';
 import { Text } from '@/components/ui/text';
 import { Icon } from '@/components/ui/icon';
 import { Heart } from 'lucide-react-native';
-import { ScrollView, View } from 'react-native';
+import { ScrollView, View, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ProductCard } from '@/components/ProductCard';
 import { useWishlist } from '@/hooks/useWishlist';
 import { Link } from 'expo-router';
-import { ArrowRight } from 'lucide-react-native';
 
 export default function FavoritesScreen() {
   const { items, isLoading, loadWishlist } = useWishlist();
@@ -19,7 +18,7 @@ export default function FavoritesScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView className="flex-1 items-center justify-center bg-background p-4">
+      <SafeAreaView className="bg-background flex-1 items-center justify-center p-4">
         <Text className="text-muted-foreground">Loading wishlist...</Text>
       </SafeAreaView>
     );
@@ -27,23 +26,20 @@ export default function FavoritesScreen() {
 
   if (items.length === 0) {
     return (
-      <SafeAreaView className="flex-1 items-center justify-center bg-background p-4">
+      <SafeAreaView className="bg-background flex-1 items-center justify-center p-6">
         <View className="items-center gap-4">
-          <View className="size-20 items-center justify-center rounded-full bg-muted">
-            <Icon as={Heart} size={32} className="text-muted-foreground" />
+          <View className="bg-secondary size-24 items-center justify-center rounded-full">
+            <Icon as={Heart} size={40} className="text-muted-foreground" />
           </View>
           <View className="items-center gap-2">
-            <Text variant="h3" className="font-bold tracking-tight">
-              No Favorites Yet
-            </Text>
-            <Text className="text-center text-muted-foreground">
-              Tap the heart icon on products you love to save them here.
+            <Text className="text-foreground text-xl font-bold">No Favorites Yet</Text>
+            <Text className="text-muted-foreground text-center text-sm">
+              Tap the heart icon on products you love{'\n'}to save them here.
             </Text>
           </View>
-          <Link href="/(user)/catalog" asChild>
-            <Button className="mt-2">
-              <Text className="font-semibold">Browse Products</Text>
-              <Icon as={ArrowRight} size={18} />
+          <Link href="/(user)/(tabs)/home" asChild>
+            <Button className="mt-2 h-12 rounded-2xl">
+              <Text className="text-primary-foreground font-semibold">Browse Products</Text>
             </Button>
           </Link>
         </View>
@@ -52,11 +48,17 @@ export default function FavoritesScreen() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-background">
-      <ScrollView contentContainerClassName="p-4">
-        <View className="flex-row flex-wrap justify-between gap-y-4">
+    <SafeAreaView className="bg-background flex-1">
+      <ScrollView contentContainerClassName="p-5 pb-8">
+        <View className="mb-4 flex-row items-center justify-between">
+          <Text className="text-foreground text-xl font-bold">Favorites</Text>
+          <Text className="text-muted-foreground text-sm">{items.length} items</Text>
+        </View>
+        <View className="flex-row flex-wrap justify-between gap-3">
           {items.map((item) => (
-            <View key={item.id} className="w-[48%] sm:w-[32%] lg:w-[23%]">
+            <View
+              key={item.id}
+              className={Platform.OS === 'web' ? 'w-[31%] lg:w-[23%]' : 'w-[48%]'}>
               <ProductCard product={item.product} />
             </View>
           ))}

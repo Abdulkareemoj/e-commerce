@@ -36,7 +36,7 @@ export default function OrderDetailScreen() {
           const res = await api.get(`/user/orders/${id}`);
           setOrder(res.order);
         } catch (error) {
-          console.error("Target order missing", error);
+          console.error('Target order missing', error);
         } finally {
           setFetching(false);
         }
@@ -58,8 +58,12 @@ export default function OrderDetailScreen() {
   if (!isAuthenticated || !user || user.role !== 'user') {
     return (
       <View className="flex-1 items-center justify-center p-6">
-        <Text className="text-center mb-4">You must be signed in to view order details.</Text>
-        <Link href="/(auth)/sign-in" asChild><Button variant="default"><Text>Sign In</Text></Button></Link>
+        <Text className="mb-4 text-center">You must be signed in to view order details.</Text>
+        <Link href="/(auth)/sign-in" asChild>
+          <Button variant="default">
+            <Text>Sign In</Text>
+          </Button>
+        </Link>
       </View>
     );
   }
@@ -73,11 +77,13 @@ export default function OrderDetailScreen() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-background">
-      <View className="flex-1 p-4 gap-4">
+    <SafeAreaView className="bg-background flex-1">
+      <View className="flex-1 gap-4 p-4">
         <View>
-          <Text variant="h2" className="font-bold">Order Detail</Text>
-          <Text className="text-xs text-muted-foreground mt-1">ID: {order.id}</Text>
+          <Text variant="h2" className="font-bold">
+            Order Detail
+          </Text>
+          <Text className="text-muted-foreground mt-1 text-xs">ID: {order.id}</Text>
         </View>
 
         <Card className="gap-3 p-4">
@@ -89,7 +95,9 @@ export default function OrderDetailScreen() {
           </View>
           <View className="flex-row items-center justify-between">
             <Text className="text-muted-foreground">Total</Text>
-            <Text className="font-bold">{formatCurrency(Math.round(parseFloat(order.totalAmount || 0) * 100), 'USD')}</Text>
+            <Text className="font-bold">
+              {formatCurrency(Math.round(parseFloat(order.totalAmount || 0) * 100), 'USD')}
+            </Text>
           </View>
           {order.trackingNumber && (
             <View className="flex-row items-center justify-between">
@@ -104,7 +112,9 @@ export default function OrderDetailScreen() {
           {order.couponCode && (
             <View className="flex-row items-center justify-between">
               <Text className="text-muted-foreground">Coupon</Text>
-              <Badge variant="outline"><Text className="text-xs">{order.couponCode}</Text></Badge>
+              <Badge variant="outline">
+                <Text className="text-xs">{order.couponCode}</Text>
+              </Badge>
             </View>
           )}
         </Card>
@@ -113,16 +123,18 @@ export default function OrderDetailScreen() {
         {order.items?.map((item: any) => (
           <Card key={item.id} className="flex-row gap-3 overflow-hidden p-0">
             <Image
-              source={{ uri: item.product?.images?.[0] || 'https://picsum.photos/seed/order/100' }}
-              className="size-20 bg-muted"
+              source={{ uri: item.product?.images?.[0] }}
+              className="bg-muted size-20"
               resizeMode="cover"
             />
             <View className="flex-1 justify-center gap-1 py-3 pr-3">
               <Text className="text-sm font-medium">{item.product?.name || 'Product'}</Text>
-              <Text className="text-xs text-muted-foreground">
-                {item.quantity}x @ {formatCurrency(Math.round(parseFloat(item.price || 0) * 100), 'USD')}
+              <Text className="text-muted-foreground text-xs">
+                {item.quantity}x @{' '}
+                {formatCurrency(Math.round(parseFloat(item.price || 0) * 100), 'USD')}
               </Text>
-              <Text className={`text-xs font-medium capitalize ${STATUS_COLORS[item.status] || ''}`}>
+              <Text
+                className={`text-xs font-medium capitalize ${STATUS_COLORS[item.status] || ''}`}>
                 {item.status || 'pending'}
               </Text>
             </View>

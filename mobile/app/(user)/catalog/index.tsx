@@ -2,55 +2,39 @@ import { Button } from '@/components/ui/button';
 import { Icon } from '@/components/ui/icon';
 import { Text } from '@/components/ui/text';
 import { ProductCard } from '@/components/ProductCard';
-import { Filter, Grid, List, SlidersHorizontal, X } from 'lucide-react-native';
+import { Grid } from 'lucide-react-native';
 import * as React from 'react';
-import { ScrollView, View, Pressable } from 'react-native';
+import { ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
 import { useWindowDimensions } from 'react-native';
 import { api } from '@/lib/api';
 import { Product } from '@/types';
 
-const MOCK_FILTERS = {
-  categories: ['Electronics', 'Apparel', 'Home Goods', 'Books'],
-  brands: ['Brand A', 'Brand B', 'Brand C'],
-  priceRanges: ['Under $50', '$50 - $100', '$100 - $500', 'Over $500'],
-};
-
-// Filter Component (Reusable for both Sheet and Sidebar)
-function FilterSection({ title, options }: { title: string; options: string[] }) {
+function FilterSection({ title }: { title: string }) {
   return (
     <View className="gap-3">
       <Text variant="h4" className="font-semibold">
         {title}
       </Text>
-      <View className="gap-2">
-        {options.map((option) => (
-          <View key={option} className="flex-row items-center gap-2">
-            <Checkbox id={option} checked={false} onCheckedChange={() => {}} />
-            <Text nativeID={option} className="text-sm">
-              {option}
-            </Text>
-          </View>
-        ))}
+      <View className="py-2">
+        <Text className="text-muted-foreground text-sm">No filters available.</Text>
       </View>
       <Separator className="my-2" />
     </View>
   );
 }
 
-// Web Filter Sidebar
 function WebFilterSidebar() {
   return (
-    <View className="hidden w-64 flex-col gap-4 border-r border-border p-4 lg:flex">
+    <View className="border-border hidden w-64 flex-col gap-4 border-r p-4 lg:flex">
       <Text variant="h3" className="font-bold">
         Filters
       </Text>
       <ScrollView showsVerticalScrollIndicator={false}>
-        <FilterSection title="Category" options={MOCK_FILTERS.categories} />
-        <FilterSection title="Brand" options={MOCK_FILTERS.brands} />
-        <FilterSection title="Price" options={MOCK_FILTERS.priceRanges} />
+        <FilterSection title="Category" />
+        <FilterSection title="Brand" />
+        <FilterSection title="Price" />
         <Button variant="outline" className="mt-4">
           <Text>Clear Filters</Text>
         </Button>
@@ -80,7 +64,7 @@ export default function CatalogScreen() {
         }));
         setProducts(mappedProducts);
       } catch (err) {
-        console.error("Failed to load catalog", err);
+        console.error('Failed to load catalog', err);
       } finally {
         setLoading(false);
       }
@@ -89,7 +73,7 @@ export default function CatalogScreen() {
   }, []);
 
   return (
-    <SafeAreaView className="flex-1 bg-background">
+    <SafeAreaView className="bg-background flex-1">
       <View className="flex-1 flex-row">
         {/* Web Sidebar */}
         {isWeb && <WebFilterSidebar />}
@@ -97,7 +81,7 @@ export default function CatalogScreen() {
         {/* Main Content Area */}
         <View className="flex-1">
           {/* Header/Toolbar */}
-          <View className="flex-row items-center justify-between border-b border-border p-4">
+          <View className="border-border flex-row items-center justify-between border-b p-4">
             <Text variant="h2" className="font-bold">
               Catalog
             </Text>
