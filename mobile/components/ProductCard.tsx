@@ -1,52 +1,44 @@
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Icon } from '@/components/ui/icon';
 import { Text } from '@/components/ui/text';
 import { formatCurrency } from '@/lib/money';
 import { Product } from '@/types';
 import { Link } from 'expo-router';
-import { Heart, ShoppingCart, Star } from 'lucide-react-native';
+import { Star, Heart } from 'lucide-react-native';
 import React from 'react';
 import { Image, View, Platform, Pressable } from 'react-native';
-import { useCart } from '@/hooks/useCart';
 import { useWishlist } from '@/hooks/useWishlist';
 
 interface ProductCardProps {
   product: Product;
   isSale?: boolean;
-  categories?: string[];
 }
 
-function Rating({ rating }: { rating: number | null }) {
-  const fullStars = rating ? Math.floor(rating) : 0;
+function Rating({ rating, count }: { rating: number | null; count?: number }) {
+  if (!rating) return null;
+  const fullStars = Math.floor(rating);
   return (
     <View className="flex-row items-center gap-1">
-      <View className="flex-row">
+      <View className="flex-row items-center">
         {[...Array(5)].map((_, i) => (
           <Icon
             key={i}
             as={Star}
             size={12}
             className={i < fullStars ? 'text-amber-400' : 'text-muted-foreground/30'}
+            {...(i < fullStars ? { fill: 'currentColor' } : {})}
           />
         ))}
       </View>
-      {rating !== null && (
-        <Text className="text-xs text-muted-foreground">{rating.toFixed(1)}</Text>
-      )}
+      <Text className="text-muted-foreground text-xs">
+        {rating.toFixed(1)}
+        {count !== undefined && ` (${count})`}
+      </Text>
     </View>
   );
 }
 
-export function ProductCard({ product, isSale = false, categories = [] }: ProductCardProps) {
-  const { addItem } = useCart();
+export function ProductCard({ product, isSale = false }: ProductCardProps) {
   const { isWishlisted, toggle } = useWishlist();
-
-  const handleAddToCart = async (e: any) => {
-    e.preventDefault();
-    e.stopPropagation();
-    await addItem(product.id, 1);
-  };
 
   const handleToggleFavorite = (e: any) => {
     e.preventDefault();
@@ -54,70 +46,60 @@ export function ProductCard({ product, isSale = false, categories = [] }: Produc
     toggle(product.id);
   };
 
+  const hasDiscount = isSale || (product as any).originalPrice;
+
   return (
     <Link href={`/(user)/product/${product.id}`} asChild>
       <Pressable
-        className={`w-full ${Platform.OS === 'web' ? 'hover:scale-[1.02] active:scale-[0.98]' : ''} transition-transform duration-200`}>
-        <Card className="w-full flex-col justify-between overflow-hidden p-0">
-          <View className="relative">
-            {isSale && (
-              <View className="absolute left-3 top-3 z-10 rounded-lg bg-gradient-to-r from-rose-500 to-pink-500 px-2.5 py-1 shadow-lg shadow-rose-500/30">
-                <Text className="text-[10px] font-bold uppercase tracking-wide text-white">
-                  Sale
-                </Text>
-              </View>
-            )}
-            <Image
-              source={{ uri: product.images[0] }}
-              style={{
-                width: '100%',
-                height: Platform.OS === 'web' ? 180 : 140,
-              }}
-              className="bg-muted"
-              resizeMode="cover"
-            />
-            <Button
-              variant="ghost"
-              size="icon"
-              className="absolute right-2 top-2 size-8 rounded-full bg-background/80 shadow-sm backdrop-blur-sm active:bg-background"
-              onPress={handleToggleFavorite}>
-              <Icon as={Heart} className={isWishlisted(product.id) ? 'fill-rose-500 text-rose-500' : 'text-foreground'} size={16} />
-            </Button>
-          </View>
-
-          <CardContent className="flex-col gap-2 p-3.5">
-            <Text className="line-clamp-2 text-sm font-medium leading-snug tracking-tight">
-              {product.title}
-            </Text>
-            <Rating rating={product.rating} />
-            <View className="flex-row items-baseline justify-between">
-              <Text className="text-base font-bold text-primary">
-                {formatCurrency(product.priceCents, product.currency)}
-              </Text>
-              {isSale && (
-                <Text className="text-xs text-muted-foreground line-through">
-                  {formatCurrency(Math.round(product.priceCents * 1.5), product.currency)}
-                </Text>
-              )}
+        className={`bg-card shadow-card w-full overflow-hidden rounded-2xl ${
+          Platform.OS === 'web' ? 'hover:shadow-card-hover hover:-translate-y-0.5' : ''
+        } transition-all duration-200`}>
+        <View className="relative">
+          <Image
+            source={{ uri: product.images[0] }}
+            style={{
+              width: '100%',
+              aspectRatio: 1,
+            }}
+            className="bg-muted"
+            resizeMode="cover"
+          />
+          {hasDiscount && (
+            <View className="bg-primary absolute top-2.5 left-2.5 rounded-lg px-2 py-0.5">
+              <Text className="text-primary-foreground text-[10px] font-bold">Sale</Text>
             </View>
-            {categories && categories.length > 0 && (
-              <View className="flex-row flex-wrap gap-1.5 pt-1">
-                {categories.slice(0, 2).map((cat, idx) => (
-                  <View key={idx} className="rounded-full bg-accent px-2.5 py-0.5">
-                    <Text className="text-[10px] font-medium text-accent-foreground">{cat}</Text>
-                  </View>
-                ))}
-              </View>
-            )}
-          </CardContent>
+          )}
+          <Pressable
+            onPress={handleToggleFavorite}
+            className="bg-background/80 shadow-soft absolute top-2.5 right-2.5 size-8 items-center justify-center rounded-full backdrop-blur-sm">
+            <Icon
+              as={Heart}
+              size={16}
+              className={isWishlisted(product.id) ? 'text-rose-500' : 'text-foreground/60'}
+              {...(isWishlisted(product.id) ? { fill: 'currentColor' } : {})}
+            />
+          </Pressable>
+        </View>
 
-          <CardFooter className="p-3 pt-0">
-            <Button className="flex-1" size="sm" onPress={handleAddToCart}>
-              <Icon as={ShoppingCart} size={14} />
-              <Text className="text-xs font-medium">Add to Cart</Text>
-            </Button>
-          </CardFooter>
-        </Card>
+        <View className="gap-1.5 p-3">
+          <Text
+            className="text-foreground text-sm font-medium"
+            numberOfLines={1}
+            ellipsizeMode="tail">
+            {product.title}
+          </Text>
+          <Rating rating={product.rating} />
+          <View className="flex-row items-baseline gap-2">
+            <Text className="text-primary text-base font-bold">
+              {formatCurrency(product.priceCents, product.currency)}
+            </Text>
+            {hasDiscount && (product as any).originalPrice && (
+              <Text className="text-muted-foreground text-xs line-through">
+                {formatCurrency((product as any).originalPrice, product.currency)}
+              </Text>
+            )}
+          </View>
+        </View>
       </Pressable>
     </Link>
   );
