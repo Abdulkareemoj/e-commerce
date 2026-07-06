@@ -11,11 +11,14 @@ function getCartOwner(c: any): { userId?: string; sessionToken?: string } {
   const sessionToken = c.req.header("X-Session-Token");
   return {
     userId: user?.id,
-    sessionToken: user ? undefined : (sessionToken || undefined),
+    sessionToken: user ? undefined : sessionToken || undefined,
   };
 }
 
-async function findOrCreateCart(owner: { userId?: string; sessionToken?: string }) {
+async function findOrCreateCart(owner: {
+  userId?: string;
+  sessionToken?: string;
+}) {
   if (!owner.userId && !owner.sessionToken) return null;
 
   const existing = await db.query.cart.findFirst({
@@ -36,7 +39,12 @@ async function findOrCreateCart(owner: { userId?: string; sessionToken?: string 
     sessionToken: owner.sessionToken || null,
   });
 
-  return { id, userId: owner.userId, sessionToken: owner.sessionToken, items: [] };
+  return {
+    id,
+    userId: owner.userId,
+    sessionToken: owner.sessionToken,
+    items: [],
+  };
 }
 
 async function hydrateCartItems(items: any[]) {
@@ -80,7 +88,8 @@ cartRoutes.post("/add", async (c) => {
   try {
     const owner = getCartOwner(c);
     const userCart = await findOrCreateCart(owner);
-    if (!userCart) return c.json({ error: "Could not identify cart owner" }, 400);
+    if (!userCart)
+      return c.json({ error: "Could not identify cart owner" }, 400);
 
     const body = await c.req.json();
     if (!body.productId) return c.json({ error: "productId required" }, 400);
@@ -91,7 +100,8 @@ cartRoutes.post("/add", async (c) => {
     });
     if (!prod) return c.json({ error: "Product not found" }, 404);
 
-    const priceCents = body.priceCents ?? Math.round(parseFloat(prod.price) * 100);
+    const priceCents =
+      body.priceCents ?? Math.round(parseFloat(prod.price) * 100);
     let variantPrice: number | null = null;
 
     if (body.variantId) {
@@ -107,7 +117,7 @@ cartRoutes.post("/add", async (c) => {
     const existing = userCart.items.find(
       (i: any) =>
         i.productId === body.productId &&
-        (i.variantId || null) === (body.variantId || null)
+        (i.variantId || null) === (body.variantId || null),
     );
 
     if (existing) {
@@ -183,7 +193,15 @@ cartRoutes.delete("/clear", async (c) => {
 cartRoutes.post("/merge", async (c) => {
   try {
     const user = c.get("user");
-    if (!user) return c.json({ error: "Unauthorized" }, 401);
+    if (!user) {
+      return c.json(
+        {
+          error: "Session expired. Please log in again.",
+          code: "SESSION_EXPIRED",
+        },
+        401,
+      );
+    }
 
     const body = await c.req.json();
     const sessionToken = body.sessionToken;
@@ -200,7 +218,11 @@ cartRoutes.post("/merge", async (c) => {
     });
 
     if (!guestCart || guestCart.items.length === 0) {
-      if (userCart) await db.update(cart).set({ sessionToken: null }).where(eq(cart.id, userCart.id));
+      if (userCart)
+        await db
+          .update(cart)
+          .set({ sessionToken: null })
+          .where(eq(cart.id, userCart.id));
       return c.json({ message: "Nothing to merge" });
     }
 
@@ -209,7 +231,7 @@ cartRoutes.post("/merge", async (c) => {
         const match = userCart.items.find(
           (i) =>
             i.productId === guestItem.productId &&
-            (i.variantId || null) === (guestItem.variantId || null)
+            (i.variantId || null) === (guestItem.variantId || null),
         );
         if (match) {
           await db
@@ -228,7 +250,10 @@ cartRoutes.post("/merge", async (c) => {
         }
       }
       await db.delete(cart).where(eq(cart.id, guestCart.id));
-      await db.update(cart).set({ sessionToken: null }).where(eq(cart.id, userCart.id));
+      await db
+        .update(cart)
+        .set({ sessionToken: null })
+        .where(eq(cart.id, userCart.id));
     } else {
       await db
         .update(cart)

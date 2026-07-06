@@ -44,16 +44,36 @@ export function checkRole(role: string) {
   return async (c: Context<{ Variables: AuthVariables }>, next: Next) => {
     const user = c.get("user");
 
-    // 401 Unauthorized if not authenticated
     if (!user) {
-      return c.json({ error: "Unauthorized" }, 401);
+      return c.json(
+        {
+          error: "Session expired. Please log in again.",
+          code: "SESSION_EXPIRED",
+        },
+        401,
+      );
     }
 
-    // 403 Forbidden if role doesn't match
     if (user.role !== role) {
-      return c.json({ error: `Forbidden: ${role} access required.` }, 403);
+      return c.json(
+        {
+          error: `You don't have permission to access this resource.`,
+          code: "FORBIDDEN",
+        },
+        403,
+      );
     }
 
+    await next();
+  };
+}
+
+/**
+ * Optional auth middleware — attaches user/session if present but never blocks.
+ * Use for routes that behave differently for guests vs authenticated users.
+ */
+export function optionalAuth() {
+  return async (c: Context<{ Variables: AuthVariables }>, next: Next) => {
     await next();
   };
 }

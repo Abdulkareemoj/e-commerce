@@ -18,7 +18,15 @@ const vendorRoutes = new Hono();
 // Status check — registered before role check so both users and vendors can poll for approval
 vendorRoutes.get("/status", async (c) => {
   const user = c.get("user");
-  if (!user) return c.json({ error: "Unauthorized" }, 401);
+  if (!user) {
+    return c.json(
+      {
+        error: "Session expired. Please log in again.",
+        code: "SESSION_EXPIRED",
+      },
+      401,
+    );
+  }
 
   try {
     const existing = await db.query.vendor.findFirst({
