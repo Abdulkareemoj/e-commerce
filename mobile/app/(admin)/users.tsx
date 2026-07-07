@@ -4,13 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Icon } from '@/components/ui/icon';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import {
-  View, ScrollView, ActivityIndicator, Pressable, RefreshControl,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import {
-  Search, Shield, Ban, UserCog, ChevronRight,
-} from 'lucide-react-native';
+import { View, ScrollView, ActivityIndicator, Pressable, RefreshControl } from 'react-native';
+import { Search, Shield, Ban, UserCog, ChevronRight } from 'lucide-react-native';
 import { api } from '@/lib/api';
 
 export default function UsersScreen() {
@@ -38,7 +33,9 @@ export default function UsersScreen() {
     }
   }, []);
 
-  useEffect(() => { fetchUsers(page, search, roleFilter); }, [page]);
+  useEffect(() => {
+    fetchUsers(page, search, roleFilter);
+  }, [page]);
 
   const handleSearch = () => {
     setPage(1);
@@ -46,7 +43,10 @@ export default function UsersScreen() {
   };
 
   const handleBan = async (userId: string, banned: boolean) => {
-    await api.publicPut(`/admin/users/${userId}/ban`, { banned, reason: banned ? 'Banned by admin' : undefined });
+    await api.publicPut(`/admin/users/${userId}/ban`, {
+      banned,
+      reason: banned ? 'Banned by admin' : undefined,
+    });
     fetchUsers(page, search, roleFilter);
   };
 
@@ -56,14 +56,24 @@ export default function UsersScreen() {
   };
 
   const roleBadge = (role: string) => {
-    const colors: Record<string, string> = { admin: 'bg-red-500', vendor: 'bg-blue-500', user: 'bg-zinc-500' };
-    return <Badge className={colors[role] || 'bg-zinc-500'}><Text className="text-white text-xs">{role}</Text></Badge>;
+    const colors: Record<string, string> = {
+      admin: 'bg-red-500',
+      vendor: 'bg-blue-500',
+      user: 'bg-zinc-500',
+    };
+    return (
+      <Badge className={colors[role] || 'bg-zinc-500'}>
+        <Text className="text-xs text-white">{role}</Text>
+      </Badge>
+    );
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-background">
-      <View className="p-4 gap-4">
-        <Text variant="h2" className="font-bold">Users</Text>
+    <View className="bg-background flex-1">
+      <View className="gap-4 p-4">
+        <Text variant="h2" className="font-bold">
+          Users
+        </Text>
 
         <View className="flex-row items-center gap-2">
           <Input
@@ -82,9 +92,14 @@ export default function UsersScreen() {
           {['', 'user', 'vendor', 'admin'].map((r) => (
             <Pressable
               key={r}
-              onPress={() => { setRoleFilter(r); setPage(1); fetchUsers(1, search, r); }}
-              className={`px-3 py-1.5 rounded-full border ${roleFilter === r ? 'bg-primary border-primary' : 'border-border'}`}>
-              <Text className={`text-sm ${roleFilter === r ? 'text-primary-foreground' : 'text-foreground'}`}>
+              onPress={() => {
+                setRoleFilter(r);
+                setPage(1);
+                fetchUsers(1, search, r);
+              }}
+              className={`rounded-full border px-3 py-1.5 ${roleFilter === r ? 'bg-primary border-primary' : 'border-border'}`}>
+              <Text
+                className={`text-sm ${roleFilter === r ? 'text-primary-foreground' : 'text-foreground'}`}>
                 {r || 'All'}
               </Text>
             </Pressable>
@@ -94,23 +109,31 @@ export default function UsersScreen() {
 
       <ScrollView
         className="flex-1 px-4"
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); fetchUsers(page, search, roleFilter); }} />}>
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={() => {
+              setRefreshing(true);
+              fetchUsers(page, search, roleFilter);
+            }}
+          />
+        }>
         {loading ? (
           <ActivityIndicator className="mt-8" />
         ) : users.length === 0 ? (
-          <Text className="text-center text-muted-foreground mt-8">No users found</Text>
+          <Text className="text-muted-foreground mt-8 text-center">No users found</Text>
         ) : (
           <View className="gap-3 pb-4">
             {users.map((u: any) => (
-              <View key={u.id} className="rounded-lg border bg-card p-4">
+              <View key={u.id} className="bg-card rounded-lg border p-4">
                 <View className="flex-row items-center justify-between">
                   <View className="flex-1 flex-row items-center gap-3">
-                    <View className="h-10 w-10 items-center justify-center rounded-full bg-muted">
+                    <View className="bg-muted h-10 w-10 items-center justify-center rounded-full">
                       <Text className="font-bold">{u.name?.charAt(0) || '?'}</Text>
                     </View>
                     <View className="flex-1">
                       <Text className="font-semibold">{u.name}</Text>
-                      <Text className="text-xs text-muted-foreground">{u.email}</Text>
+                      <Text className="text-muted-foreground text-xs">{u.email}</Text>
                     </View>
                   </View>
                   {roleBadge(u.role)}
@@ -119,23 +142,29 @@ export default function UsersScreen() {
                 <View className="mt-3 flex-row items-center gap-2">
                   {u.banned && (
                     <Badge className="bg-red-500/20">
-                      <Text className="text-red-500 text-xs">Banned</Text>
+                      <Text className="text-xs text-red-500">Banned</Text>
                     </Badge>
                   )}
                   {!u.emailVerified && (
                     <Badge variant="outline">
-                      <Text className="text-xs text-muted-foreground">Unverified</Text>
+                      <Text className="text-muted-foreground text-xs">Unverified</Text>
                     </Badge>
                   )}
                 </View>
 
                 <View className="mt-3 flex-row gap-2">
-                  <Button size="sm" variant="outline" className="h-8 gap-1"
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-8 gap-1"
                     onPress={() => handleRole(u.id, u.role === 'admin' ? 'user' : 'admin')}>
                     <Icon as={UserCog} size={14} />
                     <Text className="text-xs">Toggle Admin</Text>
                   </Button>
-                  <Button size="sm" variant={u.banned ? 'outline' : 'destructive'} className="h-8 gap-1"
+                  <Button
+                    size="sm"
+                    variant={u.banned ? 'outline' : 'destructive'}
+                    className="h-8 gap-1"
                     onPress={() => handleBan(u.id, !u.banned)}>
                     <Icon as={Ban} size={14} />
                     <Text className="text-xs">{u.banned ? 'Unban' : 'Ban'}</Text>
@@ -147,17 +176,25 @@ export default function UsersScreen() {
         )}
       </ScrollView>
 
-      <View className="flex-row items-center justify-between p-4 border-t border-border">
-        <Text className="text-sm text-muted-foreground">{total} total</Text>
+      <View className="border-border flex-row items-center justify-between border-t p-4">
+        <Text className="text-muted-foreground text-sm">{total} total</Text>
         <View className="flex-row gap-2">
-          <Button size="sm" variant="outline" disabled={page <= 1} onPress={() => setPage((p) => p - 1)}>
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={page <= 1}
+            onPress={() => setPage((p) => p - 1)}>
             <Text>Previous</Text>
           </Button>
-          <Button size="sm" variant="outline" disabled={page * 20 >= total} onPress={() => setPage((p) => p + 1)}>
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={page * 20 >= total}
+            onPress={() => setPage((p) => p + 1)}>
             <Text>Next</Text>
           </Button>
         </View>
       </View>
-    </SafeAreaView>
+    </View>
   );
 }

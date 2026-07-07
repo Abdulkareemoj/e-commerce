@@ -4,9 +4,13 @@ import { Button } from '@/components/ui/button';
 import { Icon } from '@/components/ui/icon';
 import { Input } from '@/components/ui/input';
 import {
-  View, ScrollView, ActivityIndicator, RefreshControl, Pressable, Alert,
+  View,
+  ScrollView,
+  ActivityIndicator,
+  RefreshControl,
+  Pressable,
+  Alert,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Tags, Plus, Edit3, Trash2, X, Check } from 'lucide-react-native';
 import { api } from '@/lib/api';
 
@@ -32,7 +36,9 @@ export default function CategoriesScreen() {
     }
   }, []);
 
-  useEffect(() => { fetchCategories(); }, []);
+  useEffect(() => {
+    fetchCategories();
+  }, []);
 
   const createCategory = async () => {
     if (!newName.trim() || !newSlug.trim()) return;
@@ -60,19 +66,29 @@ export default function CategoriesScreen() {
   const deleteCategory = async (id: string) => {
     Alert.alert('Delete Category', 'Are you sure?', [
       { text: 'Cancel', style: 'cancel' },
-      { text: 'Delete', style: 'destructive', onPress: async () => {
-        await api.publicDelete(`/admin/categories/${id}`);
-        fetchCategories();
-      }},
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: async () => {
+          await api.publicDelete(`/admin/categories/${id}`);
+          fetchCategories();
+        },
+      },
     ]);
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-background">
-      <View className="p-4 gap-4">
+    <View className="bg-background flex-1">
+      <View className="gap-4 p-4">
         <View className="flex-row items-center justify-between">
-          <Text variant="h2" className="font-bold">Categories</Text>
-          <Button size="sm" variant="outline" className="gap-1" onPress={() => setShowNew(!showNew)}>
+          <Text variant="h2" className="font-bold">
+            Categories
+          </Text>
+          <Button
+            size="sm"
+            variant="outline"
+            className="gap-1"
+            onPress={() => setShowNew(!showNew)}>
             <Icon as={Plus} size={16} />
             <Text>Add</Text>
           </Button>
@@ -80,8 +96,18 @@ export default function CategoriesScreen() {
 
         {showNew && (
           <View className="flex-row items-center gap-2">
-            <Input value={newName} onChangeText={setNewName} placeholder="Name" className="flex-1" />
-            <Input value={newSlug} onChangeText={(t) => setNewSlug(t.toLowerCase().replace(/\s+/g, '-'))} placeholder="slug" className="flex-1" />
+            <Input
+              value={newName}
+              onChangeText={setNewName}
+              placeholder="Name"
+              className="flex-1"
+            />
+            <Input
+              value={newSlug}
+              onChangeText={(t) => setNewSlug(t.toLowerCase().replace(/\s+/g, '-'))}
+              placeholder="slug"
+              className="flex-1"
+            />
             <Button size="icon" variant="default" onPress={createCategory}>
               <Icon as={Check} size={16} />
             </Button>
@@ -96,11 +122,11 @@ export default function CategoriesScreen() {
         {loading ? (
           <ActivityIndicator className="mt-8" />
         ) : categories.length === 0 ? (
-          <Text className="text-center text-muted-foreground mt-8">No categories yet</Text>
+          <Text className="text-muted-foreground mt-8 text-center">No categories yet</Text>
         ) : (
           <View className="gap-2 pb-4">
             {categories.map((c: any) => (
-              <View key={c.id} className="rounded-lg border bg-card p-4">
+              <View key={c.id} className="bg-card rounded-lg border p-4">
                 {editingId === c.id ? (
                   <View className="gap-2">
                     <View className="flex-row items-center gap-2">
@@ -120,14 +146,24 @@ export default function CategoriesScreen() {
                   <View className="flex-row items-center justify-between">
                     <View>
                       <Text className="font-semibold">{c.name}</Text>
-                      <Text className="text-xs text-muted-foreground">/{c.slug}</Text>
+                      <Text className="text-muted-foreground text-xs">/{c.slug}</Text>
                     </View>
                     <View className="flex-row gap-1">
-                      <Button size="icon" variant="ghost" className="h-8 w-8"
-                        onPress={() => { setEditingId(c.id); setEditName(c.name); setEditSlug(c.slug); }}>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-8 w-8"
+                        onPress={() => {
+                          setEditingId(c.id);
+                          setEditName(c.name);
+                          setEditSlug(c.slug);
+                        }}>
                         <Icon as={Edit3} size={14} />
                       </Button>
-                      <Button size="icon" variant="ghost" className="h-8 w-8"
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-8 w-8"
                         onPress={() => deleteCategory(c.id)}>
                         <Icon as={Trash2} size={14} className="text-red-500" />
                       </Button>
@@ -139,6 +175,6 @@ export default function CategoriesScreen() {
           </View>
         )}
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }

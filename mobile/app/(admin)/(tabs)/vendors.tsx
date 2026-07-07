@@ -1,12 +1,10 @@
 import { Button } from '@/components/ui/button';
 import { Text } from '@/components/ui/text';
 import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Icon } from '@/components/ui/icon';
-import { Store, Check, X, ChevronRight } from 'lucide-react-native';
+import { Store, Check, X } from 'lucide-react-native';
 import * as React from 'react';
 import { ScrollView, View, Pressable } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { api } from '@/lib/api';
 
 type VendorStatus = 'pending' | 'approved' | 'rejected';
@@ -31,8 +29,17 @@ const STATUS_TABS: { label: string; value: VendorStatus | 'all' }[] = [
 ];
 
 function StatusBadge({ status }: { status: VendorStatus }) {
-  const variant = status === 'approved' ? 'default' as const : status === 'rejected' ? 'destructive' as const : 'outline' as const;
-  return <Badge variant={variant}><Text className="text-xs font-medium capitalize">{status}</Text></Badge>;
+  const STATUS_STYLES: Record<VendorStatus, { bg: string; text: string }> = {
+    approved: { bg: 'bg-success/10', text: 'text-success' },
+    rejected: { bg: 'bg-destructive/10', text: 'text-destructive' },
+    pending: { bg: 'bg-warning/10', text: 'text-warning' },
+  };
+  const style = STATUS_STYLES[status] || STATUS_STYLES.pending;
+  return (
+    <View className={`${style.bg} rounded-full px-2 py-0.5`}>
+      <Text className={`${style.text} text-[10px] font-semibold capitalize`}>{status}</Text>
+    </View>
+  );
 }
 
 export default function VendorsScreen() {
@@ -53,7 +60,9 @@ export default function VendorsScreen() {
     }
   }
 
-  React.useEffect(() => { fetchVendors(); }, [filter]);
+  React.useEffect(() => {
+    fetchVendors();
+  }, [filter]);
 
   async function handleApprove(id: string) {
     try {
@@ -74,19 +83,15 @@ export default function VendorsScreen() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-background">
-      <View className="border-b border-border p-4">
-        <Text variant="h2" className="font-bold">Manage Vendors</Text>
-      </View>
-
-      <View className="flex-row gap-2 border-b border-border px-4 py-2">
+    <View className="bg-background flex-1">
+      <View className="bg-card border-border flex-row gap-2 border-b px-4 py-2">
         {STATUS_TABS.map((tab) => (
           <Pressable
             key={tab.value}
             onPress={() => setFilter(tab.value)}
-            className={`rounded-full px-4 py-1.5 ${filter === tab.value ? 'bg-primary' : 'bg-muted'}`}
-          >
-            <Text className={`text-sm font-medium ${filter === tab.value ? 'text-primary-foreground' : 'text-foreground'}`}>
+            className={`rounded-full px-4 py-1.5 ${filter === tab.value ? 'bg-primary' : 'bg-muted'}`}>
+            <Text
+              className={`text-sm font-medium ${filter === tab.value ? 'text-primary-foreground' : 'text-foreground'}`}>
               {tab.label}
             </Text>
           </Pressable>
@@ -95,22 +100,22 @@ export default function VendorsScreen() {
 
       <ScrollView contentContainerClassName="p-4 gap-3">
         {loading ? (
-          <Text className="text-center text-muted-foreground mt-10">Loading vendors...</Text>
+          <Text className="text-muted-foreground mt-10 text-center">Loading vendors...</Text>
         ) : vendors.length === 0 ? (
-          <Text className="text-center text-muted-foreground mt-10">No vendors found.</Text>
+          <Text className="text-muted-foreground mt-10 text-center">No vendors found</Text>
         ) : (
           vendors.map((v) => (
-            <Card key={v.id} className="p-4 gap-3">
+            <Card key={v.id} className="bg-card border-border gap-3 rounded-2xl border p-4">
               <View className="flex-row items-start justify-between">
-                <View className="flex-row items-center gap-3 flex-1">
-                  <View className="size-10 items-center justify-center rounded-xl bg-primary/10">
+                <View className="flex-1 flex-row items-center gap-3">
+                  <View className="bg-primary/10 size-10 items-center justify-center rounded-xl">
                     <Icon as={Store} size={20} className="text-primary" />
                   </View>
                   <View className="flex-1">
-                    <Text className="font-semibold">{v.storeName}</Text>
-                    <Text className="text-xs text-muted-foreground">/{v.storeSlug}</Text>
+                    <Text className="text-foreground font-semibold">{v.storeName}</Text>
+                    <Text className="text-muted-foreground text-xs">/{v.storeSlug}</Text>
                     {v.userName && (
-                      <Text className="text-xs text-muted-foreground mt-0.5">
+                      <Text className="text-muted-foreground mt-0.5 text-xs">
                         {v.userName} — {v.userEmail}
                       </Text>
                     )}
@@ -120,18 +125,25 @@ export default function VendorsScreen() {
               </View>
 
               {v.description && (
-                <Text className="text-sm text-muted-foreground">{v.description}</Text>
+                <Text className="text-muted-foreground text-sm">{v.description}</Text>
               )}
 
               {v.isVerified === 'pending' && (
                 <View className="flex-row gap-2 pt-1">
-                  <Button size="sm" className="flex-1" onPress={() => handleApprove(v.id)}>
-                    <Icon as={Check} size={14} />
-                    <Text>Approve</Text>
+                  <Button
+                    size="sm"
+                    className="flex-1 rounded-xl"
+                    onPress={() => handleApprove(v.id)}>
+                    <Icon as={Check} size={14} className="text-primary-foreground" />
+                    <Text className="text-primary-foreground font-semibold">Approve</Text>
                   </Button>
-                  <Button variant="outline" size="sm" className="flex-1" onPress={() => handleReject(v.id)}>
-                    <Icon as={X} size={14} />
-                    <Text>Reject</Text>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex-1 rounded-xl"
+                    onPress={() => handleReject(v.id)}>
+                    <Icon as={X} size={14} className="text-destructive" />
+                    <Text className="text-destructive font-semibold">Reject</Text>
                   </Button>
                 </View>
               )}
@@ -139,6 +151,6 @@ export default function VendorsScreen() {
           ))
         )}
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
