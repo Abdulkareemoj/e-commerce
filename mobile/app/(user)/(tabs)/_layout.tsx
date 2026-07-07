@@ -7,7 +7,7 @@ import { useNavigation, DrawerActions } from 'expo-router/react-navigation';
 import { Icon } from '@/components/ui/icon';
 import { useCart } from '@/hooks/useCart';
 
-function TabHeader() {
+function TabHeader({ isWeb = false }: { isWeb?: boolean }) {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
   const router = useRouter();
@@ -15,28 +15,30 @@ function TabHeader() {
 
   return (
     <View
-      style={{ paddingTop: insets.top + 4 }}
-      className="bg-card flex-row items-center justify-between px-5 pb-3">
-      <TouchableOpacity
-        onPress={() => navigation.dispatch(DrawerActions.toggleDrawer())}
-        activeOpacity={0.7}
-        className="bg-secondary size-10 items-center justify-center rounded-xl">
-        <Icon as={Menu} size={20} className="text-foreground" />
-      </TouchableOpacity>
+      style={{ paddingTop: isWeb ? 12 : insets.top + 4 }}
+      className="bg-card border-border flex-row items-center justify-between border-b px-5 pb-3">
+      {!isWeb && (
+        <TouchableOpacity
+          onPress={() => navigation.dispatch(DrawerActions.toggleDrawer())}
+          activeOpacity={0.7}
+          className="bg-secondary size-10 items-center justify-center rounded-xl">
+          <Icon as={Menu} size={20} className="text-foreground" />
+        </TouchableOpacity>
+      )}
 
       <Text className="text-foreground text-lg font-bold">Shop</Text>
 
       <View className="flex-row gap-2">
         <TouchableOpacity
           activeOpacity={0.7}
-          onPress={() => router.push('/search')}
+          onPress={() => router.push('/(user)/search')}
           className="bg-secondary size-10 items-center justify-center rounded-xl">
           <Icon as={Search} size={20} className="text-foreground" />
         </TouchableOpacity>
 
         <TouchableOpacity
           activeOpacity={0.7}
-          onPress={() => router.push('/cart')}
+          onPress={() => router.push('/(user)/cart')}
           className="bg-secondary size-10 items-center justify-center rounded-xl">
           <View>
             <Icon as={ShoppingBag} size={20} className="text-foreground" />
@@ -123,7 +125,7 @@ export default function TabsLayout() {
     <Tabs
       tabBar={isWeb ? () => null : () => <CustomTabBar />}
       screenOptions={{
-        header: isWeb ? () => null : () => <TabHeader />,
+        header: isWeb ? () => <TabHeader isWeb /> : () => <TabHeader />,
       }}>
       <Tabs.Screen name="home" />
       <Tabs.Screen name="categories" />

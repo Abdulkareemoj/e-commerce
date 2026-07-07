@@ -6,7 +6,6 @@ import { Icon } from '@/components/ui/icon';
 import { OrderSummary } from '@/components/OrderSummary';
 import * as React from 'react';
 import { ScrollView, View, useWindowDimensions, Pressable } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -92,15 +91,15 @@ export default function CartScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView className="bg-background flex-1 items-center justify-center p-4">
+      <View className="bg-background flex-1 items-center justify-center p-4">
         <Text className="text-muted-foreground">Loading cart...</Text>
-      </SafeAreaView>
+      </View>
     );
   }
 
   if (cartItems.length === 0) {
     return (
-      <SafeAreaView className="bg-background flex-1 items-center justify-center p-6">
+      <View className="bg-background flex-1 items-center justify-center p-6">
         <View className="items-center gap-4">
           <View className="bg-secondary size-24 items-center justify-center rounded-full">
             <Icon as={ShoppingBag} size={40} className="text-muted-foreground" />
@@ -117,7 +116,7 @@ export default function CartScreen() {
             </Button>
           </Link>
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
@@ -128,7 +127,7 @@ export default function CartScreen() {
   const totalCents = subtotalCents - discountCents + shippingCents + taxCents;
 
   return (
-    <SafeAreaView className="bg-background flex-1" edges={['top']}>
+    <View className="bg-background flex-1">
       <View className="flex-1 flex-row">
         <ScrollView
           contentContainerClassName={`gap-4 ${isWeb ? 'w-2/3 p-6' : 'p-5 pb-48'}`}
@@ -187,6 +186,6 @@ export default function CartScreen() {
           </View>
         </View>
       )}
-    </SafeAreaView>
+    </View>
   );
 }

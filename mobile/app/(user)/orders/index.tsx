@@ -4,7 +4,6 @@ import { Icon } from '@/components/ui/icon';
 import { Package, ChevronRight, Clock, Truck, CheckCircle } from 'lucide-react-native';
 import * as React from 'react';
 import { ScrollView, View, Pressable } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { formatCurrency } from '@/lib/money';
 import { Link } from 'expo-router';
 import { useAuthStore } from '@/lib/authStore';
@@ -13,13 +12,13 @@ import { api } from '@/lib/api';
 function getStatusConfig(status: string) {
   switch (status?.toLowerCase()) {
     case 'delivered':
-      return { icon: CheckCircle, color: 'text-emerald-500', bg: 'bg-emerald-500/10' };
+      return { icon: CheckCircle, color: 'text-success', bg: 'bg-success/10' };
     case 'shipped':
-      return { icon: Truck, color: 'text-blue-500', bg: 'bg-blue-500/10' };
+      return { icon: Truck, color: 'text-info', bg: 'bg-info/10' };
     case 'processing':
-      return { icon: Clock, color: 'text-amber-500', bg: 'bg-amber-500/10' };
+      return { icon: Clock, color: 'text-warning', bg: 'bg-warning/10' };
     default:
-      return { icon: Package, color: 'text-muted-foreground', bg: 'bg-secondary' };
+      return { icon: Package, color: 'text-muted-foreground', bg: 'bg-muted' };
   }
 }
 
@@ -92,41 +91,43 @@ export default function OrdersScreen() {
 
   if (isLoading || fetching) {
     return (
-      <SafeAreaView className="bg-background flex-1 items-center justify-center">
+      <View className="bg-background flex-1 items-center justify-center">
         <Text className="text-muted-foreground">Loading orders...</Text>
-      </SafeAreaView>
+      </View>
     );
   }
 
   if (!isAuthenticated || !user || user.role !== 'user') {
     return (
-      <SafeAreaView className="bg-background flex-1 items-center justify-center p-6">
-        <View className="items-center gap-4">
-          <Icon as={Package} size={40} className="text-muted-foreground" />
-          <Text className="text-muted-foreground text-center text-sm">
-            Sign in to view your orders
-          </Text>
-          <Link href="/(auth)/sign-in" asChild>
-            <Button className="h-12 rounded-2xl">
-              <Text className="text-primary-foreground font-semibold">Sign In</Text>
-            </Button>
-          </Link>
+      <View className="bg-background flex-1 items-center justify-center gap-4 p-6">
+        <View className="bg-muted size-16 items-center justify-center rounded-full">
+          <Icon as={Package} size={32} className="text-muted-foreground" />
         </View>
-      </SafeAreaView>
+        <Text className="text-muted-foreground text-center text-sm">
+          Sign in to view your orders
+        </Text>
+        <Link href="/(auth)/sign-in" asChild>
+          <Button className="h-12 rounded-2xl">
+            <Text className="text-primary-foreground font-semibold">Sign In</Text>
+          </Button>
+        </Link>
+      </View>
     );
   }
 
   return (
-    <SafeAreaView className="bg-background flex-1" edges={['top']}>
-      <View className="border-border border-b px-5 py-3">
+    <View className="bg-background flex-1">
+      <View className="bg-card border-border items-center justify-center border-b px-5 py-4">
         <Text className="text-foreground text-lg font-bold">My Orders</Text>
       </View>
       <ScrollView contentContainerClassName="p-5 pb-8" showsVerticalScrollIndicator={false}>
         {orders.length === 0 ? (
-          <View className="items-center justify-center py-16">
-            <Icon as={Package} size={48} className="text-muted-foreground" />
-            <Text className="text-foreground mt-3 text-base font-semibold">No orders yet</Text>
-            <Text className="text-muted-foreground mt-1 text-sm">
+          <View className="items-center justify-center gap-3 py-16">
+            <View className="bg-muted size-16 items-center justify-center rounded-full">
+              <Icon as={Package} size={32} className="text-muted-foreground" />
+            </View>
+            <Text className="text-foreground text-base font-semibold">No orders yet</Text>
+            <Text className="text-muted-foreground text-sm">
               Your order history will appear here
             </Text>
           </View>
@@ -138,6 +139,6 @@ export default function OrdersScreen() {
           </View>
         )}
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }

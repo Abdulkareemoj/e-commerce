@@ -4,7 +4,6 @@ import { Text } from '@/components/ui/text';
 import { Icon } from '@/components/ui/icon';
 import { Heart } from 'lucide-react-native';
 import { ScrollView, View, Platform } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { ProductCard } from '@/components/ProductCard';
 import { useWishlist } from '@/hooks/useWishlist';
 import { Link } from 'expo-router';
@@ -18,15 +17,15 @@ export default function FavoritesScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView className="bg-background flex-1 items-center justify-center p-4">
+      <View className="bg-background flex-1 items-center justify-center p-4">
         <Text className="text-muted-foreground">Loading wishlist...</Text>
-      </SafeAreaView>
+      </View>
     );
   }
 
   if (items.length === 0) {
     return (
-      <SafeAreaView className="bg-background flex-1 items-center justify-center p-6">
+      <View className="bg-background flex-1 items-center justify-center p-6">
         <View className="items-center gap-4">
           <View className="bg-secondary size-24 items-center justify-center rounded-full">
             <Icon as={Heart} size={40} className="text-muted-foreground" />
@@ -43,12 +42,12 @@ export default function FavoritesScreen() {
             </Button>
           </Link>
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
   return (
-    <SafeAreaView className="bg-background flex-1">
+    <View className="bg-background flex-1">
       <ScrollView contentContainerClassName="p-5 pb-8">
         <View className="mb-4 flex-row items-center justify-between">
           <Text className="text-foreground text-xl font-bold">Favorites</Text>
@@ -64,6 +63,6 @@ export default function FavoritesScreen() {
           ))}
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }

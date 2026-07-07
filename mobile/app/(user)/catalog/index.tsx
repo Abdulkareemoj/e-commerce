@@ -5,7 +5,6 @@ import { ProductCard } from '@/components/ProductCard';
 import { Grid } from 'lucide-react-native';
 import * as React from 'react';
 import { ScrollView, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Separator } from '@/components/ui/separator';
 import { useWindowDimensions } from 'react-native';
 import { api } from '@/lib/api';
@@ -73,7 +72,7 @@ export default function CatalogScreen() {
   }, []);
 
   return (
-    <SafeAreaView className="bg-background flex-1">
+    <View className="bg-background flex-1">
       <View className="flex-1 flex-row">
         {/* Web Sidebar */}
         {isWeb && <WebFilterSidebar />}
@@ -121,6 +120,6 @@ export default function CatalogScreen() {
           </ScrollView>
         </View>
       </View>
-    </SafeAreaView>
+    </View>
   );
 }

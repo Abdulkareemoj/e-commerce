@@ -12,7 +12,6 @@ import {
   NativeScrollEvent,
   Pressable,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { formatCurrency } from '@/lib/money';
 import { useCart } from '@/hooks/useCart';
@@ -301,17 +300,17 @@ export default function ProductDetailScreen() {
 
   if (loading) {
     return (
-      <SafeAreaView className="bg-background flex-1 items-center justify-center">
+      <View className="bg-background flex-1 items-center justify-center">
         <Text className="text-muted-foreground">Loading product...</Text>
-      </SafeAreaView>
+      </View>
     );
   }
 
   if (!product) {
     return (
-      <SafeAreaView className="bg-background flex-1 items-center justify-center">
+      <View className="bg-background flex-1 items-center justify-center">
         <Text className="text-muted-foreground">Product not found.</Text>
-      </SafeAreaView>
+      </View>
     );
   }
 
@@ -324,139 +323,137 @@ export default function ProductDetailScreen() {
   };
 
   return (
-    <SafeAreaView className="bg-background flex-1" edges={['top']}>
-      <View className="flex-1">
-        <ScrollView contentContainerClassName="pb-32" showsVerticalScrollIndicator={false}>
-          <View className="relative">
-            <ProductImageGallery images={displayImages} />
+    <View className="bg-background flex-1">
+      <ScrollView contentContainerClassName="pb-32" showsVerticalScrollIndicator={false}>
+        <View className="relative">
+          <ProductImageGallery images={displayImages} />
 
-            <View
-              className="absolute top-4 right-4 left-4 flex-row justify-between"
-              style={{ zIndex: 10 }}>
-              <Pressable
-                onPress={() => router.back()}
-                className="bg-background/80 shadow-soft size-10 items-center justify-center rounded-full backdrop-blur-sm">
-                <Icon as={ArrowLeft} size={20} className="text-foreground" />
-              </Pressable>
-
-              <View className="flex-row gap-2">
-                <Pressable
-                  onPress={() => toggle(product.id)}
-                  className="bg-background/80 shadow-soft size-10 items-center justify-center rounded-full backdrop-blur-sm">
-                  <Icon
-                    as={Heart}
-                    size={20}
-                    className={isWishlisted(product.id) ? 'text-rose-500' : 'text-foreground'}
-                    {...(isWishlisted(product.id) ? { fill: 'currentColor' } : {})}
-                  />
-                </Pressable>
-                <Pressable className="bg-background/80 shadow-soft size-10 items-center justify-center rounded-full backdrop-blur-sm">
-                  <Icon as={Share2} size={20} className="text-foreground" />
-                </Pressable>
-              </View>
-            </View>
-          </View>
-
-          <View className={`gap-5 ${isWeb ? 'mx-auto max-w-3xl px-8 pt-6' : 'px-5 pt-4'}`}>
-            <View className="gap-2">
-              <View className="flex-row items-center justify-between">
-                <Text className="text-foreground text-xl font-bold">{product.title}</Text>
-                <View className="rounded-full bg-emerald-500/10 px-2.5 py-1">
-                  <Text className="text-xs font-semibold text-emerald-600">On sale</Text>
-                </View>
-              </View>
-
-              <View className="flex-row items-center gap-3">
-                <View className="flex-row items-center gap-1">
-                  <Icon as={Star} size={16} className="text-amber-400" fill="currentColor" />
-                  <Text className="text-foreground text-sm font-medium">
-                    {product.rating ? product.rating.toFixed(1) : 'New'}
-                  </Text>
-                </View>
-                {product.rating && (
-                  <Text className="text-muted-foreground text-sm">
-                    • {((product.rating / 5) * 100).toFixed(0)}% positive
-                  </Text>
-                )}
-              </View>
-            </View>
-
-            {product.variants && product.variants.length > 0 && (
-              <ProductVariantSelector
-                variants={product.variants}
-                selectedVariant={selectedVariant}
-                onSelect={setSelectedVariant}
-              />
-            )}
-
-            <View className="bg-card shadow-card gap-2 rounded-2xl p-4">
-              <Text className="text-muted-foreground text-sm">Description</Text>
-              <Text className="text-foreground/80 text-sm leading-relaxed">
-                {product.description || 'No description available for this product.'}
-              </Text>
-            </View>
-
-            <View className="bg-card shadow-card flex-row items-center gap-2 rounded-2xl p-4">
-              <Icon as={Truck} size={18} className="text-primary" />
-              <Text className="text-foreground text-sm">Free delivery on orders over $50</Text>
-            </View>
-
-            <Tabs value="reviews" onValueChange={() => {}}>
-              <TabsList className="w-full rounded-2xl">
-                <TabsTrigger value="reviews" className="flex-1 rounded-xl">
-                  <Text>Reviews</Text>
-                </TabsTrigger>
-                <TabsTrigger value="specs" className="flex-1 rounded-xl">
-                  <Text>Specs</Text>
-                </TabsTrigger>
-              </TabsList>
-              <TabsContent value="reviews" className="mt-4">
-                <ProductReviews productId={product.id} />
-              </TabsContent>
-              <TabsContent value="specs" className="mt-4">
-                <View className="bg-card shadow-card gap-3 rounded-2xl p-4">
-                  <View className="flex-row justify-between">
-                    <Text className="text-muted-foreground text-sm">SKU</Text>
-                    <Text className="text-foreground text-sm font-medium">
-                      {selectedVariant?.sku || 'N/A'}
-                    </Text>
-                  </View>
-                  <View className="bg-border h-px" />
-                  <View className="flex-row justify-between">
-                    <Text className="text-muted-foreground text-sm">Stock</Text>
-                    <Text className="text-foreground text-sm font-medium">
-                      {effectiveStock > 0 ? `${effectiveStock} available` : 'Out of stock'}
-                    </Text>
-                  </View>
-                </View>
-              </TabsContent>
-            </Tabs>
-          </View>
-        </ScrollView>
-
-        <View
-          className="border-border bg-card/95 border-t backdrop-blur-sm"
-          style={{ paddingBottom: 16 }}>
           <View
-            className={`flex-row items-center gap-4 ${isWeb ? 'mx-auto max-w-3xl px-8' : 'px-5'}`}>
-            <View className="flex-1">
-              <Text className="text-muted-foreground text-xs">Price</Text>
-              <Text className="text-primary text-2xl font-bold">
-                {formatCurrency(effectivePrice, product.currency)}
-              </Text>
+            className="absolute top-4 right-4 left-4 flex-row justify-between"
+            style={{ zIndex: 10 }}>
+            <Pressable
+              onPress={() => router.back()}
+              className="bg-background/80 shadow-soft size-10 items-center justify-center rounded-full backdrop-blur-sm">
+              <Icon as={ArrowLeft} size={20} className="text-foreground" />
+            </Pressable>
+
+            <View className="flex-row gap-2">
+              <Pressable
+                onPress={() => toggle(product.id)}
+                className="bg-background/80 shadow-soft size-10 items-center justify-center rounded-full backdrop-blur-sm">
+                <Icon
+                  as={Heart}
+                  size={20}
+                  className={isWishlisted(product.id) ? 'text-rose-500' : 'text-foreground'}
+                  {...(isWishlisted(product.id) ? { fill: 'currentColor' } : {})}
+                />
+              </Pressable>
+              <Pressable className="bg-background/80 shadow-soft size-10 items-center justify-center rounded-full backdrop-blur-sm">
+                <Icon as={Share2} size={20} className="text-foreground" />
+              </Pressable>
             </View>
-            <Button
-              className="h-12 flex-1 rounded-2xl"
-              onPress={handleAddToCart}
-              disabled={effectiveStock <= 0}>
-              <Icon as={ShoppingCart} size={18} />
-              <Text className="text-primary-foreground font-semibold">
-                {effectiveStock <= 0 ? 'Out of Stock' : 'Add to Cart'}
-              </Text>
-            </Button>
           </View>
         </View>
+
+        <View className={`gap-5 ${isWeb ? 'mx-auto max-w-3xl px-8 pt-6' : 'px-5 pt-4'}`}>
+          <View className="gap-2">
+            <View className="flex-row items-center justify-between">
+              <Text className="text-foreground text-xl font-bold">{product.title}</Text>
+              <View className="rounded-full bg-emerald-500/10 px-2.5 py-1">
+                <Text className="text-xs font-semibold text-emerald-600">On sale</Text>
+              </View>
+            </View>
+
+            <View className="flex-row items-center gap-3">
+              <View className="flex-row items-center gap-1">
+                <Icon as={Star} size={16} className="text-amber-400" fill="currentColor" />
+                <Text className="text-foreground text-sm font-medium">
+                  {product.rating ? product.rating.toFixed(1) : 'New'}
+                </Text>
+              </View>
+              {product.rating && (
+                <Text className="text-muted-foreground text-sm">
+                  • {((product.rating / 5) * 100).toFixed(0)}% positive
+                </Text>
+              )}
+            </View>
+          </View>
+
+          {product.variants && product.variants.length > 0 && (
+            <ProductVariantSelector
+              variants={product.variants}
+              selectedVariant={selectedVariant}
+              onSelect={setSelectedVariant}
+            />
+          )}
+
+          <View className="bg-card shadow-card gap-2 rounded-2xl p-4">
+            <Text className="text-muted-foreground text-sm">Description</Text>
+            <Text className="text-foreground/80 text-sm leading-relaxed">
+              {product.description || 'No description available for this product.'}
+            </Text>
+          </View>
+
+          <View className="bg-card shadow-card flex-row items-center gap-2 rounded-2xl p-4">
+            <Icon as={Truck} size={18} className="text-primary" />
+            <Text className="text-foreground text-sm">Free delivery on orders over $50</Text>
+          </View>
+
+          <Tabs value="reviews" onValueChange={() => {}}>
+            <TabsList className="w-full rounded-2xl">
+              <TabsTrigger value="reviews" className="flex-1 rounded-xl">
+                <Text>Reviews</Text>
+              </TabsTrigger>
+              <TabsTrigger value="specs" className="flex-1 rounded-xl">
+                <Text>Specs</Text>
+              </TabsTrigger>
+            </TabsList>
+            <TabsContent value="reviews" className="mt-4">
+              <ProductReviews productId={product.id} />
+            </TabsContent>
+            <TabsContent value="specs" className="mt-4">
+              <View className="bg-card shadow-card gap-3 rounded-2xl p-4">
+                <View className="flex-row justify-between">
+                  <Text className="text-muted-foreground text-sm">SKU</Text>
+                  <Text className="text-foreground text-sm font-medium">
+                    {selectedVariant?.sku || 'N/A'}
+                  </Text>
+                </View>
+                <View className="bg-border h-px" />
+                <View className="flex-row justify-between">
+                  <Text className="text-muted-foreground text-sm">Stock</Text>
+                  <Text className="text-foreground text-sm font-medium">
+                    {effectiveStock > 0 ? `${effectiveStock} available` : 'Out of stock'}
+                  </Text>
+                </View>
+              </View>
+            </TabsContent>
+          </Tabs>
+        </View>
+      </ScrollView>
+
+      <View
+        className="border-border bg-card/95 border-t backdrop-blur-sm"
+        style={{ paddingBottom: 16 }}>
+        <View
+          className={`flex-row items-center gap-4 ${isWeb ? 'mx-auto max-w-3xl px-8' : 'px-5'}`}>
+          <View className="flex-1">
+            <Text className="text-muted-foreground text-xs">Price</Text>
+            <Text className="text-primary text-2xl font-bold">
+              {formatCurrency(effectivePrice, product.currency)}
+            </Text>
+          </View>
+          <Button
+            className="h-12 flex-1 rounded-2xl"
+            onPress={handleAddToCart}
+            disabled={effectiveStock <= 0}>
+            <Icon as={ShoppingCart} size={18} />
+            <Text className="text-primary-foreground font-semibold">
+              {effectiveStock <= 0 ? 'Out of Stock' : 'Add to Cart'}
+            </Text>
+          </Button>
+        </View>
       </View>
-    </SafeAreaView>
+    </View>
   );
 }

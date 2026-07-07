@@ -7,7 +7,6 @@ import { Uniwind, useUniwind } from 'uniwind';
 import { Moon, Sun, Lock, Globe, ChevronRight } from 'lucide-react-native';
 import * as React from 'react';
 import { ScrollView, View, Pressable } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Link } from 'expo-router';
 import { useAuthStore } from '@/lib/authStore';
 
@@ -58,7 +57,7 @@ function SettingItem({
         <Icon as={icon} size={24} className="text-primary" />
         <View className="flex-1">
           <Text className="text-base font-medium">{title}</Text>
-          {description && <Text className="text-sm text-muted-foreground">{description}</Text>}
+          {description && <Text className="text-muted-foreground text-sm">{description}</Text>}
         </View>
       </View>
       {renderAction()}
@@ -70,8 +69,8 @@ export default function SettingsScreen() {
   const { user } = useAuthStore();
 
   return (
-    <SafeAreaView className="flex-1 bg-background">
-      <View className="border-b border-border p-4">
+    <View className="bg-background flex-1">
+      <View className="border-border border-b p-4">
         <Text variant="h2" className="font-bold">
           Settings
         </Text>
@@ -79,22 +78,22 @@ export default function SettingsScreen() {
       <ScrollView contentContainerClassName="p-4 gap-6">
         {/* Profile Summary */}
         {user && (
-          <View className="flex-row items-center gap-4 rounded-xl bg-muted/30 p-4">
-            <View className="size-12 items-center justify-center rounded-full bg-primary/20">
-              <Text className="text-xl font-bold text-primary">
+          <View className="bg-muted/30 flex-row items-center gap-4 rounded-xl p-4">
+            <View className="bg-primary/20 size-12 items-center justify-center rounded-full">
+              <Text className="text-primary text-xl font-bold">
                 {user.name?.[0]?.toUpperCase() || 'U'}
               </Text>
             </View>
             <View className="flex-1">
               <Text className="text-lg font-bold">{user.name}</Text>
-              <Text className="text-sm text-muted-foreground">{user.email}</Text>
+              <Text className="text-muted-foreground text-sm">{user.email}</Text>
             </View>
           </View>
         )}
 
         {/* Appearance */}
         <View className="gap-2">
-          <Text variant="large" className="font-semibold text-muted-foreground">
+          <Text variant="large" className="text-muted-foreground font-semibold">
             Appearance
           </Text>
           <SettingItem
@@ -110,7 +109,7 @@ export default function SettingsScreen() {
 
         {/* Security */}
         <View className="gap-2">
-          <Text variant="large" className="font-semibold text-muted-foreground">
+          <Text variant="large" className="text-muted-foreground font-semibold">
             Security
           </Text>
           <SettingItem
@@ -131,7 +130,7 @@ export default function SettingsScreen() {
 
         {/* Legal */}
         <View className="gap-2">
-          <Text variant="large" className="font-semibold text-muted-foreground">
+          <Text variant="large" className="text-muted-foreground font-semibold">
             Legal & Info
           </Text>
           <Link href="/(user)/settings/privacy" asChild>
@@ -140,9 +139,9 @@ export default function SettingsScreen() {
           <Link href="/(user)/settings/terms" asChild>
             <SettingItem title="Terms of Service" icon={Lock} action="link" />
           </Link>
-          <Text className="mt-4 text-center text-xs text-muted-foreground">App Version 1.0.0</Text>
+          <Text className="text-muted-foreground mt-4 text-center text-xs">App Version 1.0.0</Text>
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }

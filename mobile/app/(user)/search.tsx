@@ -1,6 +1,5 @@
 import * as React from 'react';
 import { ScrollView, View, Pressable, Platform } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text } from '@/components/ui/text';
 import { Icon } from '@/components/ui/icon';
 import { api } from '@/lib/api';
@@ -65,8 +64,8 @@ export default function SearchScreen() {
   );
 
   return (
-    <SafeAreaView className="bg-background flex-1" edges={['top']}>
-      <View className="px-5 pt-2 pb-3">
+    <View className="bg-background flex-1">
+      <View className="bg-card border-border border-b px-5 pt-3 pb-3">
         <SearchBar
           value={query}
           onChangeText={setQuery}
@@ -76,7 +75,7 @@ export default function SearchScreen() {
         />
       </View>
 
-      <ScrollView contentContainerClassName="px-5 pb-8" showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerClassName="px-5 py-4 pb-8" showsVerticalScrollIndicator={false}>
         {!isSearching ? (
           <View className="gap-6">
             {recentSearches.length > 0 && (
@@ -124,17 +123,17 @@ export default function SearchScreen() {
             </View>
 
             {loading ? (
-              <View className="items-center justify-center py-12">
+              <View className="items-center justify-center gap-2 py-12">
                 <Icon as={SearchIcon} size={32} className="text-muted-foreground" />
-                <Text className="text-muted-foreground mt-2 text-sm">Searching...</Text>
+                <Text className="text-muted-foreground text-sm">Searching...</Text>
               </View>
             ) : searchResults.length === 0 ? (
-              <View className="items-center justify-center py-12">
-                <Icon as={SearchIcon} size={40} className="text-muted-foreground" />
-                <Text className="text-foreground mt-3 text-base font-semibold">
-                  No results found
-                </Text>
-                <Text className="text-muted-foreground mt-1 text-sm">
+              <View className="items-center justify-center gap-3 py-12">
+                <View className="bg-muted size-16 items-center justify-center rounded-full">
+                  <Icon as={SearchIcon} size={32} className="text-muted-foreground" />
+                </View>
+                <Text className="text-foreground text-base font-semibold">No results found</Text>
+                <Text className="text-muted-foreground text-sm">
                   Try different keywords or check spelling
                 </Text>
               </View>
@@ -152,6 +151,6 @@ export default function SearchScreen() {
           </View>
         )}
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }

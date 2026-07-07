@@ -102,12 +102,12 @@ export default function HomeScreen() {
             {user?.name ? `, ${user.name.split(' ')[0]}` : ''}
           </Text>
 
-          <SearchBar
+          {/* <SearchBar
             value={searchQuery}
             onChangeText={setSearchQuery}
             onSubmit={handleSearchSubmit}
             placeholder="Search products..."
-          />
+          /> */}
         </View>
 
         <View className="px-4">

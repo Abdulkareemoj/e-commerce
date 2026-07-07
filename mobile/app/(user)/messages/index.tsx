@@ -2,7 +2,6 @@ import React, { useEffect } from 'react';
 import { Text } from '@/components/ui/text';
 import { ChatListItem } from '@/components/messages/ChatListItem';
 import { View, ScrollView, RefreshControl } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { MessageSquare } from 'lucide-react-native';
 import { Icon } from '@/components/ui/icon';
 import { useRouter } from 'expo-router';
@@ -27,11 +26,9 @@ export default function UserMessagesScreen() {
       message="Sign in as a buyer to view your messages."
       requiredRole="user"
       roleMessage="Only buyers can access messages.">
-      <SafeAreaView className="bg-background flex-1" edges={['top']}>
-        <View className="border-border/50 border-b px-4 py-3">
-          <Text variant="h3" className="font-bold">
-            Messages
-          </Text>
+      <View className="bg-background flex-1">
+        <View className="bg-card border-border items-center justify-center border-b px-5 py-4">
+          <Text className="text-foreground text-lg font-bold">Messages</Text>
         </View>
         <ScrollView
           className="flex-1"
@@ -39,9 +36,11 @@ export default function UserMessagesScreen() {
             <RefreshControl refreshing={isLoading} onRefresh={() => fetchConversations('user')} />
           }>
           {conversations.length === 0 ? (
-            <View className="mt-20 items-center gap-2">
-              <Icon as={MessageSquare} size={32} className="text-muted-foreground" />
-              <Text className="text-muted-foreground">No conversations yet.</Text>
+            <View className="mt-20 items-center gap-3">
+              <View className="bg-muted size-16 items-center justify-center rounded-full">
+                <Icon as={MessageSquare} size={32} className="text-muted-foreground" />
+              </View>
+              <Text className="text-muted-foreground">No conversations yet</Text>
             </View>
           ) : (
             conversations.map((conv) => (
@@ -62,7 +61,7 @@ export default function UserMessagesScreen() {
             ))
           )}
         </ScrollView>
-      </SafeAreaView>
+      </View>
     </AuthGuard>
   );
 }

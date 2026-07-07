@@ -5,7 +5,6 @@ import { Separator } from '@/components/ui/separator';
 import { X } from 'lucide-react-native';
 import * as React from 'react';
 import { ScrollView, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 
 function FilterSection({ title }: { title: string }) {
@@ -33,7 +32,7 @@ export default function CatalogFilterScreen() {
   };
 
   return (
-    <SafeAreaView className="bg-background flex-1">
+    <View className="bg-background flex-1">
       {/* Header */}
       <View className="border-border flex-row items-center justify-between border-b p-4">
         <Button variant="ghost" size="sm" onPress={handleClear}>
@@ -63,6 +62,6 @@ export default function CatalogFilterScreen() {
           <Text>Show Results</Text>
         </Button>
       </View>
-    </SafeAreaView>
+    </View>
   );
 }

@@ -4,7 +4,6 @@ import { Icon } from '@/components/ui/icon';
 import { MapPin, Truck, CreditCard, Check, ChevronLeft } from 'lucide-react-native';
 import * as React from 'react';
 import { ScrollView, View, Pressable } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useCart } from '@/hooks/useCart';
 import { api } from '@/lib/api';
 import { router } from 'expo-router';
@@ -147,8 +146,8 @@ export default function CheckoutScreen() {
   };
 
   return (
-    <SafeAreaView className="bg-background flex-1" edges={['top']}>
-      <View className="border-border flex-row items-center gap-3 border-b px-5 py-3">
+    <View className="bg-background flex-1">
+      <View className="bg-card border-border flex-row items-center gap-3 border-b px-5 py-3">
         <Pressable
           onPress={() => router.back()}
           className="bg-secondary size-10 items-center justify-center rounded-xl">
@@ -176,7 +175,7 @@ export default function CheckoutScreen() {
           </View>
         </View>
 
-        <View className="bg-card shadow-card gap-4 rounded-2xl p-5">
+        <View className="bg-card border-border gap-4 rounded-2xl border p-5">
           <Text className="text-foreground text-base font-semibold">Order Summary</Text>
           <View className="gap-3">
             <View className="flex-row items-center justify-between">
@@ -189,11 +188,11 @@ export default function CheckoutScreen() {
             </View>
             <View className="flex-row items-center justify-between">
               <Text className="text-muted-foreground text-sm">Shipping</Text>
-              <Text className="text-foreground text-sm font-medium">
+              <Text className="text-sm font-medium">
                 {shippingCents === 0 ? (
-                  <Text className="text-emerald-500">Free</Text>
+                  <Text className="text-success">Free</Text>
                 ) : (
-                  formatCurrency(shippingCents, 'USD')
+                  <Text className="text-foreground">{formatCurrency(shippingCents, 'USD')}</Text>
                 )}
               </Text>
             </View>
@@ -224,6 +223,6 @@ export default function CheckoutScreen() {
           </Text>
         </Button>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }

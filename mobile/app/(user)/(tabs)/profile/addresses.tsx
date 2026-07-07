@@ -3,7 +3,6 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { ScrollView, View, Pressable } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text } from '@/components/ui/text';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -11,7 +10,14 @@ import { Card } from '@/components/ui/card';
 import { Icon } from '@/components/ui/icon';
 import { FormInput } from '@/components/ui/form-input';
 import { FieldSet, Field } from '@/components/ui/field';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogClose,
+} from '@/components/ui/dialog';
 import { api } from '@/lib/api';
 import { MapPin, Edit, Trash2, Plus, Check } from 'lucide-react-native';
 
@@ -61,14 +67,22 @@ function AddressForm({
 
   const [isDefault, setIsDefault] = React.useState(address?.isDefault || false);
 
-  const onSubmit = React.useCallback((data: AddressData) => {
-    onSave({ ...data, type: address?.type || 'shipping', isDefault });
-  }, [onSave, address, isDefault]);
+  const onSubmit = React.useCallback(
+    (data: AddressData) => {
+      onSave({ ...data, type: address?.type || 'shipping', isDefault });
+    },
+    [onSave, address, isDefault]
+  );
 
   return (
     <FieldSet>
       <FormInput control={control} name="line1" label="Street Address" placeholder="123 Main St" />
-      <FormInput control={control} name="line2" label="Apt / Suite (optional)" placeholder="Apt 4B" />
+      <FormInput
+        control={control}
+        name="line2"
+        label="Apt / Suite (optional)"
+        placeholder="Apt 4B"
+      />
       <View className="flex-row gap-3">
         <View className="flex-1">
           <FormInput control={control} name="city" label="City" placeholder="Los Angeles" />
@@ -79,24 +93,32 @@ function AddressForm({
       </View>
       <View className="flex-row gap-3">
         <View className="flex-1">
-          <FormInput control={control} name="postalCode" label="Postal Code" placeholder="90210" keyboardType="number-pad" />
+          <FormInput
+            control={control}
+            name="postalCode"
+            label="Postal Code"
+            placeholder="90210"
+            keyboardType="number-pad"
+          />
         </View>
         <View className="w-24">
           <FormInput control={control} name="country" label="Country" placeholder="US" />
         </View>
       </View>
-      <Pressable
-        onPress={() => setIsDefault(!isDefault)}
-        className="flex-row items-center gap-2"
-      >
-        <View className={`size-5 rounded border items-center justify-center ${isDefault ? 'bg-primary border-primary' : 'border-muted-foreground'}`}>
+      <Pressable onPress={() => setIsDefault(!isDefault)} className="flex-row items-center gap-2">
+        <View
+          className={`size-5 items-center justify-center rounded border ${isDefault ? 'bg-primary border-primary' : 'border-muted-foreground'}`}>
           {isDefault && <Icon as={Check} size={14} className="text-primary-foreground" />}
         </View>
         <Text className="text-sm">Set as default address</Text>
       </Pressable>
       <View className="flex-row gap-3 pt-2">
-        <Button variant="outline" className="flex-1" onPress={onCancel}><Text>Cancel</Text></Button>
-        <Button className="flex-1" onPress={handleSubmit(onSubmit)}><Text>Save</Text></Button>
+        <Button variant="outline" className="flex-1" onPress={onCancel}>
+          <Text>Cancel</Text>
+        </Button>
+        <Button className="flex-1" onPress={handleSubmit(onSubmit)}>
+          <Text>Save</Text>
+        </Button>
       </View>
     </FieldSet>
   );
@@ -119,7 +141,9 @@ export default function AddressesScreen() {
     }
   }
 
-  React.useEffect(() => { fetchAddresses(); }, []);
+  React.useEffect(() => {
+    fetchAddresses();
+  }, []);
 
   async function handleSave(form: any) {
     try {
@@ -146,20 +170,28 @@ export default function AddressesScreen() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-background">
-      <View className="flex-row items-center justify-between border-b border-border p-4">
-        <Text variant="h2" className="font-bold">My Addresses</Text>
+    <View className="bg-background flex-1">
+      <View className="bg-card border-border flex-row items-center justify-between border-b px-5 py-4">
+        <Text className="text-foreground text-lg font-bold">My Addresses</Text>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
-            <Button size="sm"><Icon as={Plus} size={16} /><Text>Add New</Text></Button>
+            <Button size="sm" className="rounded-xl">
+              <Icon as={Plus} size={16} className="text-primary-foreground" />
+              <Text className="text-primary-foreground font-semibold">Add New</Text>
+            </Button>
           </DialogTrigger>
           <DialogContent className="w-full max-w-md">
-            <DialogHeader><DialogTitle>{editingAddress ? 'Edit Address' : 'Add Address'}</DialogTitle></DialogHeader>
+            <DialogHeader>
+              <DialogTitle>{editingAddress ? 'Edit Address' : 'Add Address'}</DialogTitle>
+            </DialogHeader>
             <AddressForm
               key={editingAddress?.id || 'new'}
               address={editingAddress}
               onSave={handleSave}
-              onCancel={() => { setDialogOpen(false); setEditingAddress(null); }}
+              onCancel={() => {
+                setDialogOpen(false);
+                setEditingAddress(null);
+              }}
             />
           </DialogContent>
         </Dialog>
@@ -167,44 +199,67 @@ export default function AddressesScreen() {
 
       <ScrollView contentContainerClassName="p-4 gap-4">
         {loading ? (
-          <Text className="text-center text-muted-foreground mt-10">Loading addresses...</Text>
+          <Text className="text-muted-foreground mt-10 text-center">Loading addresses...</Text>
         ) : addresses.length === 0 ? (
-          <View className="items-center mt-10 gap-3">
-            <Text className="text-muted-foreground">No addresses yet.</Text>
-            <Button variant="outline"><Icon as={Plus} size={16} /><Text>Add an Address</Text></Button>
+          <View className="mt-10 items-center gap-3">
+            <Icon as={MapPin} size={48} className="text-muted-foreground" />
+            <Text className="text-muted-foreground">No addresses yet</Text>
+            <Button variant="outline" className="rounded-xl">
+              <Icon as={Plus} size={16} />
+              <Text>Add an Address</Text>
+            </Button>
           </View>
         ) : (
           addresses.map((addr) => (
-            <Card key={addr.id} className="gap-3 border-2 border-border/50 p-4">
+            <Card key={addr.id} className="bg-card border-border rounded-2xl border p-4">
               <View className="flex-row items-start justify-between">
-                <View className="flex-row items-center gap-2 flex-1">
-                  <Icon as={MapPin} size={20} className="text-primary" />
+                <View className="flex-1 flex-row items-center gap-3">
+                  <View className="bg-primary/10 size-10 items-center justify-center rounded-xl">
+                    <Icon as={MapPin} size={18} className="text-primary" />
+                  </View>
                   <View className="flex-1">
                     <View className="flex-row items-center gap-2">
-                      <Text className="font-semibold capitalize">{addr.type}</Text>
-                      {addr.isDefault && <Badge variant="default"><Text className="text-xs font-medium">Default</Text></Badge>}
+                      <Text className="text-foreground font-semibold capitalize">{addr.type}</Text>
+                      {addr.isDefault && (
+                        <View className="bg-primary/10 rounded-full px-2 py-0.5">
+                          <Text className="text-primary text-[10px] font-semibold">Default</Text>
+                        </View>
+                      )}
                     </View>
+                    <Text className="text-muted-foreground mt-1 text-sm">
+                      {addr.line1}
+                      {addr.line2 ? `, ${addr.line2}` : ''}
+                    </Text>
+                    <Text className="text-muted-foreground text-sm">
+                      {addr.city}
+                      {addr.state ? `, ${addr.state}` : ''} {addr.postalCode}, {addr.country}
+                    </Text>
                   </View>
                 </View>
-                <View className="flex-row gap-2">
-                  <Button variant="ghost" size="icon" onPress={() => { setEditingAddress(addr); setDialogOpen(true); }}>
-                    <Icon as={Edit} size={18} />
+                <View className="flex-row gap-1">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="size-9 rounded-xl"
+                    onPress={() => {
+                      setEditingAddress(addr);
+                      setDialogOpen(true);
+                    }}>
+                    <Icon as={Edit} size={16} className="text-muted-foreground" />
                   </Button>
-                  <Button variant="ghost" size="icon" onPress={() => handleDelete(addr.id)}>
-                    <Icon as={Trash2} size={18} className="text-destructive" />
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="size-9 rounded-xl"
+                    onPress={() => handleDelete(addr.id)}>
+                    <Icon as={Trash2} size={16} className="text-destructive" />
                   </Button>
                 </View>
               </View>
-              <Text className="text-sm text-muted-foreground">
-                {addr.line1}{addr.line2 ? `, ${addr.line2}` : ''}
-              </Text>
-              <Text className="text-sm text-muted-foreground">
-                {addr.city}{addr.state ? `, ${addr.state}` : ''} {addr.postalCode}, {addr.country}
-              </Text>
             </Card>
           ))
         )}
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }

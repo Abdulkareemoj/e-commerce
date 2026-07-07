@@ -21,7 +21,6 @@ import {
 } from 'lucide-react-native';
 import * as React from 'react';
 import { ScrollView, View, Pressable } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Link, router } from 'expo-router';
 import { api } from '@/lib/api';
 import { AuthGuard } from '@/components/AuthGuard';
@@ -72,7 +71,7 @@ export default function ProfileScreen() {
 
   return (
     <AuthGuard icon={User} message="Sign in to view your profile.">
-      <SafeAreaView className="bg-background flex-1">
+      <View className="bg-background flex-1">
         <ScrollView contentContainerClassName="pb-8 gap-5" showsVerticalScrollIndicator={false}>
           <View className="gap-5 px-5 pt-4">
             <Text className="text-foreground text-xl font-bold">Profile</Text>
@@ -218,7 +217,7 @@ export default function ProfileScreen() {
             </Pressable>
           </View>
         </ScrollView>
-      </SafeAreaView>
+      </View>
     </AuthGuard>
   );
 }

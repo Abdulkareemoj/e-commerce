@@ -4,7 +4,6 @@ import { ProductCard } from '@/components/ProductCard';
 import { CategoryChips } from '@/components/CategoryChips';
 import * as React from 'react';
 import { ScrollView, View, Platform, Pressable } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useWindowDimensions } from 'react-native';
 import { api } from '@/lib/api';
 import { Product, Category } from '@/types';
@@ -56,7 +55,7 @@ export default function CategoriesScreen() {
   }, []);
 
   return (
-    <SafeAreaView className="bg-background flex-1">
+    <View className="bg-background flex-1">
       <View className="flex-1 flex-row">
         {isWeb && (
           <View className="border-border bg-card hidden w-64 flex-col gap-4 border-r p-4 lg:flex">
@@ -139,6 +138,6 @@ export default function CategoriesScreen() {
           </ScrollView>
         </View>
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
