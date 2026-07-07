@@ -1,6 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { View, ScrollView, Pressable, Animated, Dimensions, ActivityIndicator } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { View, ScrollView, Pressable, Dimensions, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Text } from '@/components/ui/text';
 import { Icon } from '@/components/ui/icon';
@@ -12,9 +11,6 @@ import {
   TrendingUp,
   DollarSign,
   Search,
-  Star,
-  BarChart3,
-  CheckCircle,
   ArrowRight,
   ChevronRight,
 } from 'lucide-react-native';
@@ -23,26 +19,24 @@ import { api } from '@/lib/api';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
-// Slide data
-
 const USER_SLIDES = [
   {
     icon: Search,
     title: 'Discover products',
     body: 'Browse thousands of products from verified vendors, filtered by category, price, and ratings.',
-    accent: '#fbbf24',
+    accent: '#8b5cf6',
   },
   {
     icon: Heart,
     title: 'Save your favorites',
     body: 'Wishlist items you love and get notified when prices drop or stock runs low.',
-    accent: '#f87171',
+    accent: '#ec4899',
   },
   {
     icon: ShoppingBag,
     title: 'Track every order',
     body: 'Real-time order status from purchase to doorstep, with in-app messaging to sellers.',
-    accent: '#34d399',
+    accent: '#10b981',
   },
 ];
 
@@ -51,30 +45,30 @@ const VENDOR_SLIDES = [
     icon: Package,
     title: 'List your products',
     body: 'Upload products with variants, images, and stock levels in minutes. We handle the storefront.',
-    accent: '#fbbf24',
+    accent: '#8b5cf6',
   },
   {
     icon: TrendingUp,
     title: 'Grow your sales',
     body: 'Analytics dashboards show you whats selling, where traffic comes from, and how to optimise.',
-    accent: '#a78bfa',
+    accent: '#f59e0b',
   },
   {
     icon: DollarSign,
     title: 'Get paid fast',
     body: 'Automatic payouts after order completion. Track every transaction in your payout dashboard.',
-    accent: '#34d399',
+    accent: '#10b981',
   },
 ];
 
-// ─── Step 1: Role Select ──────────────────────────────────────────────────────
-
 function RoleSelect({ onSelect }: { onSelect: (role: 'user' | 'vendor') => void }) {
   return (
-    <View className="flex-1 px-6 pt-10 pb-8">
+    <View className="bg-background flex-1 px-6 pt-10 pb-8">
       <View className="mb-12">
-        <Text className="mb-2 text-3xl font-bold tracking-tight text-white">Welcome aboard 👋</Text>
-        <Text className="text-base leading-relaxed text-zinc-400">
+        <Text className="text-foreground mb-2 text-3xl font-bold tracking-tight">
+          Welcome aboard
+        </Text>
+        <Text className="text-muted-foreground text-base leading-relaxed">
           How are you planning to use the marketplace?
         </Text>
       </View>
@@ -82,43 +76,41 @@ function RoleSelect({ onSelect }: { onSelect: (role: 'user' | 'vendor') => void 
       <View className="flex-1 gap-4">
         <Pressable
           onPress={() => onSelect('user')}
-          className="flex-row items-center gap-5 rounded-2xl border border-zinc-800 bg-zinc-900 p-6 active:opacity-75">
-          <View className="h-14 w-14 items-center justify-center rounded-2xl bg-amber-400/15">
-            <Icon as={ShoppingBag} size={28} color="#fbbf24" />
+          className="bg-card border-border flex-row items-center gap-5 rounded-2xl border p-6 active:opacity-75">
+          <View className="bg-primary/10 h-14 w-14 items-center justify-center rounded-2xl">
+            <Icon as={ShoppingBag} size={28} className="text-primary" />
           </View>
           <View className="flex-1">
-            <Text className="mb-0.5 text-lg font-semibold text-white">I want to shop</Text>
-            <Text className="text-sm leading-snug text-zinc-500">
+            <Text className="text-foreground mb-0.5 text-lg font-semibold">I want to shop</Text>
+            <Text className="text-muted-foreground text-sm leading-snug">
               Browse products, save favorites, and track orders.
             </Text>
           </View>
-          <Icon as={ChevronRight} size={20} color="#52525b" />
+          <Icon as={ChevronRight} size={20} className="text-muted-foreground" />
         </Pressable>
 
         <Pressable
           onPress={() => onSelect('vendor')}
-          className="flex-row items-center gap-5 rounded-2xl border border-zinc-800 bg-zinc-900 p-6 active:opacity-75">
-          <View className="h-14 w-14 items-center justify-center rounded-2xl bg-violet-400/15">
-            <Icon as={Store} size={28} color="#a78bfa" />
+          className="bg-card border-border flex-row items-center gap-5 rounded-2xl border p-6 active:opacity-75">
+          <View className="bg-secondary h-14 w-14 items-center justify-center rounded-2xl">
+            <Icon as={Store} size={28} className="text-secondary-foreground" />
           </View>
           <View className="flex-1">
-            <Text className="mb-0.5 text-lg font-semibold text-white">I want to sell</Text>
-            <Text className="text-sm leading-snug text-zinc-500">
+            <Text className="text-foreground mb-0.5 text-lg font-semibold">I want to sell</Text>
+            <Text className="text-muted-foreground text-sm leading-snug">
               List products, manage orders, and get paid.
             </Text>
           </View>
-          <Icon as={ChevronRight} size={20} color="#52525b" />
+          <Icon as={ChevronRight} size={20} className="text-muted-foreground" />
         </Pressable>
       </View>
 
-      <Text className="mt-6 text-center text-xs text-zinc-600">
+      <Text className="text-muted-foreground mt-6 text-center text-xs">
         You can change this later in your account settings.
       </Text>
     </View>
   );
 }
-
-// ─── Step 2: Feature Highlights Carousel ─────────────────────────────────────
 
 function FeatureSlides({
   slides,
@@ -145,7 +137,7 @@ function FeatureSlides({
   const isLast = index === slides.length - 1;
 
   return (
-    <View className="flex-1">
+    <View className="bg-background flex-1">
       <ScrollView
         ref={scrollRef}
         horizontal
@@ -159,22 +151,21 @@ function FeatureSlides({
             style={{ width: SCREEN_WIDTH }}
             className="flex-1 items-center justify-center px-8">
             <View
-              className="mb-8 h-24 w-24 items-center justify-center rounded-3xl"
+              className="bg-primary/10 mb-8 h-24 w-24 items-center justify-center rounded-3xl"
               style={{ backgroundColor: slide.accent + '20' }}>
               <Icon as={slide.icon} size={44} color={slide.accent} />
             </View>
-            <Text className="mb-3 text-center text-2xl font-bold tracking-tight text-white">
+            <Text className="text-foreground mb-3 text-center text-2xl font-bold tracking-tight">
               {slide.title}
             </Text>
-            <Text className="text-center text-base leading-relaxed text-zinc-400">
+            <Text className="text-muted-foreground text-center text-base leading-relaxed">
               {slide.body}
             </Text>
           </View>
         ))}
       </ScrollView>
 
-      {/* Dots */}
-      <View className="mb-8 flex-row items-center justify-center gap-2">
+      <View className="bg-card mb-8 flex-row items-center justify-center gap-2">
         {slides.map((_, i) => (
           <View
             key={i}
@@ -182,26 +173,25 @@ function FeatureSlides({
             style={{
               width: i === index ? 20 : 6,
               height: 6,
-              backgroundColor: i === index ? '#fbbf24' : '#3f3f46',
+              backgroundColor: i === index ? slide.accent : 'hsl(var(--muted))',
             }}
           />
         ))}
       </View>
 
-      {/* CTA */}
       <View className="px-6 pb-8">
         <Pressable
           onPress={goNext}
           disabled={loading}
-          className="h-14 items-center justify-center rounded-2xl bg-amber-400 active:opacity-85">
+          className="bg-primary h-14 items-center justify-center rounded-2xl active:opacity-85">
           {loading ? (
-            <ActivityIndicator color="#09090b" />
+            <ActivityIndicator color="hsl(var(--primary-foreground))" />
           ) : (
             <View className="flex-row items-center gap-2">
-              <Text className="text-base font-bold text-zinc-950">
+              <Text className="text-primary-foreground text-base font-bold">
                 {isLast ? 'Get started' : 'Next'}
               </Text>
-              {!loading && <Icon as={ArrowRight} size={18} color="#09090b" />}
+              {!loading && <Icon as={ArrowRight} size={18} className="text-primary-foreground" />}
             </View>
           )}
         </Pressable>
@@ -223,13 +213,11 @@ export default function OnboardingScreen() {
 
   const handleRoleSelect = async (role: 'user' | 'vendor') => {
     setSelectedRole(role);
-    // Optimistically update role in store so rest of app knows
     updateUser({ role });
-    // Persist to backend
     try {
       await api.patch('/user/role', { role });
     } catch {
-      // Non-fatal — they can retry or we can pick it up on next session
+      // Non-fatal
     }
     setStep('slides');
   };
@@ -241,13 +229,11 @@ export default function OnboardingScreen() {
       updateUser({ onboardingComplete: true });
 
       if (selectedRole === 'vendor') {
-        // Vendor needs to submit a store application before being approved
         router.replace('/(vendor)/pending');
       } else {
         router.replace('/(user)/(tabs)/home');
       }
     } catch {
-      // Even on failure, push them through — onboarding is not a hard gate
       updateUser({ onboardingComplete: true });
       router.replace(selectedRole === 'vendor' ? '/(vendor)/pending' : '/(user)/(tabs)/home');
     } finally {
@@ -256,12 +242,12 @@ export default function OnboardingScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-zinc-950">
+    <View className="bg-background flex-1">
       {step === 'role' ? (
         <RoleSelect onSelect={handleRoleSelect} />
       ) : (
         <FeatureSlides slides={slides} onFinish={handleFinish} loading={loading} />
       )}
-    </SafeAreaView>
+    </View>
   );
 }

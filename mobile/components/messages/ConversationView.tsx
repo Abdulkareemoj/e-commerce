@@ -7,7 +7,6 @@ import type { MessageItem } from './types';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/lib/authStore';
 import { View, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Icon } from '@/components/ui/icon';
 import { MessageSquare } from 'lucide-react-native';
 
@@ -87,7 +86,7 @@ export function ConversationView({
 
   if (loading) {
     return (
-      <SafeAreaView className="bg-background flex-1">
+      <View className="bg-background flex-1">
         <ConversationHeader
           name={header?.name || 'Conversation'}
           subtitle="Loading..."
@@ -98,12 +97,12 @@ export function ConversationView({
         <View className="flex-1 items-center justify-center">
           <Text className="text-muted-foreground">Loading messages...</Text>
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
   return (
-    <SafeAreaView className="bg-background flex-1" edges={['top']}>
+    <View className="bg-background flex-1">
       <ConversationHeader
         name={header?.name || 'Conversation'}
         subtitle={header?.subtitle}
@@ -116,8 +115,10 @@ export function ConversationView({
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}>
         {messages.length === 0 ? (
-          <View className="flex-1 items-center justify-center gap-2">
-            <Icon as={MessageSquare} size={32} className="text-muted-foreground" />
+          <View className="flex-1 items-center justify-center gap-3">
+            <View className="bg-muted size-16 items-center justify-center rounded-full">
+              <Icon as={MessageSquare} size={32} className="text-muted-foreground" />
+            </View>
             <Text className="text-muted-foreground">No messages yet. Say hello!</Text>
           </View>
         ) : (
@@ -144,6 +145,6 @@ export function ConversationView({
         )}
         <MessageComposer onSend={handleSend} disabled={sending} />
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </View>
   );
 }
