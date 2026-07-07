@@ -63,7 +63,15 @@ export const useCart = create<CartState>()(
 
       loadCart: async () => {
         const { sessionToken } = get();
-        const user = useAuthStore.getState().user;
+        const { user, isAuthenticated } = useAuthStore.getState();
+        
+        // For authenticated users, skip if not authenticated
+        if (user && !isAuthenticated) {
+          set({ isLoading: false });
+          return;
+        }
+        
+        // For guests, skip if no session token
         if (!user && !sessionToken) {
           set({ isLoading: false });
           return;
@@ -93,9 +101,14 @@ export const useCart = create<CartState>()(
           } else {
             set({ isLoading: false });
           }
-        } catch (err) {
-          console.error('Failed to load cart:', err);
-          set({ isLoading: false });
+        } catch (err: any) {
+          // Silently handle auth errors - session expiry handles the UI
+          if (err.message?.includes('Session expired')) {
+            set({ isLoading: false });
+          } else {
+            console.error('Failed to load cart:', err);
+            set({ isLoading: false });
+          }
         }
       },
 
@@ -107,10 +120,10 @@ export const useCart = create<CartState>()(
           set({ sessionToken: token });
         }
 
-        const user = useAuthStore.getState().user;
+        const { user, isAuthenticated } = useAuthStore.getState();
 
         try {
-          if (user) {
+          if (user && isAuthenticated) {
             await api.post('/cart/add', { productId, variantId, quantity: qty, priceCents });
           } else {
             await api.publicPost('/cart/add', { productId, variantId, quantity: qty, priceCents }, {
@@ -119,17 +132,19 @@ export const useCart = create<CartState>()(
           }
 
           await get().loadCart();
-        } catch (err) {
-          console.error('Failed to add item to cart:', err);
+        } catch (err: any) {
+          if (!err.message?.includes('Session expired')) {
+            console.error('Failed to add item to cart:', err);
+          }
         }
       },
 
       removeItem: async (itemId) => {
         const { sessionToken } = get();
-        const user = useAuthStore.getState().user;
+        const { user, isAuthenticated } = useAuthStore.getState();
 
         try {
-          if (user) {
+          if (user && isAuthenticated) {
             await api.delete(`/cart/item/${itemId}`);
           } else {
             await api.publicRequest(`/cart/item/${itemId}`, {
@@ -138,14 +153,16 @@ export const useCart = create<CartState>()(
             });
           }
           await get().loadCart();
-        } catch (err) {
-          console.error('Failed to remove item:', err);
+        } catch (err: any) {
+          if (!err.message?.includes('Session expired')) {
+            console.error('Failed to remove item:', err);
+          }
         }
       },
 
       updateItemQuantity: async (itemId, qty) => {
         const { sessionToken } = get();
-        const user = useAuthStore.getState().user;
+        const { user, isAuthenticated } = useAuthStore.getState();
 
         try {
           if (qty < 1) {
@@ -153,7 +170,7 @@ export const useCart = create<CartState>()(
             return;
           }
 
-          if (user) {
+          if (user && isAuthenticated) {
             await api.put(`/cart/item/${itemId}`, { quantity: qty });
           } else {
             await api.publicRequest(`/cart/item/${itemId}`, {
@@ -163,17 +180,19 @@ export const useCart = create<CartState>()(
             });
           }
           await get().loadCart();
-        } catch (err) {
-          console.error('Failed to update quantity:', err);
+        } catch (err: any) {
+          if (!err.message?.includes('Session expired')) {
+            console.error('Failed to update quantity:', err);
+          }
         }
       },
 
       clearCart: async () => {
         const { sessionToken } = get();
-        const user = useAuthStore.getState().user;
+        const { user, isAuthenticated } = useAuthStore.getState();
 
         try {
-          if (user) {
+          if (user && isAuthenticated) {
             await api.delete('/cart/clear');
           } else {
             await api.publicRequest('/cart/clear', {
@@ -182,8 +201,10 @@ export const useCart = create<CartState>()(
             });
           }
           set({ cartItems: [], cartTotalCents: 0 });
-        } catch (err) {
-          console.error('Failed to clear cart:', err);
+        } catch (err: any) {
+          if (!err.message?.includes('Session expired')) {
+            console.error('Failed to clear cart:', err);
+          }
         }
       },
 
@@ -195,8 +216,10 @@ export const useCart = create<CartState>()(
           await api.post('/cart/merge', { sessionToken });
           set({ sessionToken: null });
           await get().loadCart();
-        } catch (err) {
-          console.error('Failed to merge cart:', err);
+        } catch (err: any) {
+          if (!err.message?.includes('Session expired')) {
+            console.error('Failed to merge cart:', err);
+          }
         }
       },
 

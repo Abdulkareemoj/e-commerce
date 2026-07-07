@@ -1,6 +1,7 @@
 import { Product } from '@/types';
 import { create } from 'zustand';
 import { api } from '@/lib/api';
+import { useAuthStore } from '@/lib/authStore';
 
 interface WishlistItem {
   id: string;
@@ -25,6 +26,12 @@ export const useWishlist = create<WishlistState>()((set, get) => ({
   wishlistedIds: new Set(),
 
   loadWishlist: async () => {
+    const { isAuthenticated } = useAuthStore.getState();
+    if (!isAuthenticated) {
+      set({ items: [], wishlistedIds: new Set(), isLoading: false });
+      return;
+    }
+
     set({ isLoading: true });
     try {
       const res = await api.get('/user/wishlist');
@@ -34,13 +41,21 @@ export const useWishlist = create<WishlistState>()((set, get) => ({
         wishlistedIds: new Set(items.map((i: WishlistItem) => i.productId)),
         isLoading: false,
       });
-    } catch (err) {
-      console.error('Failed to load wishlist:', err);
-      set({ isLoading: false });
+    } catch (err: any) {
+      // Silently handle auth errors - session expiry handles the UI
+      if (err.message?.includes('Session expired')) {
+        set({ items: [], wishlistedIds: new Set(), isLoading: false });
+      } else {
+        console.error('Failed to load wishlist:', err);
+        set({ isLoading: false });
+      }
     }
   },
 
   toggle: async (productId) => {
+    const { isAuthenticated } = useAuthStore.getState();
+    if (!isAuthenticated) return;
+
     const { wishlistedIds } = get();
     const isAdding = !wishlistedIds.has(productId);
 
@@ -57,8 +72,11 @@ export const useWishlist = create<WishlistState>()((set, get) => ({
         newIds.delete(productId);
       }
       set({ wishlistedIds: newIds });
-    } catch (err) {
-      console.error('Failed to toggle wishlist:', err);
+    } catch (err: any) {
+      // Silently handle auth errors
+      if (!err.message?.includes('Session expired')) {
+        console.error('Failed to toggle wishlist:', err);
+      }
     }
   },
 
