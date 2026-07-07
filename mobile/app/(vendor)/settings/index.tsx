@@ -3,7 +3,6 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { View, ScrollView, ActivityIndicator } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text } from '@/components/ui/text';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -13,7 +12,10 @@ import { api } from '@/lib/api';
 
 const storeSchema = z.object({
   storeName: z.string().min(1, 'Store name is required'),
-  storeSlug: z.string().min(1, 'Store slug is required').regex(/^[a-z0-9-]+$/, 'Only lowercase letters, numbers, and hyphens'),
+  storeSlug: z
+    .string()
+    .min(1, 'Store slug is required')
+    .regex(/^[a-z0-9-]+$/, 'Only lowercase letters, numbers, and hyphens'),
   description: z.string().optional(),
   payoutDetails: z.string().optional(),
 });
@@ -48,47 +50,76 @@ export default function VendorSettingsScreen() {
     })();
   }, [reset]);
 
-  const onSubmit = React.useCallback(async (data: StoreData) => {
-    setSaving(true);
-    try {
-      const res = await api.put('/vendor/store', data);
-      if (res.store) reset({
-        storeName: res.store.storeName || '',
-        storeSlug: res.store.storeSlug || '',
-        description: res.store.description || '',
-        payoutDetails: res.store.payoutDetails || '',
-      });
-    } catch (err) {
-      console.error('Failed to update store:', err);
-    } finally {
-      setSaving(false);
-    }
-  }, [reset]);
+  const onSubmit = React.useCallback(
+    async (data: StoreData) => {
+      setSaving(true);
+      try {
+        const res = await api.put('/vendor/store', data);
+        if (res.store)
+          reset({
+            storeName: res.store.storeName || '',
+            storeSlug: res.store.storeSlug || '',
+            description: res.store.description || '',
+            payoutDetails: res.store.payoutDetails || '',
+          });
+      } catch (err) {
+        console.error('Failed to update store:', err);
+      } finally {
+        setSaving(false);
+      }
+    },
+    [reset]
+  );
 
   if (loading) {
     return (
-      <SafeAreaView className="flex-1 items-center justify-center bg-background">
+      <View className="bg-background flex-1 items-center justify-center">
         <ActivityIndicator />
-      </SafeAreaView>
+      </View>
     );
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-background">
+    <View className="bg-background flex-1">
       <ScrollView contentContainerClassName="p-4 gap-6">
-        <Text variant="h2" className="font-bold">Store Settings</Text>
+        <Text variant="h2" className="font-bold">
+          Store Settings
+        </Text>
         <Card className="p-4">
           <FieldSet>
-            <FormInput control={control} name="storeName" label="Store Name" placeholder="My Store" />
-            <FormInput control={control} name="storeSlug" label="Store Slug" placeholder="my-store" autoCapitalize="none" />
-            <FormInput control={control} name="description" label="Description" placeholder="Tell customers about your store" multiline />
-            <FormInput control={control} name="payoutDetails" label="Payout Details" placeholder="Bank account or payment provider info" multiline />
+            <FormInput
+              control={control}
+              name="storeName"
+              label="Store Name"
+              placeholder="My Store"
+            />
+            <FormInput
+              control={control}
+              name="storeSlug"
+              label="Store Slug"
+              placeholder="my-store"
+              autoCapitalize="none"
+            />
+            <FormInput
+              control={control}
+              name="description"
+              label="Description"
+              placeholder="Tell customers about your store"
+              multiline
+            />
+            <FormInput
+              control={control}
+              name="payoutDetails"
+              label="Payout Details"
+              placeholder="Bank account or payment provider info"
+              multiline
+            />
             <Button onPress={handleSubmit(onSubmit)} disabled={saving}>
               <Text>{saving ? 'Saving...' : 'Save Settings'}</Text>
             </Button>
           </FieldSet>
         </Card>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }

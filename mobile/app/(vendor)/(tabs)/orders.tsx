@@ -2,11 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { Text } from '@/components/ui/text';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { View, ScrollView } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { api } from '@/lib/api';
 import { formatCurrency } from '@/lib/money';
+import { Icon } from '@/components/ui/icon';
+import { ShoppingCart } from 'lucide-react-native';
 
 const STATUS_FLOW = ['pending', 'accepted', 'shipped', 'delivered'] as const;
 
@@ -31,54 +31,71 @@ function OrderCard({ order, onUpdate }: { order: any; onUpdate: () => void }) {
     }
   };
 
+  const STATUS_STYLES: Record<string, { bg: string; text: string }> = {
+    pending: { bg: 'bg-warning/10', text: 'text-warning' },
+    accepted: { bg: 'bg-primary/10', text: 'text-primary' },
+    shipped: { bg: 'bg-info/10', text: 'text-info' },
+    delivered: { bg: 'bg-success/10', text: 'text-success' },
+    cancelled: { bg: 'bg-destructive/10', text: 'text-destructive' },
+  };
+
   return (
-    <Card className="gap-3 p-4">
+    <Card className="bg-card border-border gap-3 rounded-2xl border p-4">
       <View className="flex-row items-start justify-between">
         <View>
-          <Text className="text-sm font-semibold text-muted-foreground">
+          <Text className="text-foreground text-sm font-semibold">
             Order #{order.id.slice(0, 8)}
           </Text>
-          <Text className="text-xs text-muted-foreground">
+          <Text className="text-muted-foreground text-xs">
             {order.user?.name} ({order.user?.email})
           </Text>
-          <Text className="text-xs text-muted-foreground">
+          <Text className="text-muted-foreground text-xs">
             {new Date(order.createdAt).toLocaleDateString()}
           </Text>
         </View>
-        <Badge variant="outline">
-          <Text className="text-xs">{order.status}</Text>
-        </Badge>
+        <View
+          className={`${STATUS_STYLES[order.status]?.bg || 'bg-muted'} rounded-full px-2 py-0.5`}>
+          <Text
+            className={`${STATUS_STYLES[order.status]?.text || 'text-muted-foreground'} text-[10px] font-semibold`}>
+            {order.status}
+          </Text>
+        </View>
       </View>
 
-      {order.items?.map((item: any) => (
-        <View key={item.id} className="rounded-lg border border-border p-3">
-          <View className="flex-row items-center justify-between">
-            <View className="flex-1 gap-1">
-              <Text className="text-sm font-medium">{item.productName}</Text>
-              <Text className="text-xs text-muted-foreground">
-                {item.quantity}x @ ${parseFloat(item.price).toFixed(2)}
-              </Text>
+      {order.items?.map((item: any) => {
+        const itemStatus = STATUS_STYLES[item.status] || STATUS_STYLES.pending;
+        return (
+          <View key={item.id} className="bg-secondary/50 rounded-xl p-3">
+            <View className="flex-row items-center justify-between">
+              <View className="flex-1 gap-1">
+                <Text className="text-foreground text-sm font-medium">{item.productName}</Text>
+                <Text className="text-muted-foreground text-xs">
+                  {item.quantity}x @ ${parseFloat(item.price).toFixed(2)}
+                </Text>
+              </View>
+              <View className={`${itemStatus.bg} rounded-full px-2 py-0.5`}>
+                <Text className={`${itemStatus.text} text-[10px] font-semibold capitalize`}>
+                  {item.status}
+                </Text>
+              </View>
             </View>
-            <Badge variant="outline">
-              <Text className="text-xs capitalize">{item.status}</Text>
-            </Badge>
+
+            {getNextStatus(item.status) && (
+              <Button
+                size="sm"
+                className="mt-2 rounded-xl"
+                onPress={() => handleUpdateStatus(item.id, getNextStatus(item.status)!)}
+                disabled={updating}>
+                <Text className="text-primary-foreground text-xs font-semibold">
+                  {updating ? '...' : `Mark as ${getNextStatus(item.status)}`}
+                </Text>
+              </Button>
+            )}
           </View>
+        );
+      })}
 
-          {getNextStatus(item.status) && (
-            <Button
-              size="sm"
-              className="mt-2"
-              onPress={() => handleUpdateStatus(item.id, getNextStatus(item.status)!)}
-              disabled={updating}>
-              <Text className="text-xs">
-                {updating ? '...' : `Mark as ${getNextStatus(item.status)}`}
-              </Text>
-            </Button>
-          )}
-        </View>
-      ))}
-
-      <Text className="text-sm font-bold">
+      <Text className="text-foreground text-sm font-bold">
         Total: {formatCurrency(Math.round(parseFloat(order.totalAmount || 0) * 100), 'USD')}
       </Text>
     </Card>
@@ -106,24 +123,26 @@ export default function VendorOrdersScreen() {
 
   if (loading) {
     return (
-      <SafeAreaView className="flex-1 items-center justify-center bg-background">
+      <View className="bg-background flex-1 items-center justify-center">
         <Text className="text-muted-foreground">Loading orders...</Text>
-      </SafeAreaView>
+      </View>
     );
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-background">
+    <View className="bg-background flex-1">
       <ScrollView contentContainerClassName="p-4 gap-4">
-        <Text variant="h2" className="font-bold">
-          Manage Orders
-        </Text>
         {orders.length === 0 ? (
-          <Text className="mt-10 text-center text-muted-foreground">No orders yet.</Text>
+          <View className="mt-10 items-center gap-3">
+            <View className="bg-muted size-16 items-center justify-center rounded-full">
+              <Icon as={ShoppingCart} size={32} className="text-muted-foreground" />
+            </View>
+            <Text className="text-muted-foreground text-center">No orders yet</Text>
+          </View>
         ) : (
           orders.map((order) => <OrderCard key={order.id} order={order} onUpdate={fetchOrders} />)
         )}
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }

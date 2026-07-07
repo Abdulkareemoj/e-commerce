@@ -9,7 +9,6 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Icon } from '@/components/ui/icon';
 import { View, ScrollView, Pressable } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { api } from '@/lib/api';
 import { AlertTriangle, Package, ChevronDown, ChevronUp } from 'lucide-react-native';
 
@@ -58,14 +57,17 @@ function LowStockItem({
   }, [inputValue, item, type, onUpdate]);
 
   return (
-    <View className="flex-row items-center justify-between rounded-lg border border-border p-3">
+    <View className="border-border flex-row items-center justify-between rounded-lg border p-3">
       <View className="flex-1 gap-1">
         <Text className="text-sm font-medium">{item.productName}</Text>
         {type === 'variant' && (
-          <Text className="text-xs text-muted-foreground">Variant: {item.variantName} (SKU: {item.sku})</Text>
+          <Text className="text-muted-foreground text-xs">
+            Variant: {item.variantName} (SKU: {item.sku})
+          </Text>
         )}
         <View className="flex-row items-center gap-2">
-          <Text className={`text-xs font-semibold ${item.stock === 0 ? 'text-destructive' : 'text-amber-500'}`}>
+          <Text
+            className={`text-xs font-semibold ${item.stock === 0 ? 'text-destructive' : 'text-amber-500'}`}>
             {item.stock} in stock
           </Text>
           <Badge variant="outline">
@@ -100,7 +102,11 @@ function LowStockItem({
 }
 
 export default function InventoryScreen() {
-  const [data, setData] = React.useState<{ lowStockProducts: any[]; lowStockVariants: any[]; total: number } | null>(null);
+  const [data, setData] = React.useState<{
+    lowStockProducts: any[];
+    lowStockVariants: any[];
+    total: number;
+  } | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [showVariants, setShowVariants] = React.useState(false);
 
@@ -115,44 +121,53 @@ export default function InventoryScreen() {
     }
   }, []);
 
-  React.useEffect(() => { fetchLowStock(); }, [fetchLowStock]);
+  React.useEffect(() => {
+    fetchLowStock();
+  }, [fetchLowStock]);
 
   if (loading) {
     return (
-      <SafeAreaView className="flex-1 items-center justify-center bg-background">
+      <View className="bg-background flex-1 items-center justify-center">
         <Text className="text-muted-foreground">Loading inventory...</Text>
-      </SafeAreaView>
+      </View>
     );
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-background">
+    <View className="bg-background flex-1">
       <ScrollView contentContainerClassName="p-4 gap-4">
         <View className="flex-row items-center justify-between">
-          <Text variant="h2" className="font-bold">Inventory Alerts</Text>
-          {data && (
-            <Badge variant="destructive">
-              <Text className="text-xs">{data.total} low stock</Text>
-            </Badge>
+          <Text className="text-foreground text-lg font-bold">Inventory Alerts</Text>
+          {data && data.total > 0 && (
+            <View className="bg-destructive/10 rounded-full px-2 py-0.5">
+              <Text className="text-destructive text-[10px] font-semibold">
+                {data.total} low stock
+              </Text>
+            </View>
           )}
         </View>
 
         {data && data.lowStockProducts.length === 0 && data.lowStockVariants.length === 0 ? (
           <View className="items-center gap-3 py-10">
-            <View className="size-16 items-center justify-center rounded-full bg-green-500/10">
-              <Icon as={Package} size={28} className="text-green-500" />
+            <View className="bg-success/10 size-16 items-center justify-center rounded-full">
+              <Icon as={Package} size={28} className="text-success" />
             </View>
-            <Text className="text-center text-muted-foreground">All products are well-stocked.</Text>
+            <Text className="text-muted-foreground text-center">All products are well-stocked</Text>
           </View>
         ) : (
           <>
             {data.lowStockProducts.length > 0 && (
               <View className="gap-2">
-                <Text className="text-sm font-semibold text-muted-foreground">
+                <Text className="text-muted-foreground text-sm font-semibold">
                   Products ({data.lowStockProducts.length})
                 </Text>
                 {data.lowStockProducts.map((item) => (
-                  <LowStockItem key={item.productId} item={item} type="product" onUpdate={fetchLowStock} />
+                  <LowStockItem
+                    key={item.productId}
+                    item={item}
+                    type="product"
+                    onUpdate={fetchLowStock}
+                  />
                 ))}
               </View>
             )}
@@ -162,19 +177,29 @@ export default function InventoryScreen() {
                 <Pressable
                   onPress={() => setShowVariants(!showVariants)}
                   className="flex-row items-center justify-between">
-                  <Text className="text-sm font-semibold text-muted-foreground">
+                  <Text className="text-muted-foreground text-sm font-semibold">
                     Variants ({data.lowStockVariants.length})
                   </Text>
-                  <Icon as={showVariants ? ChevronUp : ChevronDown} size={18} className="text-muted-foreground" />
+                  <Icon
+                    as={showVariants ? ChevronUp : ChevronDown}
+                    size={18}
+                    className="text-muted-foreground"
+                  />
                 </Pressable>
-                {showVariants && data.lowStockVariants.map((item: any) => (
-                  <LowStockItem key={item.variantId} item={item} type="variant" onUpdate={fetchLowStock} />
-                ))}
+                {showVariants &&
+                  data.lowStockVariants.map((item: any) => (
+                    <LowStockItem
+                      key={item.variantId}
+                      item={item}
+                      type="variant"
+                      onUpdate={fetchLowStock}
+                    />
+                  ))}
               </View>
             )}
           </>
         )}
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }

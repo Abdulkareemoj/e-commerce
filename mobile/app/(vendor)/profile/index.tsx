@@ -3,7 +3,6 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { View, ScrollView, ActivityIndicator } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text } from '@/components/ui/text';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -42,41 +41,57 @@ export default function VendorProfileScreen() {
     })();
   }, [reset]);
 
-  const onSubmit = React.useCallback(async (data: ProfileData) => {
-    setSaving(true);
-    try {
-      const res = await api.put('/vendor/profile', data);
-      if (res.profile) reset(res.profile);
-    } catch (err) {
-      console.error('Failed to update profile:', err);
-    } finally {
-      setSaving(false);
-    }
-  }, [reset]);
+  const onSubmit = React.useCallback(
+    async (data: ProfileData) => {
+      setSaving(true);
+      try {
+        const res = await api.put('/vendor/profile', data);
+        if (res.profile) reset(res.profile);
+      } catch (err) {
+        console.error('Failed to update profile:', err);
+      } finally {
+        setSaving(false);
+      }
+    },
+    [reset]
+  );
 
   if (loading) {
     return (
-      <SafeAreaView className="flex-1 items-center justify-center bg-background">
+      <View className="bg-background flex-1 items-center justify-center">
         <ActivityIndicator />
-      </SafeAreaView>
+      </View>
     );
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-background">
+    <View className="bg-background flex-1">
       <ScrollView contentContainerClassName="p-4 gap-6">
-        <Text variant="h2" className="font-bold">My Profile</Text>
+        <Text variant="h2" className="font-bold">
+          My Profile
+        </Text>
         <Card className="p-4">
           <FieldSet>
             <FormInput control={control} name="name" label="Name" placeholder="Full name" />
-            <FormInput control={control} name="bio" label="Bio" placeholder="Tell buyers about yourself" multiline />
-            <FormInput control={control} name="location" label="Location" placeholder="City, Country" />
+            <FormInput
+              control={control}
+              name="bio"
+              label="Bio"
+              placeholder="Tell buyers about yourself"
+              multiline
+            />
+            <FormInput
+              control={control}
+              name="location"
+              label="Location"
+              placeholder="City, Country"
+            />
             <Button onPress={handleSubmit(onSubmit)} disabled={saving}>
               <Text>{saving ? 'Saving...' : 'Save Changes'}</Text>
             </Button>
           </FieldSet>
         </Card>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }

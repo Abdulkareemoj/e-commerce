@@ -10,22 +10,39 @@ import { Icon } from '@/components/ui/icon';
 import { FormInput } from '@/components/ui/form-input';
 import { FieldSet } from '@/components/ui/field';
 import { View, Pressable, FlatList } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogClose,
+} from '@/components/ui/dialog';
 import { api } from '@/lib/api';
 import { formatCurrency } from '@/lib/money';
-import { Plus, Pencil, Trash2 } from 'lucide-react-native';
+import { Plus, Pencil, Trash2, Package } from 'lucide-react-native';
 
 const productSchema = z.object({
   name: z.string().min(1, 'Name is required'),
-  price: z.string().min(1, 'Price is required').regex(/^\d+(\.\d{1,2})?$/, 'Invalid price'),
+  price: z
+    .string()
+    .min(1, 'Price is required')
+    .regex(/^\d+(\.\d{1,2})?$/, 'Invalid price'),
   stock: z.string().optional(),
   description: z.string().optional(),
 });
 
 type ProductData = z.infer<typeof productSchema>;
 
-function ProductForm({ product, onSave, onClose }: { product?: any; onSave: () => void; onClose: () => void }) {
+function ProductForm({
+  product,
+  onSave,
+  onClose,
+}: {
+  product?: any;
+  onSave: () => void;
+  onClose: () => void;
+}) {
   const { control, handleSubmit } = useForm<ProductData>({
     resolver: zodResolver(productSchema),
     defaultValues: {
@@ -38,33 +55,56 @@ function ProductForm({ product, onSave, onClose }: { product?: any; onSave: () =
 
   const [saving, setSaving] = React.useState(false);
 
-  const onSubmit = React.useCallback(async (data: ProductData) => {
-    setSaving(true);
-    try {
-      const body = { ...data, stock: parseInt(data.stock || '0') };
-      if (product) {
-        await api.put(`/vendor/products/${product.id}`, body);
-      } else {
-        await api.post('/vendor/products', body);
+  const onSubmit = React.useCallback(
+    async (data: ProductData) => {
+      setSaving(true);
+      try {
+        const body = { ...data, stock: parseInt(data.stock || '0') };
+        if (product) {
+          await api.put(`/vendor/products/${product.id}`, body);
+        } else {
+          await api.post('/vendor/products', body);
+        }
+        onSave();
+        onClose();
+      } catch (err) {
+        console.error('Failed to save product:', err);
+      } finally {
+        setSaving(false);
       }
-      onSave();
-      onClose();
-    } catch (err) {
-      console.error('Failed to save product:', err);
-    } finally {
-      setSaving(false);
-    }
-  }, [product, onSave, onClose]);
+    },
+    [product, onSave, onClose]
+  );
 
   return (
     <FieldSet>
       <FormInput control={control} name="name" label="Name" placeholder="Product name" />
-      <FormInput control={control} name="price" label="Price" placeholder="0.00" keyboardType="decimal-pad" />
-      <FormInput control={control} name="stock" label="Stock" placeholder="0" keyboardType="number-pad" />
-      <FormInput control={control} name="description" label="Description" placeholder="Product description" multiline />
+      <FormInput
+        control={control}
+        name="price"
+        label="Price"
+        placeholder="0.00"
+        keyboardType="decimal-pad"
+      />
+      <FormInput
+        control={control}
+        name="stock"
+        label="Stock"
+        placeholder="0"
+        keyboardType="number-pad"
+      />
+      <FormInput
+        control={control}
+        name="description"
+        label="Description"
+        placeholder="Product description"
+        multiline
+      />
       <View className="flex-row gap-2 pt-2">
         <DialogClose asChild>
-          <Button variant="outline" className="flex-1"><Text>Cancel</Text></Button>
+          <Button variant="outline" className="flex-1">
+            <Text>Cancel</Text>
+          </Button>
         </DialogClose>
         <Button className="flex-1" onPress={handleSubmit(onSubmit)} disabled={saving}>
           <Text>{saving ? 'Saving...' : product ? 'Update' : 'Create'}</Text>
@@ -91,39 +131,49 @@ export default function ProductsScreen() {
     }
   }, []);
 
-  React.useEffect(() => { fetchProducts(); }, [fetchProducts]);
-
-  const handleDelete = React.useCallback(async (id: string) => {
-    try {
-      await api.delete(`/vendor/products/${id}`);
-      fetchProducts();
-    } catch (err) {
-      console.error('Failed to delete product:', err);
-    }
+  React.useEffect(() => {
+    fetchProducts();
   }, [fetchProducts]);
+
+  const handleDelete = React.useCallback(
+    async (id: string) => {
+      try {
+        await api.delete(`/vendor/products/${id}`);
+        fetchProducts();
+      } catch (err) {
+        console.error('Failed to delete product:', err);
+      }
+    },
+    [fetchProducts]
+  );
 
   if (loading) {
     return (
-      <SafeAreaView className="flex-1 items-center justify-center bg-background">
+      <View className="bg-background flex-1 items-center justify-center">
         <Text className="text-muted-foreground">Loading products...</Text>
-      </SafeAreaView>
+      </View>
     );
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-background">
+    <View className="bg-background flex-1">
+      <View className="bg-card border-border items-center justify-center border-b px-5 py-4">
+        <Text className="text-foreground text-lg font-bold">Products</Text>
+      </View>
       <View className="flex-1 p-4">
         <View className="mb-4 flex-row items-center justify-between">
-          <Text variant="h2" className="font-bold">Products</Text>
+          <Text className="text-foreground text-lg font-bold">Products</Text>
           <Dialog open={showCreate} onOpenChange={setShowCreate}>
             <DialogTrigger asChild>
-              <Button size="sm">
-                <Icon as={Plus} size={16} />
-                <Text className="ml-1">Add</Text>
+              <Button size="sm" className="rounded-xl">
+                <Icon as={Plus} size={16} className="text-primary-foreground" />
+                <Text className="text-primary-foreground font-semibold">Add</Text>
               </Button>
             </DialogTrigger>
             <DialogContent className="max-h-[500px]">
-              <DialogHeader><DialogTitle>New Product</DialogTitle></DialogHeader>
+              <DialogHeader>
+                <DialogTitle>New Product</DialogTitle>
+              </DialogHeader>
               <ProductForm onSave={fetchProducts} onClose={() => setShowCreate(false)} />
             </DialogContent>
           </Dialog>
@@ -136,26 +186,46 @@ export default function ProductsScreen() {
           onRefresh={fetchProducts}
           contentContainerClassName="gap-3"
           ListEmptyComponent={
-            <Text className="mt-10 text-center text-muted-foreground">No products yet. Create your first one!</Text>
+            <View className="mt-10 items-center gap-3">
+              <View className="bg-muted size-16 items-center justify-center rounded-full">
+                <Icon as={Package} size={32} className="text-muted-foreground" />
+              </View>
+              <Text className="text-muted-foreground text-center">
+                No products yet. Create your first one!
+              </Text>
+            </View>
           }
           renderItem={({ item }) => (
-            <Card className="p-4">
+            <Card className="bg-card border-border rounded-2xl border p-4">
               <View className="flex-row items-start justify-between">
                 <View className="flex-1 gap-1">
-                  <Text className="font-medium">{item.name}</Text>
-                  <Text className="text-sm text-muted-foreground">
-                    {formatCurrency(Math.round(parseFloat(item.price) * 100))} · {item.stock} in stock
+                  <Text className="text-foreground font-medium">{item.name}</Text>
+                  <Text className="text-muted-foreground text-sm">
+                    {formatCurrency(Math.round(parseFloat(item.price) * 100))} · {item.stock} in
+                    stock
                   </Text>
                   {item.variants?.length > 0 && (
-                    <Text className="text-xs text-muted-foreground">
+                    <Text className="text-muted-foreground text-xs">
                       {item.variants.length} variant{item.variants.length > 1 ? 's' : ''}
                     </Text>
                   )}
                 </View>
                 <View className="flex-row items-center gap-2">
-                  <Badge variant={item.isAvailable ? 'default' : 'secondary'}>
-                    <Text className="text-xs">{item.isAvailable ? 'Active' : 'Inactive'}</Text>
-                  </Badge>
+                  <View
+                    className={
+                      item.isAvailable
+                        ? 'bg-success/10 rounded-full px-2 py-0.5'
+                        : 'bg-muted rounded-full px-2 py-0.5'
+                    }>
+                    <Text
+                      className={
+                        item.isAvailable
+                          ? 'text-success text-[10px] font-semibold'
+                          : 'text-muted-foreground text-[10px] font-semibold'
+                      }>
+                      {item.isAvailable ? 'Active' : 'Inactive'}
+                    </Text>
+                  </View>
                   <Dialog>
                     <DialogTrigger asChild>
                       <Pressable onPress={() => setEditingProduct(item)}>
@@ -163,8 +233,14 @@ export default function ProductsScreen() {
                       </Pressable>
                     </DialogTrigger>
                     <DialogContent className="max-h-[500px]">
-                      <DialogHeader><DialogTitle>Edit Product</DialogTitle></DialogHeader>
-                      <ProductForm product={item} onSave={fetchProducts} onClose={() => setEditingProduct(null)} />
+                      <DialogHeader>
+                        <DialogTitle>Edit Product</DialogTitle>
+                      </DialogHeader>
+                      <ProductForm
+                        product={item}
+                        onSave={fetchProducts}
+                        onClose={() => setEditingProduct(null)}
+                      />
                     </DialogContent>
                   </Dialog>
                   <Pressable onPress={() => handleDelete(item.id)}>
@@ -176,6 +252,6 @@ export default function ProductsScreen() {
           )}
         />
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
