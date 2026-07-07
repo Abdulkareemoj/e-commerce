@@ -1,6 +1,20 @@
-import { useAuthStore } from './authStore';
+import { useAuthStore, emitSessionExpired } from './authStore';
 import Constants from 'expo-constants';
 import { Platform } from 'react-native';
+
+// Track if we've already emitted an event to avoid duplicates
+let sessionExpiredEmitted = false;
+
+function resetSessionExpiredFlag() {
+  sessionExpiredEmitted = false;
+}
+
+// Reset flag when auth state changes
+useAuthStore.subscribe((state, prev) => {
+  if (state.isAuthenticated && !prev.isAuthenticated) {
+    resetSessionExpiredFlag();
+  }
+});
 
 function getDefaultApiBaseUrl() {
   if (Platform.OS === 'web') {
@@ -50,6 +64,11 @@ async function fetchWithAuth(endpoint: string, options: ApiRequestOptions = {}) 
       response = await fetch(url, config);
     } else {
       useAuthStore.getState().clearAuth();
+      // Emit event only once per session expiry
+      if (!sessionExpiredEmitted) {
+        sessionExpiredEmitted = true;
+        emitSessionExpired();
+      }
       throw new Error('Session expired. Please log in again.');
     }
   }

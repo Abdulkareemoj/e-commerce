@@ -23,6 +23,26 @@ interface AuthState {
   updateUser: (updates: Partial<User>) => void;
 }
 
+// Simple event bus for session expiry (cross-platform, no Node.js dependency)
+type Listener = () => void;
+const listeners = new Set<Listener>();
+
+export const sessionBus = {
+  on(_event: string, fn: Listener) {
+    listeners.add(fn);
+  },
+  off(_event: string, fn: Listener) {
+    listeners.delete(fn);
+  },
+  emit(_event: string) {
+    listeners.forEach((fn) => fn());
+  },
+};
+
+export function emitSessionExpired() {
+  sessionBus.emit('expired');
+}
+
 export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   accessToken: null,
