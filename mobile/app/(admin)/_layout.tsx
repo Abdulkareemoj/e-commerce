@@ -14,11 +14,14 @@ import {
   Wallet,
   Tags,
   Settings,
+  Tag,
+  Flag,
 } from 'lucide-react-native';
 import { Icon } from '@/components/ui/icon';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuthStore } from '@/lib/authStore';
 import { AppSidebar } from '@/components/layout/AppSidebar';
+import { AuthGuard } from '@/components/AuthGuard';
 
 export { ErrorBoundary } from 'expo-router';
 
@@ -33,8 +36,10 @@ function CustomDrawerContent() {
     { label: 'Vendors', icon: Store, route: '/(admin)/(tabs)/vendors' },
     { label: 'Products', icon: Package, route: '/(admin)/products' },
     { label: 'Orders', icon: ShoppingCart, route: '/(admin)/orders' },
+    { label: 'Coupons', icon: Tag, route: '/(admin)/coupons' },
     { label: 'Payouts', icon: Wallet, route: '/(admin)/(tabs)/payouts' },
     { label: 'Categories', icon: Tags, route: '/(admin)/categories' },
+    { label: 'Reports', icon: Flag, route: '/(admin)/reports' },
     { label: 'Analytics', icon: BarChart3, route: '/(admin)/(tabs)/analytics' },
     { label: 'Settings', icon: Settings, route: '/(admin)/settings' },
   ];
@@ -92,7 +97,7 @@ function CustomDrawerContent() {
           return (
             <Pressable
               key={item.route}
-              onPress={() => router.push(item.route)}
+              onPress={() => router.push(item.route as any)}
               className={`mb-1 flex-row items-center gap-3 rounded-xl px-3 py-2.5 ${
                 isActive ? 'bg-primary/10' : 'active:bg-secondary/50'
               }`}>
@@ -170,9 +175,11 @@ function MobileLayout() {
         }}
       />
       <Drawer.Screen name="users" options={{ headerShown: true, title: 'Users' }} />
+      <Drawer.Screen name="coupons" options={{ headerShown: true, title: 'Coupons' }} />
       <Drawer.Screen name="products" options={{ headerShown: true, title: 'Products' }} />
       <Drawer.Screen name="orders" options={{ headerShown: true, title: 'Orders' }} />
       <Drawer.Screen name="categories" options={{ headerShown: true, title: 'Categories' }} />
+      <Drawer.Screen name="reports" options={{ headerShown: true, title: 'Reports' }} />
       <Drawer.Screen name="settings" options={{ headerShown: true, title: 'Settings' }} />
     </Drawer>
   );
@@ -186,9 +193,11 @@ function WebLayout() {
       }}>
       <Stack.Screen name="(tabs)" />
       <Stack.Screen name="users" />
+      <Stack.Screen name="coupons" />
       <Stack.Screen name="products" />
       <Stack.Screen name="orders" />
       <Stack.Screen name="categories" />
+      <Stack.Screen name="reports" />
       <Stack.Screen name="settings" />
     </Stack>
   );
@@ -198,16 +207,18 @@ export default function AdminLayout() {
   const { width } = useWindowDimensions();
   const isWeb = width >= 1024;
 
-  if (isWeb) {
-    return (
-      <View className="bg-background flex-1 flex-row">
-        <AppSidebar role="admin" />
-        <View className="flex-1">
-          <WebLayout />
+  return (
+    <AuthGuard requiredRole="admin" roleMessage="You need an admin account to access this page.">
+      {isWeb ? (
+        <View className="bg-background flex-1 flex-row">
+          <AppSidebar role="admin" />
+          <View className="flex-1">
+            <WebLayout />
+          </View>
         </View>
-      </View>
-    );
-  }
-
-  return <MobileLayout />;
+      ) : (
+        <MobileLayout />
+      )}
+    </AuthGuard>
+  );
 }

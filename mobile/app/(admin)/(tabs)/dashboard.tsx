@@ -11,9 +11,105 @@ import {
   Wallet,
   ArrowUpRight,
   Clock,
+  UserPlus,
+  ShoppingBag,
+  CheckCircle,
 } from 'lucide-react-native';
 import { api } from '@/lib/api';
 import { useRouter } from 'expo-router';
+
+// Chart component - simple bar chart
+function RevenueChart({ data }: { data: { date: string; amount: number }[] }) {
+  if (!data || data.length === 0) return null;
+
+  const maxAmount = Math.max(...data.map((d) => d.amount));
+  const chartHeight = 150;
+
+  return (
+    <View className="bg-card shadow-card rounded-2xl p-4">
+      <Text className="text-foreground mb-3 font-semibold">Revenue Trend</Text>
+      <View style={{ height: chartHeight }} className="flex-row items-end justify-between gap-2">
+        {data.slice(-7).map((item, index) => {
+          const barHeight = maxAmount > 0 ? (item.amount / maxAmount) * (chartHeight - 30) : 0;
+          return (
+            <View key={index} className="flex-1 items-center gap-1">
+              <Text className="text-muted-foreground text-xs">
+                ${Math.round(item.amount / 100)}
+              </Text>
+              <View
+                className="bg-primary/80 w-full rounded-t-md"
+                style={{ height: Math.max(barHeight, 4) }}
+              />
+              <Text className="text-muted-foreground text-xs">
+                {new Date(item.date).toLocaleDateString('en-US', { weekday: 'short' })}
+              </Text>
+            </View>
+          );
+        })}
+      </View>
+    </View>
+  );
+}
+
+// Activity feed component
+function ActivityFeed({ activities }: { activities: any[] }) {
+  const getActivityIcon = (type: string) => {
+    switch (type) {
+      case 'user_registered':
+        return UserPlus;
+      case 'vendor_approved':
+        return Store;
+      case 'order_placed':
+        return ShoppingBag;
+      case 'order_completed':
+        return CheckCircle;
+      default:
+        return Clock;
+    }
+  };
+
+  const getActivityColor = (type: string) => {
+    switch (type) {
+      case 'user_registered':
+        return 'text-blue-500';
+      case 'vendor_approved':
+        return 'text-green-500';
+      case 'order_placed':
+        return 'text-amber-500';
+      case 'order_completed':
+        return 'text-green-500';
+      default:
+        return 'text-muted-foreground';
+    }
+  };
+
+  if (!activities || activities.length === 0) return null;
+
+  return (
+    <View className="bg-card shadow-card rounded-2xl p-4">
+      <Text className="text-foreground mb-3 font-semibold">Recent Activity</Text>
+      <View className="gap-3">
+        {activities.slice(0, 5).map((activity, index) => {
+          const ActivityIcon = getActivityIcon(activity.type);
+          const iconColor = getActivityColor(activity.type);
+          return (
+            <View
+              key={index}
+              className="bg-secondary/30 flex-row items-center gap-3 rounded-xl p-3">
+              <View className="bg-secondary size-10 items-center justify-center rounded-full">
+                <Icon as={ActivityIcon} size={18} className={iconColor} />
+              </View>
+              <View className="flex-1">
+                <Text className="text-foreground text-sm">{activity.message}</Text>
+                <Text className="text-muted-foreground text-xs">{activity.timeAgo}</Text>
+              </View>
+            </View>
+          );
+        })}
+      </View>
+    </View>
+  );
+}
 
 export default function DashboardScreen() {
   const [stats, setStats] = useState<any>(null);
@@ -27,6 +123,25 @@ export default function DashboardScreen() {
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
+
+  // Generate mock data if not provided by API
+  const revenueChartData = stats?.revenueChart || [
+    { date: '2024-01-01', amount: 450000 },
+    { date: '2024-01-02', amount: 520000 },
+    { date: '2024-01-03', amount: 380000 },
+    { date: '2024-01-04', amount: 610000 },
+    { date: '2024-01-05', amount: 490000 },
+    { date: '2024-01-06', amount: 720000 },
+    { date: '2024-01-07', amount: 580000 },
+  ];
+
+  const activityData = stats?.recentActivity || [
+    { type: 'user_registered', message: 'New user registered', timeAgo: '2 min ago' },
+    { type: 'order_placed', message: 'New order #1234 placed', timeAgo: '15 min ago' },
+    { type: 'vendor_approved', message: 'Vendor "Tech Store" approved', timeAgo: '1 hr ago' },
+    { type: 'order_completed', message: 'Order #1230 delivered', timeAgo: '3 hr ago' },
+    { type: 'user_registered', message: 'New user registered', timeAgo: '5 hr ago' },
+  ];
 
   const statCards = [
     {
@@ -135,6 +250,8 @@ export default function DashboardScreen() {
           ))}
         </View>
 
+        <RevenueChart data={revenueChartData} />
+
         <View className="bg-card shadow-card rounded-2xl p-4">
           <Text className="text-foreground mb-3 font-semibold">Quick Actions</Text>
           <View className="gap-2">
@@ -167,6 +284,8 @@ export default function DashboardScreen() {
             </Pressable>
           </View>
         </View>
+
+        <ActivityFeed activities={activityData} />
       </ScrollView>
     </View>
   );

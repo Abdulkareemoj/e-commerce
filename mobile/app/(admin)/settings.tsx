@@ -13,17 +13,9 @@ import { Icon } from '@/components/ui/icon';
 import { Separator } from '@/components/ui/separator';
 import { Uniwind, useUniwind } from 'uniwind';
 import { api } from '@/lib/api';
-import { authClient, signOut } from '@/lib/auth-client';
 import { useAuthStore } from '@/lib/authStore';
 import { router } from 'expo-router';
-import {
-  Shield,
-  Lock,
-  Moon,
-  Sun,
-  LogOut,
-  CheckCircle2,
-} from 'lucide-react-native';
+import { Shield, Lock, Moon, Sun, LogOut, CheckCircle2 } from 'lucide-react-native';
 
 const profileSchema = z.object({
   name: z.string().min(1, 'Name is required'),
@@ -34,7 +26,7 @@ const profileSchema = z.object({
 type ProfileData = z.infer<typeof profileSchema>;
 
 export default function AdminSettingsScreen() {
-  const { data: session } = authClient.useSession();
+  const { user, clearAuth } = useAuthStore();
   const { theme } = useUniwind();
   const isDark = theme === 'dark';
   const [loading, setLoading] = React.useState(true);
@@ -78,33 +70,32 @@ export default function AdminSettingsScreen() {
   }, []);
 
   const handleSignOut = async () => {
-    await signOut();
-    useAuthStore.getState().clearAuth();
+    await clearAuth();
     router.replace('/(auth)/sign-in');
   };
 
   if (loading) {
     return (
-      <View className="flex-1 items-center justify-center bg-background">
+      <View className="bg-background flex-1 items-center justify-center">
         <ActivityIndicator size="large" />
       </View>
     );
   }
 
-  const displayName = session?.user?.name || 'Admin';
-  const displayEmail = session?.user?.email || '';
+  const displayName = user?.name || 'Admin';
+  const displayEmail = user?.email || '';
   const initial = displayName.charAt(0).toUpperCase();
 
   return (
     <ScrollView contentContainerClassName="p-4 gap-6 bg-background">
       {/* Profile Header */}
-      <View className="flex-row items-center gap-4 rounded-xl bg-muted/30 p-4">
+      <View className="bg-muted/30 flex-row items-center gap-4 rounded-xl p-4">
         <View className="size-14 items-center justify-center rounded-full bg-amber-500/20">
           <Text className="text-2xl font-bold text-amber-500">{initial}</Text>
         </View>
         <View className="flex-1">
           <Text className="text-lg font-bold">{displayName}</Text>
-          <Text className="text-sm text-muted-foreground">{displayEmail}</Text>
+          <Text className="text-muted-foreground text-sm">{displayEmail}</Text>
           <View className="mt-1 flex-row items-center gap-1.5">
             <Icon as={Shield} size={12} className="text-amber-500" />
             <Text className="text-xs font-medium text-amber-500">Admin</Text>
@@ -120,8 +111,19 @@ export default function AdminSettingsScreen() {
         <CardContent>
           <FieldSet>
             <FormInput control={control} name="name" label="Name" placeholder="Full name" />
-            <FormInput control={control} name="bio" label="Bio" placeholder="Tell us about yourself" multiline />
-            <FormInput control={control} name="location" label="Location" placeholder="City, Country" />
+            <FormInput
+              control={control}
+              name="bio"
+              label="Bio"
+              placeholder="Tell us about yourself"
+              multiline
+            />
+            <FormInput
+              control={control}
+              name="location"
+              label="Location"
+              placeholder="City, Country"
+            />
             {message && (
               <View className="flex-row items-center gap-2">
                 <Icon as={CheckCircle2} size={14} className="text-emerald-500" />
@@ -139,7 +141,7 @@ export default function AdminSettingsScreen() {
 
       {/* Appearance */}
       <View className="gap-3">
-        <Text className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+        <Text className="text-muted-foreground text-xs font-semibold tracking-wider uppercase">
           Appearance
         </Text>
         <Card>
@@ -151,7 +153,10 @@ export default function AdminSettingsScreen() {
                 <Icon as={isDark ? Moon : Sun} size={20} className="text-primary" />
                 <Text className="text-base font-medium">Dark Mode</Text>
               </View>
-              <Switch checked={isDark} onCheckedChange={(v) => Uniwind.setTheme(v ? 'dark' : 'light')} />
+              <Switch
+                checked={isDark}
+                onCheckedChange={(v) => Uniwind.setTheme(v ? 'dark' : 'light')}
+              />
             </Pressable>
           </CardContent>
         </Card>
@@ -161,7 +166,7 @@ export default function AdminSettingsScreen() {
 
       {/* Security */}
       <View className="gap-3">
-        <Text className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+        <Text className="text-muted-foreground text-xs font-semibold tracking-wider uppercase">
           Security
         </Text>
         <Card>
@@ -171,7 +176,7 @@ export default function AdminSettingsScreen() {
                 <Icon as={Lock} size={20} className="text-primary" />
                 <View>
                   <Text className="text-base font-medium">Change Password</Text>
-                  <Text className="text-sm text-muted-foreground">Update your admin password</Text>
+                  <Text className="text-muted-foreground text-sm">Update your admin password</Text>
                 </View>
               </View>
             </Pressable>
@@ -187,7 +192,7 @@ export default function AdminSettingsScreen() {
         <Text>Sign Out</Text>
       </Button>
 
-      <Text className="mt-2 text-center text-xs text-muted-foreground">
+      <Text className="text-muted-foreground mt-2 text-center text-xs">
         Marketplace Admin v1.0.0
       </Text>
     </ScrollView>

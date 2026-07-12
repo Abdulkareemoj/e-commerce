@@ -112,7 +112,8 @@ export default function OrdersScreen() {
                     <View className="flex-1">
                       <Text className="font-semibold">#{o.id.slice(0, 8)}</Text>
                       <Text className="text-muted-foreground mt-0.5 text-xs">
-                        {o.userName} • ${parseFloat(o.totalAmount).toFixed(2)} • {o.itemCount} items
+                        {o.userName} • ${parseFloat(String(o.totalAmount || '0')).toFixed(2)} •{' '}
+                        {o.itemCount} items
                       </Text>
                     </View>
                     <View className="flex-row items-center gap-2">
