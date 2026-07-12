@@ -16,6 +16,7 @@ import { Link, router } from 'expo-router';
 import { AlertCircle, GalleryVerticalEnd } from 'lucide-react-native';
 import { signIn, getSession } from '@/lib/auth-client';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { navigateToDashboard } from '@/lib/auth-helpers';
 
 export default function SignInScreen() {
   const [email, setEmail] = React.useState('test@example.com');
@@ -36,10 +37,8 @@ export default function SignInScreen() {
       useAuthStore.getState().setAuth(session.user as any);
       (await import('@/hooks/useCart')).useCart.getState().mergeGuestCart();
 
-      const role = (session.user as any)?.role;
-      if (role === 'admin') router.replace('/(admin)/(tabs)/dashboard');
-      else if (role === 'vendor') router.replace('/(vendor)/(tabs)/dashboard');
-      else router.replace('/(user)/(tabs)/home');
+      const user = session.user as any;
+      navigateToDashboard(user.role, user.vendorStatus);
     } catch (err: any) {
       setError(err.message || 'An unexpected error occurred.');
     } finally {
@@ -61,10 +60,8 @@ export default function SignInScreen() {
       useAuthStore.getState().setAuth(session.user as any);
       (await import('@/hooks/useCart')).useCart.getState().mergeGuestCart();
 
-      const role = (session.user as any)?.role;
-      if (role === 'admin') router.replace('/(admin)/(tabs)/dashboard');
-      else if (role === 'vendor') router.replace('/(vendor)/(tabs)/dashboard');
-      else router.replace('/(user)/(tabs)/home');
+      const user = session.user as any;
+      navigateToDashboard(user.role, user.vendorStatus);
     } catch (err: any) {
       setError(err.message || 'An unexpected error occurred.');
     } finally {

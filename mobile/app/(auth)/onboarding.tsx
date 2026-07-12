@@ -173,7 +173,7 @@ function FeatureSlides({
             style={{
               width: i === index ? 20 : 6,
               height: 6,
-              backgroundColor: i === index ? slide.accent : 'hsl(var(--muted))',
+              backgroundColor: slides[i].accent || 'hsl(var(--muted))',
             }}
           />
         ))}

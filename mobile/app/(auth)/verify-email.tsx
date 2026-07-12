@@ -13,6 +13,7 @@ import { api } from '@/lib/api';
 import { useAuthStore } from '@/lib/authStore';
 import { router, useLocalSearchParams } from 'expo-router';
 import { AlertCircle, CheckCircle2 } from 'lucide-react-native';
+import { navigateToDashboard } from '@/lib/auth-helpers';
 
 const RESEND_CODE_INTERVAL_SECONDS = 30;
 
@@ -32,7 +33,10 @@ function useCountdown(seconds = 30) {
     intervalRef.current = setInterval(() => {
       setCountdown((prev) => {
         if (prev <= 1) {
-          if (intervalRef.current) { clearInterval(intervalRef.current); intervalRef.current = null; }
+          if (intervalRef.current) {
+            clearInterval(intervalRef.current);
+            intervalRef.current = null;
+          }
           return 0;
         }
         return prev - 1;
@@ -42,7 +46,9 @@ function useCountdown(seconds = 30) {
 
   React.useEffect(() => {
     startCountdown();
-    return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
   }, [startCountdown]);
 
   return { countdown, restartCountdown: startCountdown };
@@ -60,24 +66,28 @@ export default function VerifyEmailScreen() {
     defaultValues: { code: '' },
   });
 
-  const onSubmit = React.useCallback(async (data: CodeData) => {
-    if (!email) {
-      setError('Email is missing from the request. Please try signing up again.');
-      return;
-    }
-    setIsSubmitting(true);
-    setError(null);
-    setSuccess(null);
-    try {
-      const response = await api.publicPost('/auth/verify-email', { email, token: data.code });
-      useAuthStore.getState().setAuth(response.user);
-      router.replace('/(app)/(tabs)/home');
-    } catch (err: any) {
-      setError(err.message || 'An unexpected error occurred.');
-    } finally {
-      setIsSubmitting(false);
-    }
-  }, [email]);
+  const onSubmit = React.useCallback(
+    async (data: CodeData) => {
+      if (!email) {
+        setError('Email is missing from the request. Please try signing up again.');
+        return;
+      }
+      setIsSubmitting(true);
+      setError(null);
+      setSuccess(null);
+      try {
+        const response = await api.publicPost('/auth/verify-email', { email, token: data.code });
+        useAuthStore.getState().setAuth(response.user);
+        const user = response.user;
+        navigateToDashboard(user.role, user.vendorStatus);
+      } catch (err: any) {
+        setError(err.message || 'An unexpected error occurred.');
+      } finally {
+        setIsSubmitting(false);
+      }
+    },
+    [email]
+  );
 
   const onResend = React.useCallback(async () => {
     if (!email) {
@@ -102,7 +112,7 @@ export default function VerifyEmailScreen() {
       keyboardDismissMode="interactive">
       <View className="w-full max-w-sm">
         <View className="gap-6">
-          <Card className="border-border/0 pb-4 shadow-none sm:border-border sm:shadow-sm sm:shadow-black/5">
+          <Card className="border-border/0 sm:border-border pb-4 shadow-none sm:shadow-sm sm:shadow-black/5">
             <CardHeader>
               <CardTitle className="text-center text-xl sm:text-left">Verify your email</CardTitle>
               <CardDescription className="text-center sm:text-left">
@@ -132,8 +142,7 @@ export default function VerifyEmailScreen() {
                 />
                 <Button variant="link" size="sm" disabled={countdown > 0} onPress={onResend}>
                   <Text className="text-center text-xs">
-                    Didn&apos;t receive the code? Resend{' '}
-                    {countdown > 0 ? `(${countdown})` : null}
+                    Didn&apos;t receive the code? Resend {countdown > 0 ? `(${countdown})` : null}
                   </Text>
                 </Button>
                 <Button className="w-full" onPress={handleSubmit(onSubmit)} disabled={isSubmitting}>

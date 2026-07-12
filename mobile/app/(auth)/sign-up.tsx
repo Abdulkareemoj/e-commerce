@@ -9,6 +9,7 @@ import { Link, router } from 'expo-router';
 import { AlertCircle, GalleryVerticalEnd } from 'lucide-react-native';
 import { signUp, getSession } from '@/lib/auth-client';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { navigateToDashboard } from '@/lib/auth-helpers';
 
 export default function SignUpScreen() {
   const [name, setName] = React.useState('');
@@ -41,10 +42,12 @@ export default function SignUpScreen() {
 
       useAuthStore.getState().setAuth(session.user as any);
 
-      const role = (session.user as any)?.role;
-      if (role === 'admin') router.replace('/(admin)/(tabs)/dashboard');
-      else if (role === 'vendor') router.replace('/(vendor)/(tabs)/dashboard');
-      else router.replace('/(auth)/onboarding');
+      const user = session.user as any;
+      if (!user.onboardingComplete) {
+        router.replace('/(auth)/onboarding');
+      } else {
+        navigateToDashboard(user.role, user.vendorStatus);
+      }
     } catch (err: any) {
       setError(err.message || 'An unexpected error occurred.');
     } finally {
