@@ -1,12 +1,12 @@
-import * as React from "react";
-import { View } from "react-native";
+import * as React from 'react';
+import { View } from 'react-native';
 
-import { cn } from "@/lib/utils";
+import { cn } from '@/lib/utils';
 
-import { Label } from "./label";
-import { Text } from "./text";
+import { Label } from './label';
+import { Text } from './text';
 
-type FieldOrientation = "vertical" | "horizontal";
+type FieldOrientation = 'vertical' | 'horizontal';
 
 interface FieldContextValue {
   orientation: FieldOrientation;
@@ -17,45 +17,40 @@ interface FieldContextValue {
 const FieldContext = React.createContext<FieldContextValue | null>(null);
 
 function useFieldContext() {
-  return React.useContext(FieldContext) ?? { orientation: "vertical" as const };
+  return React.useContext(FieldContext) ?? { orientation: 'vertical' as const };
 }
 
 function FieldSet({ className, ...props }: React.ComponentProps<typeof View>) {
-  return <View className={cn("flex flex-col gap-3", className)} {...props} />;
+  return <View className={cn('flex flex-col gap-3', className)} {...props} />;
 }
 
 function FieldLegend({
   className,
-  variant = "legend",
+  variant = 'label' as const,
   ...props
-}: React.ComponentProps<typeof Text> & { variant?: "legend" | "label" }) {
+}: Omit<React.ComponentProps<typeof Text>, 'variant'> & { variant?: 'legend' | 'label' }) {
   return (
     <Text
       className={cn(
-        "font-sans-medium",
+        'font-sans-medium',
         {
-          "text-base": variant === "legend",
-          "text-sm": variant === "label",
+          'text-base': variant === 'legend',
+          'text-sm': variant === 'label',
         },
-        className,
+        className
       )}
       {...props}
     />
   );
 }
 
-function FieldGroup({
-  className,
-  ...props
-}: React.ComponentProps<typeof View>) {
-  return (
-    <View className={cn("flex w-full flex-col gap-3", className)} {...props} />
-  );
+function FieldGroup({ className, ...props }: React.ComponentProps<typeof View>) {
+  return <View className={cn('flex w-full flex-col gap-3', className)} {...props} />;
 }
 
 function Field({
   className,
-  orientation = "vertical",
+  orientation = 'vertical',
   disabled,
   invalid,
   ...props
@@ -68,11 +63,11 @@ function Field({
     <FieldContext.Provider value={{ orientation, disabled, invalid }}>
       <View
         className={cn(
-          "flex w-full gap-2",
+          'flex w-full gap-2',
           {
-            "flex-row items-center": orientation === "horizontal",
+            'flex-row items-center': orientation === 'horizontal',
           },
-          className,
+          className
         )}
         {...props}
       />
@@ -80,28 +75,20 @@ function Field({
   );
 }
 
-function FieldContent({
-  className,
-  ...props
-}: React.ComponentProps<typeof View>) {
-  return (
-    <View className={cn("flex flex-1 flex-col gap-1", className)} {...props} />
-  );
+function FieldContent({ className, ...props }: React.ComponentProps<typeof View>) {
+  return <View className={cn('flex flex-1 flex-col gap-1', className)} {...props} />;
 }
 
-function FieldLabel({
-  className,
-  ...props
-}: React.ComponentProps<typeof Label>) {
+function FieldLabel({ className, ...props }: React.ComponentProps<typeof Label>) {
   const field = useFieldContext();
 
   return (
     <Label
       className={cn(
         {
-          "text-destructive": field.invalid,
+          'text-destructive': field.invalid,
         },
-        className,
+        className
       )}
       disabled={props.disabled ?? field.disabled}
       {...props}
@@ -109,34 +96,23 @@ function FieldLabel({
   );
 }
 
-function FieldTitle({
-  className,
-  ...props
-}: React.ComponentProps<typeof Text>) {
+function FieldTitle({ className, ...props }: React.ComponentProps<typeof Text>) {
   const { disabled } = useFieldContext();
 
   return (
     <Text
       className={cn(
-        "font-sans-medium flex flex-row items-center gap-2 text-sm",
-        disabled && "opacity-50",
-        className,
+        'font-sans-medium flex flex-row items-center gap-2 text-sm',
+        disabled && 'opacity-50',
+        className
       )}
       {...props}
     />
   );
 }
 
-function FieldDescription({
-  className,
-  ...props
-}: React.ComponentProps<typeof Text>) {
-  return (
-    <Text
-      className={cn("text-muted-foreground text-sm", className)}
-      {...props}
-    />
-  );
+function FieldDescription({ className, ...props }: React.ComponentProps<typeof Text>) {
+  return <Text className={cn('text-muted-foreground text-sm', className)} {...props} />;
 }
 
 function FieldSeparator({
@@ -147,12 +123,10 @@ function FieldSeparator({
   children?: React.ReactNode;
 }) {
   return (
-    <View className={cn("relative h-5 justify-center", className)} {...props}>
+    <View className={cn('relative h-5 justify-center', className)} {...props}>
       <View className="border-border absolute inset-0 top-1/2 border-t" />
       {!!children && (
-        <Text className="bg-background text-muted-foreground mx-auto px-2 text-sm">
-          {children}
-        </Text>
+        <Text className="bg-background text-muted-foreground mx-auto px-2 text-sm">{children}</Text>
       )}
     </View>
   );
@@ -191,7 +165,7 @@ function FieldError({
       <View className="gap-1">
         {uniqueErrors.map((error: any, index: number) => (
           <Text key={index} className="text-destructive text-sm font-normal">
-            {"\u2022 " + error!.message}
+            {'\u2022 ' + error!.message}
           </Text>
         ))}
       </View>
@@ -203,8 +177,8 @@ function FieldError({
   }
 
   return (
-    <View className={cn("gap-1", className)} {...props}>
-      {typeof content === "string" ? (
+    <View className={cn('gap-1', className)} {...props}>
+      {typeof content === 'string' ? (
         <Text className="text-destructive text-sm font-normal">{content}</Text>
       ) : (
         content
