@@ -61,7 +61,7 @@ export const useWishlist = create<WishlistState>()((set, get) => ({
 
     try {
       if (isAdding) {
-        await api.post(`/user/wishlist/${productId}`);
+        await api.post(`/user/wishlist/${productId}`, {});
       } else {
         await api.delete(`/user/wishlist/${productId}`);
       }

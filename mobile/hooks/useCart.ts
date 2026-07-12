@@ -8,6 +8,7 @@ import { useAuthStore } from '@/lib/authStore';
 export interface HydratedCartItem extends CartItem {
   title?: string;
   image?: string;
+  variantName?: string;
 }
 
 export interface CouponState {
@@ -21,13 +22,19 @@ export interface CouponState {
 interface CartState {
   cartItems: HydratedCartItem[];
   cartTotalCents: number;
+  totalItems: number;
   isLoading: boolean;
   sessionToken: string | null;
   coupon: AppliedCoupon | null;
   couponLoading: boolean;
   couponError: string | null;
 
-  addItem: (productId: string, qty: number, priceCents?: number, variantId?: string) => Promise<void>;
+  addItem: (
+    productId: string,
+    qty: number,
+    priceCents?: number,
+    variantId?: string
+  ) => Promise<void>;
   removeItem: (itemId: string) => Promise<void>;
   updateItemQuantity: (itemId: string, qty: number) => Promise<void>;
   clearCart: () => Promise<void>;
@@ -55,6 +62,7 @@ export const useCart = create<CartState>()(
     (set, get) => ({
       cartItems: [],
       cartTotalCents: 0,
+      totalItems: 0,
       isLoading: true,
       sessionToken: null,
       coupon: null,
@@ -64,13 +72,13 @@ export const useCart = create<CartState>()(
       loadCart: async () => {
         const { sessionToken } = get();
         const { user, isAuthenticated } = useAuthStore.getState();
-        
+
         // For authenticated users, skip if not authenticated
         if (user && !isAuthenticated) {
           set({ isLoading: false });
           return;
         }
-        
+
         // For guests, skip if no session token
         if (!user && !sessionToken) {
           set({ isLoading: false });
@@ -96,6 +104,7 @@ export const useCart = create<CartState>()(
             set({
               cartItems: items,
               cartTotalCents: calculateSubtotal(items),
+              totalItems: items.reduce((sum, item) => sum + item.qty, 0),
               isLoading: false,
             });
           } else {
@@ -126,9 +135,13 @@ export const useCart = create<CartState>()(
           if (user && isAuthenticated) {
             await api.post('/cart/add', { productId, variantId, quantity: qty, priceCents });
           } else {
-            await api.publicPost('/cart/add', { productId, variantId, quantity: qty, priceCents }, {
-              headers: getSessionHeaders(token) as any,
-            });
+            await api.publicPost(
+              '/cart/add',
+              { productId, variantId, quantity: qty, priceCents },
+              {
+                headers: getSessionHeaders(token) as any,
+              }
+            );
           }
 
           await get().loadCart();
@@ -200,7 +213,7 @@ export const useCart = create<CartState>()(
               headers: getSessionHeaders(sessionToken) as any,
             });
           }
-          set({ cartItems: [], cartTotalCents: 0 });
+          set({ cartItems: [], cartTotalCents: 0, totalItems: 0 });
         } catch (err: any) {
           if (!err.message?.includes('Session expired')) {
             console.error('Failed to clear cart:', err);
@@ -229,7 +242,9 @@ export const useCart = create<CartState>()(
 
         try {
           const subtotalCents = calculateSubtotal(cartItems);
-          const res = await api.publicGet(`/coupons/validate?code=${encodeURIComponent(code)}&subtotalCents=${subtotalCents}`);
+          const res = await api.publicGet(
+            `/coupons/validate?code=${encodeURIComponent(code)}&subtotalCents=${subtotalCents}`
+          );
 
           if (res.valid) {
             set({ coupon: res.coupon, couponLoading: false, couponError: null });
@@ -237,7 +252,11 @@ export const useCart = create<CartState>()(
             set({ coupon: null, couponLoading: false, couponError: res.error || 'Invalid coupon' });
           }
         } catch (err: any) {
-          set({ coupon: null, couponLoading: false, couponError: err.message || 'Failed to validate coupon' });
+          set({
+            coupon: null,
+            couponLoading: false,
+            couponError: err.message || 'Failed to validate coupon',
+          });
         }
       },
 
