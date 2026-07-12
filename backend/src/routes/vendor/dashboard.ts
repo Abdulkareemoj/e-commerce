@@ -23,7 +23,12 @@ dashboardVendor.get("/stats", async (c) => {
       where: eq(orderItem.vendorId, v.id),
       with: {
         order: {
-          columns: { id: true, status: true, totalAmount: true, createdAt: true },
+          columns: {
+            id: true,
+            status: true,
+            totalAmount: true,
+            createdAt: true,
+          },
         },
       },
       orderBy: [desc(orderItem.id)],
@@ -39,12 +44,12 @@ dashboardVendor.get("/stats", async (c) => {
     const sixtyDaysAgo = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000);
 
     const recentOrderItems = orderItems.filter(
-      (oi) => new Date(oi.order.createdAt) >= thirtyDaysAgo
+      (oi) => new Date(oi.order.createdAt) >= thirtyDaysAgo,
     );
     const previousOrderItems = orderItems.filter(
       (oi) =>
         new Date(oi.order.createdAt) >= sixtyDaysAgo &&
-        new Date(oi.order.createdAt) < thirtyDaysAgo
+        new Date(oi.order.createdAt) < thirtyDaysAgo,
     );
 
     const recentRevenue = recentOrderItems
@@ -57,7 +62,9 @@ dashboardVendor.get("/stats", async (c) => {
 
     const revenueGrowth =
       previousRevenue > 0
-        ? Math.round(((recentRevenue - previousRevenue) / previousRevenue) * 100)
+        ? Math.round(
+            ((recentRevenue - previousRevenue) / previousRevenue) * 100,
+          )
         : recentRevenue > 0
           ? 100
           : 0;
@@ -74,13 +81,56 @@ dashboardVendor.get("/stats", async (c) => {
       }
     }
     const recentOrders = Array.from(recentOrdersMap.values())
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      .sort(
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+      )
       .slice(0, 5);
 
     const lowStockCount = await db.$count(
       product,
-      and(eq(product.vendorId, v.id), eq(product.isAvailable, true), lt(product.stock, 10))
+      and(
+        eq(product.vendorId, v.id),
+        eq(product.isAvailable, true),
+        lt(product.stock, 10),
+      ),
     );
+
+    // Revenue chart: last 7 days
+    const revenueChart = [];
+    for (let i = 6; i >= 0; i--) {
+      const dayStart = new Date(now);
+      dayStart.setDate(dayStart.getDate() - i);
+      dayStart.setHours(0, 0, 0, 0);
+      const dayEnd = new Date(dayStart);
+      dayEnd.setHours(23, 59, 59, 999);
+
+      const dayRevenue = orderItems
+        .filter((oi) => {
+          const created = new Date(oi.order.createdAt);
+          return (
+            created >= dayStart &&
+            created <= dayEnd &&
+            ["accepted", "shipped", "delivered"].includes(oi.status)
+          );
+        })
+        .reduce((sum, oi) => sum + parseFloat(oi.price) * oi.quantity, 0);
+
+      revenueChart.push({
+        date: dayStart.toISOString().split("T")[0],
+        label: dayStart.toLocaleDateString("en-US", { weekday: "short" }),
+        revenue: Math.round(dayRevenue * 100) / 100,
+      });
+    }
+
+    // Recent activity
+    const recentActivity = orderItems.slice(0, 10).map((oi) => ({
+      id: oi.id,
+      type: "order" as const,
+      message: `Order #${oi.orderId.slice(0, 8)} — ${oi.quantity} item(s)`,
+      status: oi.status,
+      createdAt: oi.order.createdAt,
+    }));
 
     return c.json({
       stats: {
@@ -90,6 +140,8 @@ dashboardVendor.get("/stats", async (c) => {
         revenueGrowth,
         lowStockCount,
         recentOrders,
+        revenueChart,
+        recentActivity,
       },
     });
   } catch (error) {

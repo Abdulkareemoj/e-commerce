@@ -3,6 +3,7 @@ import { db } from "@/db";
 import { conversation, message } from "@/db/schema/message-schema";
 import { vendor } from "@/db/schema/vendor-schema";
 import { eq, desc, and } from "drizzle-orm";
+import { createNotification } from "@/utils/notifications";
 
 const messagingVendor = new Hono();
 
@@ -101,6 +102,9 @@ messagingVendor.post("/send", async (c) => {
 
     const conv = await db.query.conversation.findFirst({
       where: and(eq(conversation.id, body.conversationId), eq(conversation.vendorId, v.id)),
+      with: {
+        user: { columns: { id: true } },
+      },
     });
     if (!conv) return c.json({ error: "Conversation not found" }, 404);
 
@@ -113,6 +117,16 @@ messagingVendor.post("/send", async (c) => {
     });
 
     await db.update(conversation).set({ updatedAt: new Date() }).where(eq(conversation.id, body.conversationId));
+
+    if (conv?.user?.id) {
+      await createNotification({
+        userId: conv.user.id,
+        type: "new_message",
+        title: `New message from ${v.storeName || "Vendor"}`,
+        body: body.content.slice(0, 100),
+        data: { conversationId: body.conversationId },
+      });
+    }
 
     const created = await db.query.message.findFirst({
       where: eq(message.id, msgId),

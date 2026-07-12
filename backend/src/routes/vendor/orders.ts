@@ -4,6 +4,7 @@ import { order, orderItem } from "@/db/schema/order-schema";
 import { product } from "@/db/schema/product-schema";
 import { vendor } from "@/db/schema/vendor-schema";
 import { eq, and, desc, inArray } from "drizzle-orm";
+import { createNotification } from "@/utils/notifications";
 
 const ordersVendor = new Hono();
 
@@ -135,6 +136,21 @@ ordersVendor.put("/items/:itemId/status", async (c) => {
         product: { columns: { id: true, name: true } },
       },
     });
+
+    const ord = await db.query.order.findFirst({
+      where: eq(order.id, existing.orderId),
+      columns: { userId: true },
+    });
+
+    if (ord) {
+      await createNotification({
+        userId: ord.userId,
+        type: `order_${body.status}`,
+        title: `Order ${body.status}`,
+        body: `Your item "${updated?.product?.name || "Product"}" has been ${body.status}.`,
+        data: { orderId: existing.orderId, itemId, status: body.status },
+      });
+    }
 
     return c.json({ item: updated });
   } catch (error) {
