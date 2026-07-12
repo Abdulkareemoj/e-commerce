@@ -17,6 +17,8 @@ import {
   BarChart3,
   Users,
   Wallet,
+  Tag,
+  Flag,
 } from 'lucide-react-native';
 import { useAuthStore } from '@/lib/authStore';
 import { useCart } from '@/hooks/useCart';
@@ -58,9 +60,11 @@ const ADMIN_NAV: NavItem[] = [
   { label: 'Vendors', icon: Store, href: '/(admin)/(tabs)/vendors' },
   { label: 'Users', icon: Users, href: '/(admin)/users' },
   { label: 'Products', icon: Package, href: '/(admin)/products' },
+  { label: 'Coupons', icon: Tag, href: '/(admin)/coupons' },
   { label: 'Orders', icon: ShoppingBag, href: '/(admin)/orders' },
   { label: 'Payouts', icon: Wallet, href: '/(admin)/(tabs)/payouts' },
   { label: 'Categories', icon: LayoutGrid, href: '/(admin)/categories' },
+  { label: 'Reports', icon: Flag, href: '/(admin)/reports' },
   { label: 'Analytics', icon: BarChart3, href: '/(admin)/(tabs)/analytics' },
   { label: 'Settings', icon: Settings, href: '/(admin)/settings' },
 ];

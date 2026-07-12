@@ -21,29 +21,25 @@ export function ReviewCard({ review }: ReviewCardProps) {
   return (
     <Card className="gap-3 p-4">
       <View className="flex-row items-center gap-3">
-        <Avatar>
-          {review.user.image ? (
-            <AvatarImage source={{ uri: review.user.image }} />
-          ) : null}
+        <Avatar alt={review.user.name || 'User'}>
+          {review.user.image ? <AvatarImage source={{ uri: review.user.image }} /> : null}
           <AvatarFallback>
-            <Text className="text-xs font-bold text-muted-foreground">{initials || 'U'}</Text>
+            <Text className="text-muted-foreground text-xs font-bold">{initials || 'U'}</Text>
           </AvatarFallback>
         </Avatar>
         <View className="flex-1">
           <Text className="text-sm font-semibold">{review.user.name}</Text>
           <StarRating rating={review.rating} size={12} />
         </View>
-        <Text className="text-xs text-muted-foreground">
+        <Text className="text-muted-foreground text-xs">
           {new Date(review.createdAt).toLocaleDateString()}
         </Text>
       </View>
 
-      {review.title ? (
-        <Text className="text-sm font-medium">{review.title}</Text>
-      ) : null}
+      {review.title ? <Text className="text-sm font-medium">{review.title}</Text> : null}
 
       {review.body ? (
-        <Text className="text-sm leading-relaxed text-muted-foreground">{review.body}</Text>
+        <Text className="text-muted-foreground text-sm leading-relaxed">{review.body}</Text>
       ) : null}
     </Card>
   );

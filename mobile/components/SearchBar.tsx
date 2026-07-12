@@ -28,7 +28,6 @@ export function SearchBar({
         value={value}
         onChangeText={onChangeText}
         placeholder={placeholder}
-        placeholderClassName="text-muted-foreground"
         autoFocus={autoFocus}
         returnKeyType="search"
         onSubmitEditing={onSubmit}
