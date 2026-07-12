@@ -21,6 +21,7 @@ import { Icon } from '@/components/ui/icon';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuthStore } from '@/lib/authStore';
 import { AppSidebar } from '@/components/layout/AppSidebar';
+import { AuthGuard } from '@/components/AuthGuard';
 
 export { ErrorBoundary } from 'expo-router';
 
@@ -93,7 +94,7 @@ function CustomDrawerContent() {
           return (
             <Pressable
               key={item.route}
-              onPress={() => router.push(item.route)}
+              onPress={() => router.push(item.route as any)}
               className={`mb-1 flex-row items-center gap-3 rounded-xl px-3 py-2.5 ${
                 isActive ? 'bg-primary/10' : 'active:bg-secondary/50'
               }`}>
@@ -216,16 +217,18 @@ export default function VendorLayout() {
   const { width } = useWindowDimensions();
   const isWeb = width >= 1024;
 
-  if (isWeb) {
-    return (
-      <View className="bg-background flex-1 flex-row">
-        <AppSidebar role="vendor" />
-        <View className="flex-1">
-          <WebLayout />
+  return (
+    <AuthGuard requiredRole="vendor" roleMessage="You need a vendor account to access this page.">
+      {isWeb ? (
+        <View className="bg-background flex-1 flex-row">
+          <AppSidebar role="vendor" />
+          <View className="flex-1">
+            <WebLayout />
+          </View>
         </View>
-      </View>
-    );
-  }
-
-  return <MobileLayout />;
+      ) : (
+        <MobileLayout />
+      )}
+    </AuthGuard>
+  );
 }

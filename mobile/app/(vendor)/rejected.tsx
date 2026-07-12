@@ -21,7 +21,7 @@ export default function VendorRejectedScreen() {
   };
 
   const handleContactSupport = () => {
-    router.replace('/(user)/(tabs)/home');
+    router.push('/(user)/(tabs)/profile/support');
   };
 
   return (
