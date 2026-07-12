@@ -8,13 +8,16 @@ import { MoonStarIcon, SunIcon, LogOut } from 'lucide-react-native';
 import { Uniwind, useUniwind } from 'uniwind';
 import React from 'react';
 import { ScrollView, View } from 'react-native';
+import { useAuthStore } from '@/lib/authStore';
 
 export default function SettingsScreen() {
   const { theme } = useUniwind();
   const isDark = theme === 'dark';
   const toggleColorScheme = () => Uniwind.setTheme(isDark ? 'light' : 'dark');
+  const clearAuth = useAuthStore((s) => s.clearAuth);
 
-  const handleSignOut = () => {
+  const handleSignOut = async () => {
+    await clearAuth();
     router.replace('/(auth)/sign-in');
   };
 

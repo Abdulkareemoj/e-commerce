@@ -20,6 +20,7 @@ import {
 } from '@/components/ui/dialog';
 import { api } from '@/lib/api';
 import { MapPin, Edit, Trash2, Plus, Check } from 'lucide-react-native';
+import { AuthGuard } from '@/components/AuthGuard';
 
 const addressSchema = z.object({
   line1: z.string().min(1, 'Street address is required'),
@@ -170,96 +171,100 @@ export default function AddressesScreen() {
   }
 
   return (
-    <View className="bg-background flex-1">
-      <View className="bg-card border-border flex-row items-center justify-between border-b px-5 py-4">
-        <Text className="text-foreground text-lg font-bold">My Addresses</Text>
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogTrigger asChild>
-            <Button size="sm" className="rounded-xl">
-              <Icon as={Plus} size={16} className="text-primary-foreground" />
-              <Text className="text-primary-foreground font-semibold">Add New</Text>
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="w-full max-w-md">
-            <DialogHeader>
-              <DialogTitle>{editingAddress ? 'Edit Address' : 'Add Address'}</DialogTitle>
-            </DialogHeader>
-            <AddressForm
-              key={editingAddress?.id || 'new'}
-              address={editingAddress}
-              onSave={handleSave}
-              onCancel={() => {
-                setDialogOpen(false);
-                setEditingAddress(null);
-              }}
-            />
-          </DialogContent>
-        </Dialog>
-      </View>
+    <AuthGuard>
+      <View className="bg-background flex-1">
+        <View className="bg-card border-border flex-row items-center justify-between border-b px-5 py-4">
+          <Text className="text-foreground text-lg font-bold">My Addresses</Text>
+          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+            <DialogTrigger asChild>
+              <Button size="sm" className="rounded-xl">
+                <Icon as={Plus} size={16} className="text-primary-foreground" />
+                <Text className="text-primary-foreground font-semibold">Add New</Text>
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="w-full max-w-md">
+              <DialogHeader>
+                <DialogTitle>{editingAddress ? 'Edit Address' : 'Add Address'}</DialogTitle>
+              </DialogHeader>
+              <AddressForm
+                key={editingAddress?.id || 'new'}
+                address={editingAddress}
+                onSave={handleSave}
+                onCancel={() => {
+                  setDialogOpen(false);
+                  setEditingAddress(null);
+                }}
+              />
+            </DialogContent>
+          </Dialog>
+        </View>
 
-      <ScrollView contentContainerClassName="p-4 gap-4">
-        {loading ? (
-          <Text className="text-muted-foreground mt-10 text-center">Loading addresses...</Text>
-        ) : addresses.length === 0 ? (
-          <View className="mt-10 items-center gap-3">
-            <Icon as={MapPin} size={48} className="text-muted-foreground" />
-            <Text className="text-muted-foreground">No addresses yet</Text>
-            <Button variant="outline" className="rounded-xl">
-              <Icon as={Plus} size={16} />
-              <Text>Add an Address</Text>
-            </Button>
-          </View>
-        ) : (
-          addresses.map((addr) => (
-            <Card key={addr.id} className="bg-card border-border rounded-2xl border p-4">
-              <View className="flex-row items-start justify-between">
-                <View className="flex-1 flex-row items-center gap-3">
-                  <View className="bg-primary/10 size-10 items-center justify-center rounded-xl">
-                    <Icon as={MapPin} size={18} className="text-primary" />
-                  </View>
-                  <View className="flex-1">
-                    <View className="flex-row items-center gap-2">
-                      <Text className="text-foreground font-semibold capitalize">{addr.type}</Text>
-                      {addr.isDefault && (
-                        <View className="bg-primary/10 rounded-full px-2 py-0.5">
-                          <Text className="text-primary text-[10px] font-semibold">Default</Text>
-                        </View>
-                      )}
+        <ScrollView contentContainerClassName="p-4 gap-4">
+          {loading ? (
+            <Text className="text-muted-foreground mt-10 text-center">Loading addresses...</Text>
+          ) : addresses.length === 0 ? (
+            <View className="mt-10 items-center gap-3">
+              <Icon as={MapPin} size={48} className="text-muted-foreground" />
+              <Text className="text-muted-foreground">No addresses yet</Text>
+              <Button variant="outline" className="rounded-xl">
+                <Icon as={Plus} size={16} />
+                <Text>Add an Address</Text>
+              </Button>
+            </View>
+          ) : (
+            addresses.map((addr) => (
+              <Card key={addr.id} className="bg-card border-border rounded-2xl border p-4">
+                <View className="flex-row items-start justify-between">
+                  <View className="flex-1 flex-row items-center gap-3">
+                    <View className="bg-primary/10 size-10 items-center justify-center rounded-xl">
+                      <Icon as={MapPin} size={18} className="text-primary" />
                     </View>
-                    <Text className="text-muted-foreground mt-1 text-sm">
-                      {addr.line1}
-                      {addr.line2 ? `, ${addr.line2}` : ''}
-                    </Text>
-                    <Text className="text-muted-foreground text-sm">
-                      {addr.city}
-                      {addr.state ? `, ${addr.state}` : ''} {addr.postalCode}, {addr.country}
-                    </Text>
+                    <View className="flex-1">
+                      <View className="flex-row items-center gap-2">
+                        <Text className="text-foreground font-semibold capitalize">
+                          {addr.type}
+                        </Text>
+                        {addr.isDefault && (
+                          <View className="bg-primary/10 rounded-full px-2 py-0.5">
+                            <Text className="text-primary text-[10px] font-semibold">Default</Text>
+                          </View>
+                        )}
+                      </View>
+                      <Text className="text-muted-foreground mt-1 text-sm">
+                        {addr.line1}
+                        {addr.line2 ? `, ${addr.line2}` : ''}
+                      </Text>
+                      <Text className="text-muted-foreground text-sm">
+                        {addr.city}
+                        {addr.state ? `, ${addr.state}` : ''} {addr.postalCode}, {addr.country}
+                      </Text>
+                    </View>
+                  </View>
+                  <View className="flex-row gap-1">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="size-9 rounded-xl"
+                      onPress={() => {
+                        setEditingAddress(addr);
+                        setDialogOpen(true);
+                      }}>
+                      <Icon as={Edit} size={16} className="text-muted-foreground" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="size-9 rounded-xl"
+                      onPress={() => handleDelete(addr.id)}>
+                      <Icon as={Trash2} size={16} className="text-destructive" />
+                    </Button>
                   </View>
                 </View>
-                <View className="flex-row gap-1">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="size-9 rounded-xl"
-                    onPress={() => {
-                      setEditingAddress(addr);
-                      setDialogOpen(true);
-                    }}>
-                    <Icon as={Edit} size={16} className="text-muted-foreground" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="size-9 rounded-xl"
-                    onPress={() => handleDelete(addr.id)}>
-                    <Icon as={Trash2} size={16} className="text-destructive" />
-                  </Button>
-                </View>
-              </View>
-            </Card>
-          ))
-        )}
-      </ScrollView>
-    </View>
+              </Card>
+            ))
+          )}
+        </ScrollView>
+      </View>
+    </AuthGuard>
   );
 }
