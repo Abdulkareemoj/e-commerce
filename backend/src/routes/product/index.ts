@@ -3,7 +3,7 @@ import { db } from "@/db";
 import { product } from "@/db/schema/product-schema";
 import { category } from "@/db/schema/category-schema";
 import { review } from "@/db/schema/review-schema";
-import { eq, desc, and, sql } from "drizzle-orm";
+import { eq, desc, asc, and, sql, ne } from "drizzle-orm";
 
 const productPublicRoutes = new Hono();
 
@@ -11,9 +11,13 @@ productPublicRoutes.get("/", async (c) => {
   try {
     const categoryId = c.req.query("categoryId");
     const search = c.req.query("search");
-    
+    const minPrice = c.req.query("minPrice");
+    const maxPrice = c.req.query("maxPrice");
+    const sortBy = c.req.query("sortBy") || "createdAt";
+    const sortOrder = c.req.query("sortOrder") || "desc";
+
     const products = await db.query.product.findMany({
-      where: (prod, { eq, and, ilike }) => {
+      where: (prod, { eq, and, ilike, gte, lte }) => {
         const conditions = [eq(prod.isAvailable, true)];
         if (categoryId) {
           conditions.push(eq(prod.categoryId, categoryId));
@@ -21,22 +25,35 @@ productPublicRoutes.get("/", async (c) => {
         if (search) {
           conditions.push(ilike(prod.name, `%${search}%`));
         }
+        if (minPrice) {
+          conditions.push(gte(prod.price, minPrice));
+        }
+        if (maxPrice) {
+          conditions.push(lte(prod.price, maxPrice));
+        }
         return and(...conditions);
       },
-      orderBy: (prod, { desc }) => [desc(prod.createdAt)],
+      orderBy: (prod, { desc, asc }) => {
+        const dir = sortOrder === "asc" ? asc : desc;
+        switch (sortBy) {
+          case "price": return [dir(prod.price)];
+          case "name": return [dir(prod.name)];
+          default: return [dir(prod.createdAt)];
+        }
+      },
       with: {
         vendor: {
           columns: {
             id: true,
             storeName: true,
-          }
+          },
         },
         variants: {
           orderBy: (v, { asc }) => [asc(v.sortOrder)],
-        }
-      }
+        },
+      },
     });
-    
+
     return c.json({ products });
   } catch (error) {
     console.error("Error fetching products:", error);
@@ -64,12 +81,12 @@ productPublicRoutes.get("/:id", async (c) => {
           columns: {
             id: true,
             storeName: true,
-          }
+          },
         },
         variants: {
           orderBy: (v, { asc }) => [asc(v.sortOrder)],
-        }
-      }
+        },
+      },
     });
 
     if (!prod) {
@@ -115,6 +132,55 @@ productPublicRoutes.get("/:id/reviews", async (c) => {
   } catch (error) {
     console.error(`Error fetching reviews for product ${id}:`, error);
     return c.json({ error: "Failed to fetch reviews" }, 500);
+  }
+});
+
+productPublicRoutes.get("/:id/related", async (c) => {
+  const id = c.req.param("id");
+  try {
+    const current = await db.query.product.findFirst({
+      where: (p, { eq }) => eq(p.id, id),
+    });
+
+    if (!current) {
+      return c.json({ products: [] });
+    }
+
+    const related = await db.query.product.findMany({
+      where: (p, { eq, and, ne, or, ilike }) => {
+        const conditions = [ne(p.id, id), eq(p.isAvailable, true)];
+
+        if (current.categoryId) {
+          return or(
+            and(eq(p.categoryId, current.categoryId), ...conditions),
+            and(
+              ilike(p.name, `%${current.name.split(" ")[0]}%`),
+              ...conditions,
+            ),
+          );
+        }
+
+        return and(
+          ilike(p.name, `%${current.name.split(" ")[0]}%`),
+          ...conditions,
+        );
+      },
+      orderBy: (p, { desc }) => [desc(p.createdAt)],
+      limit: 8,
+      with: {
+        vendor: {
+          columns: { id: true, storeName: true },
+        },
+        variants: {
+          orderBy: (v, { asc }) => [asc(v.sortOrder)],
+        },
+      },
+    });
+
+    return c.json({ products: related });
+  } catch (error) {
+    console.error(`Error fetching related products for ${id}:`, error);
+    return c.json({ error: "Failed to fetch related products" }, 500);
   }
 });
 
