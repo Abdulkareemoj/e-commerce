@@ -1,39 +1,123 @@
-# Multivendor E‑commerce Platform
+# Marketplace — Multivendor E-commerce Platform
 
-A modern multivendor e‑commerce platform built with **React Native (Expo)** for the mobile/web client and **Hono + Better Auth + Drizzle ORM + PostgreSQL** for the backend.
+A full-stack multivendor marketplace built with **Expo (React Native)** for the client and **Hono + Better Auth + Drizzle ORM + PostgreSQL** for the API.
+
+> **Web** · **iOS** · **Android** — shared codebase with role-based views (Buyer, Vendor, Admin).
 
 ---
 
-## 🏗️ Architecture Overview
+## Features
 
-### Frontend (Mobile/Web)
+### Buyer
+- Browse/search products with category filters
+- Product detail page with dynamic variant selectors (color, size, etc.)
+- Cart — guest and authenticated with seamless guest→user merge on sign-in
+- Checkout flow with shipping and coupon code support
+- Order history with per-item status tracking
+- Product reviews & star ratings
+- Wishlist (favorite products)
+- Address management (CRUD with defaults)
+- In-app messaging with vendors (start conversation from product page)
 
-- **Framework**: React Native with Expo (runs on iOS, Android, and Web)
-- **Styling**: NativeWind (Tailwind CSS for RN)
-- **State**: Zustand for auth and global state
-- **Navigation**: Expo Router with file‑based routing
-- **Auth**: Better Auth Expo client with SecureStore session storage
-- **Icons**: Lucide React Native
+### Vendor
+- Product & variant CRUD with SKU management
+- Order management — accept, ship, deliver line items
+- Inventory dashboard — low-stock alerts with inline stock updates
+- Store profile management (name, slug, description, payout details)
+- Messaging — full conversation management with buyers (list, send, auto-polling)
+- Payout requests (list earnings, request payouts)
+- Analytics dashboard (product/order counts, revenue, growth, low-stock warnings)
+
+### Admin
+- Vendor registration verification (approve/reject applications)
+- User and vendor management
+- Platform settings
+- Coupon/promotion CRUD
+
+### Cross-cutting
+- Role-based access control (`user` / `vendor` / `admin`)
+- Guest session cart (survives device storage)
+- Cart merge on sign-in (guest items transfer to user)
+- Rich product variants (attributes, price override, stock, SKU)
+- Form standardization: all forms use `react-hook-form` + `zod` + `Field` component
+
+---
+
+## Project Structure
+
+```
+e-commerce/
+├── backend/
+│   ├── src/
+│   │   ├── db/
+│   │   │   ├── index.ts              # Drizzle instance + schema registry
+│   │   │   └── schema/               # Table definitions (19 tables)
+│   │   ├── routes/
+│   │   │   ├── admin/                # Admin CRUD (coupons, users, vendors)
+│   │   │   ├── user/                 # Buyer routes (profile, cart, orders, reviews, wishlist, addresses, messaging, become-vendor)
+│   │   │   ├── vendor/               # Vendor routes (products, variants, orders, inventory, store, messaging, payouts, dashboard)
+│   │   │   ├── product/              # Public product & review endpoints
+│   │   │   ├── cart/                 # Cart (guest + auth)
+│   │   │   └── coupon/               # Coupon validation
+│   │   ├── utils/
+│   │   │   ├── auth.ts               # Better Auth server config
+│   │   │   └── permissions.ts        # Role middleware
+│   │   └── index.ts                  # Hono server entry
+│   ├── drizzle/                      # Generated SQL migrations (6 increments)
+│   └── drizzle.config.ts
+│
+├── mobile/
+│   ├── app/
+│   │   ├── (auth)/                   # Sign-in, sign-up, forgot/reset password, verify email
+│   │   ├── (user)/                   # Buyer screens (cart, checkout, orders, profile, messages, search)
+│   │   ├── (vendor)/                 # Vendor screens (dashboard, products, orders, inventory, messages, analytics, profile, settings)
+│   │   └── (admin)/                  # Admin screens (vendors, users, coupons)
+│   ├── components/
+│   │   ├── ui/                       # RNR primitives (button, card, avatar, input, badge, field, etc.)
+│   │   ├── messages/                 # Chat (ChatListItem, MessageBubble, ConversationView, etc.)
+│   │   ├── ProductCard.tsx, ReviewForm.tsx, ReviewCard.tsx, StarRating.tsx
+│   ├── hooks/                        # Zustand stores (cart, wishlist, auth)
+│   ├── lib/                          # API client, theme, utilities
+│   └── types/                        # Shared TypeScript types
+│
+└── README.md
+```
+
+---
+
+## Tech Stack
+
+### Frontend
+| Layer | Choice |
+|-------|--------|
+| Framework | React Native (Expo SDK 52+) |
+| Routing | Expo Router (file-based) |
+| Styling | NativeWind v4 (Tailwind CSS) |
+| State | Zustand (persisted via AsyncStorage) |
+| Auth Client | Better Auth Expo |
+| Icons | Lucide React Native |
+| UI Primitives | `@rn-primitives` (tabs, avatar, etc.) |
 
 ### Backend
-
-- **Runtime**: Node.js with Hono
-- **Database**: PostgreSQL with Drizzle ORM
-- **Auth**: Better Auth (email/password + OAuth: Google, Apple, Discord)
-- **Validation**: Zod
-- **Logging**: Pino with pretty printing
-- **Migrations**: Drizzle Kit
+| Layer | Choice |
+|-------|--------|
+| Runtime | Node.js / Hono |
+| Auth | Better Auth (email/password + OAuth) |
+| Database | PostgreSQL + Drizzle ORM |
+| Validation | Zod |
+| Logging | Pino |
+| Migrations | Drizzle Kit |
 
 ---
 
-## 🚀 Quick Start
+## Getting Started
 
 ### Prerequisites
 
 - Node.js 18+
 - pnpm
 - PostgreSQL (local or cloud)
-- Expo CLI (`npx expo install -g`)
+- Expo CLI (`npx expo install -g` recommended)
 
 ### 1. Clone & Install
 
@@ -41,217 +125,194 @@ A modern multivendor e‑commerce platform built with **React Native (Expo)** fo
 git clone <repo-url>
 cd e-commerce
 pnpm install
-cd mobile && pnpm install
-cd ../backend && pnpm install
+cd backend && pnpm install
+cd ../mobile && pnpm install
 ```
 
 ### 2. Environment
 
-Create `.env` in `backend/`:
+Create `backend/.env.local`:
 
 ```env
 DATABASE_URL=postgresql://user:password@localhost:5432/ecommerce
-BETTER_AUTH_EMAIL=noreply@yourapp.com
-GOOGLE_CLIENT_ID=your-google-client-id
-GOOGLE_CLIENT_SECRET=your-google-client-secret
-APPLE_CLIENT_ID=your-apple-client-id
-APPLE_CLIENT_SECRET=your-apple-client-secret
-DISCORD_CLIENT_ID=your-discord-client-id
-DISCORD_CLIENT_SECRET=your-discord-client-secret
+BETTER_AUTH_SECRET=your-secret
+BETTER_AUTH_URL=http://localhost:8000
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+APPLE_CLIENT_ID=
+APPLE_CLIENT_SECRET=
+DISCORD_CLIENT_ID=
+DISCORD_CLIENT_SECRET=
 ```
 
-### 3. Database Setup
+For the mobile app, create `mobile/.env`:
+
+```env
+EXPO_PUBLIC_API_BASE_URL=http://localhost:8000/api
+```
+
+### 3. Database
 
 ```bash
 cd backend
 pnpm run db:generate
 pnpm run db:migrate
+pnpm run db:studio   # optional: inspect tables
 ```
 
-### 4. Run Development Servers
+### 4. Run
 
 ```bash
-# Backend (port 8000)
+# Terminal 1 — Backend (port 8000)
 cd backend && pnpm run dev
 
-# Frontend (port 8081)
-cd mobile && npx expo start --tunnel
+# Terminal 2 — Frontend (port 8081)
+cd mobile && npx expo start
 ```
 
 ---
 
-## 📁 Project Structure
+## API Overview
 
-```
-e-commerce/
-├─ backend/
-│  ├─ src/
-│  │  ├─ db/
-│  │  │  ├─ index.ts          # Drizzle instance & schema export
-│  │  │  └─ schema/           # Table definitions
-│  │  ├─ utils/
-│  │  │  └─ auth.ts           # Better Auth config
-│  │  └─ index.ts             # Hono server + middleware
-│  ├─ drizzle.config.ts        # Drizzle Kit config
-│  └─ drizzle/                # Generated migrations
-├─ mobile/
-│  ├─ app/
-│  │  ├─ (auth)/             # Auth screens (sign‑in, sign‑up)
-│  │  ├─ (admin)/             # Admin screens
-│  │  ├─ (vendor)/             # Vendor screens
-│  │  ├─ (user)/             # User screens
-│  │  └─ _layout.tsx         # Root layout
-│  ├─ lib/
-│  │  ├─ auth-client.ts       # Better Auth Expo client
-│  │  ├─ authStore.ts        # Zustand auth store
-│  │  └─ money.ts            # Currency helpers
-│  └─ package.json
-└─ README.md
-```
+All routes are prefixed with `/api`.
+
+### Public
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/products` | List products (filterable) |
+| GET | `/products/:id` | Product detail with avg rating |
+| GET | `/products/:id/reviews` | Reviews with user info |
+| GET | `/products/categories` | Category list |
+| GET | `/cart` | Cart (auth or X-Session-Token) |
+| POST | `/cart/add` | Add item to cart |
+| PUT | `/cart/item/:id` | Update quantity |
+| DELETE | `/cart/item/:id` | Remove item |
+| DELETE | `/cart/clear` | Clear cart |
+| GET | `/coupons/validate` | Coupon validation |
+
+### Auth (user)
+| Method | Path | Description |
+|--------|------|-------------|
+| GET/PUT | `/user/profile` | Read/update profile info |
+| GET/POST/PUT/DELETE | `/user/addresses` | Address CRUD with defaults |
+| GET | `/user/orders` | My orders |
+| GET | `/user/orders/:id` | Order detail |
+| POST | `/user/orders` | Place order |
+| GET | `/user/wishlist` | My wishlist |
+| GET | `/user/wishlist/check` | Check if wishlisted |
+| POST | `/user/wishlist/:productId` | Add to wishlist |
+| DELETE | `/user/wishlist/:productId` | Remove from wishlist |
+| POST | `/user/reviews/:productId` | Create review |
+| PUT | `/user/reviews/:id` | Update review |
+| DELETE | `/user/reviews/:id` | Delete review |
+| GET | `/user/messaging` | List conversations |
+| GET | `/user/messaging/:id` | Conversation detail with messages |
+| POST | `/user/messaging/send` | Send message |
+| POST | `/user/messaging/start` | Start new conversation with vendor |
+| POST | `/user/become-vendor` | Apply as vendor |
+
+### Auth (vendor)
+| Method | Path | Description |
+|--------|------|-------------|
+| GET/PUT | `/vendor/store` | Read/update store settings |
+| GET/PUT | `/vendor/profile` | Read/update personal profile |
+| CRUD | `/vendor/products` | Product management |
+| CRUD | `/vendor/variants` | Variant management |
+| GET | `/vendor/orders` | Orders containing my products |
+| PUT | `/vendor/orders/items/:id/status` | Update item status |
+| GET | `/vendor/inventory/low-stock` | Below-threshold products |
+| PUT | `/vendor/inventory/products/:id/stock` | Update product stock |
+| PUT | `/vendor/inventory/variants/:id/stock` | Update variant stock |
+| GET | `/vendor/messaging` | List buyer conversations |
+| GET | `/vendor/messaging/:id` | Conversation detail with messages |
+| POST | `/vendor/messaging/send` | Send message |
+| GET/POST | `/vendor/payouts` | List / request payouts |
+| GET | `/vendor/dashboard/stats` | Aggregated dashboard stats |
+
+### Admin
+| Method | Path | Description |
+|--------|------|-------------|
+| CRUD | `/admin/coupons` | Coupon management |
+| CRUD | `/admin/users` | User management |
+| GET | `/admin/vendors` | List vendor applications |
+| PUT | `/admin/vendors/:id/approve` | Approve vendor |
+| PUT | `/admin/vendors/:id/reject` | Reject vendor |
 
 ---
 
-## 🔐 Authentication
+## Schema (19 tables)
 
-- **Email/Password** with Better Auth sessions
-- **Social OAuth**: Google, Apple, Discord
-- **Roles**: `user`, `vendor`, `admin`
-- **Session storage**: SecureStore on native, cookies on web
-- **Redirects**: Role‑based after sign‑in
+`user` · `session` · `account` · `verification` · `profile` · `vendor` · `product` · `product_variant` · `category` · `cart` · `cart_item` · `order` · `order_item` · `address` · `review` · `coupon` · `wishlist_item` · `conversation` · `message` · `payout`
 
 ---
 
-## 🛒 E‑commerce Features (Schema)
-
-### Core Entities
-
-- **Users**: Auth + profile + roles
-- **Vendors**: Store profile, verification status, payout details
-- **Products**: Linked to vendors + categories
-- **Orders & OrderItems**: Multi‑vendor per order
-- **Addresses**: Shipping/billing per user
-- **Categories**: Hierarchical product categories
-
-### Relationships
-
-- `user` 1→1 `profile`
-- `user` 1→1 `vendor` (if role=vendor)
-- `vendor` 1→N `product`
-- `user` 1→N `order`
-- `order` 1→N `orderItem` (each with `vendorId`)
-
----
-
-## 🛠️ Development Scripts
+## Development Scripts
 
 ### Backend
 
 ```bash
-pnpm run dev          # Start dev server
-pnpm run build        # TypeScript build
-pnpm run start        # Run production build
-pnpm run db:generate  # Generate migration files
-pnpm run db:migrate   # Run migrations
-pnpm run db:push      # Push schema changes (dev)
-pnpm run db:studio    # Open Drizzle Studio
+pnpm run dev            # Dev server with hot reload
+pnpm run build          # TypeScript compilation
+pnpm run start          # Production server
+pnpm run db:generate    # Generate SQL migration from schema
+pnpm run db:migrate     # Apply pending migrations
+pnpm run db:push        # Push schema (dev only)
+pnpm run db:studio      # Drizzle Studio GUI
 ```
 
 ### Frontend
 
 ```bash
-npx expo start        # Start Metro dev server
-npx expo start --tunnel  # Expose via tunnel (for mobile devices)
-npx expo run:android     # Run on Android
-npx expo run:ios         # Run on iOS
+npx expo start              # Metro dev server
+npx expo start --tunnel     # Expose for physical devices
+npx expo run:android        # Native Android build
+npx expo run:ios            # Native iOS build
 ```
 
 ---
 
-## 📦 Key Dependencies
+## Roadmap
 
-### Backend
-
-- `better-auth` – Auth core
-- `@better-auth/expo` – Expo integration
-- `drizzle-orm` – ORM
-- `drizzle-kit` – Migrations
-- `hono` – Web framework
-- `pg` – PostgreSQL driver
-- `zod` – Validation
-- `pino` – Logging
-
-### Frontend
-
-- `expo` – React Native toolchain
-- `expo-router` – File‑based routing
-- `native-base` or `nativewind` – UI/styling
-- `zustand` – State
-- `lucide-react-native` – Icons
-- `@better-auth/expo` – Auth client
-
----
-
-## 🔧 Configuration Notes
-
-- **CORS/Origins**: Backend trusts `exp://*` for Expo dev and `mobile://` for production builds.
-- **Dynamic baseURL**: Auth client auto‑detects LAN IP for native devices.
-- **Environment**: Use `.env.local` for secrets; never commit.
+- [x] Product variants & SKU
+- [x] Guest cart + cart merge
+- [x] Reviews & ratings
+- [x] Coupon / promo codes
+- [x] Wishlist
+- [x] Order lifecycle (multi-vendor status machine)
+- [x] Inventory alerts (low stock)
+- [x] Vendor store & profile management
+- [x] Vendor messaging (conversations with buyers)
+- [x] Vendor payouts
+- [x] Vendor analytics dashboard
+- [x] User messaging (in-app conversations with vendors)
+- [x] Address CRUD
+- [x] Vendor registration & approval flow
+- [x] Form standardization (RHF + zod + Field component)
+- [ ] **Payment gateway** (Stripe / Paystack — TBD based on region)
+- [ ] **Post-purchase notifications** (email / push)
+- [ ] Product media upload (S3 / Supabase Storage)
+- [ ] Admin coupon management UI
+- [ ] Admin analytics dashboard
 
 ---
 
-## 🧪 Testing & Debugging
+## Troubleshooting
 
-- **Better Auth debug**: Enabled in non‑production (`debug: true`).
-- **Database**: Use `pnpm run db:studio` to inspect tables.
-- **Logs**: Backend logs via Pino; frontend via Expo Metro.
-
----
-
-## 📈 Next Steps / TODOs
-
-- [ ] Connect sign‑up screen to backend API
-- [ ] Implement vendor onboarding flow
-- [ ] Add product upload with images (S3/Supabase Storage)
-- [ ] Build checkout flow with multi‑vendor cart
-- [ ] Add order status tracking
-- [ ] Admin dashboard for vendor verification
-- [ ] Push notifications (Expo)
-
----
-
-## 🤝 Contributing
-
-1. Fork the repo
-2. Create a feature branch
-3. Submit a PR with clear description
-
----
-
-## 📄 License
-
-MIT License
-
----
-
-## 🆘 Troubleshooting
-
-### Social sign‑in 500 / Drizzle tracing error
-
-- Ensure `verification` config in `backend/src/utils/auth.ts` is disabled or use a compatible Drizzle version.
-- Restart backend after config changes.
+### Social sign-in 500 / Drizzle tracing error
+Disable `verification` config in `backend/src/utils/auth.ts` or use a compatible Drizzle version.
 
 ### Expo dev origin errors
-
-- Ensure `exp://*` origins are in `trustedOrigins`.
-- Use `pnpm run dev` on backend bound to `0.0.0.0`.
+Ensure `exp://*` is in `trustedOrigins` in the auth config and backend binds to `0.0.0.0`.
 
 ### Migration conflicts (enum already exists)
-
-- Drop dependent column first, then enum:
-  ```sql
-  ALTER TABLE vendor DROP COLUMN IF EXISTS is_verified;
-  DROP TYPE IF EXISTS vendor_status;
-  ```
-- Then re‑run migrations.
+```sql
+ALTER TABLE vendor DROP COLUMN IF EXISTS is_verified;
+DROP TYPE IF EXISTS vendor_status;
+```
+Then re-run migrations.
 
 ---
+
+## License
+
+MIT
