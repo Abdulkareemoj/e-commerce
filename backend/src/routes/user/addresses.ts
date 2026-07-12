@@ -12,10 +12,23 @@ addressesUser.get("/", async (c) => {
   const user = (c as any).get("user") as any;
 
   try {
-    const addresses = await db.query.address.findMany({
+    const rows = await db.query.address.findMany({
       where: eq(address.userId, user.id),
       orderBy: (a, { desc }) => [desc(a.isDefault), desc(a.createdAt)],
     });
+
+    const addresses = rows.map((r) => ({
+      id: r.id,
+      name: "",
+      phone: "",
+      street: r.line1,
+      city: r.city,
+      state: r.state || "",
+      zip: r.postalCode,
+      country: r.country,
+      isDefault: r.isDefault,
+      type: r.type,
+    }));
 
     return c.json({ addresses });
   } catch (error) {
@@ -29,13 +42,26 @@ addressesUser.get("/:id", async (c) => {
   const { id } = c.req.param();
 
   try {
-    const addr = await db.query.address.findFirst({
+    const r = await db.query.address.findFirst({
       where: and(eq(address.id, id), eq(address.userId, user.id)),
     });
 
-    if (!addr) {
+    if (!r) {
       return c.json({ error: "Address not found" }, 404);
     }
+
+    const addr = {
+      id: r.id,
+      name: "",
+      phone: "",
+      street: r.line1,
+      city: r.city,
+      state: r.state || "",
+      zip: r.postalCode,
+      country: r.country,
+      isDefault: r.isDefault,
+      type: r.type,
+    };
 
     return c.json({ address: addr });
   } catch (error) {
@@ -48,8 +74,18 @@ addressesUser.post("/", async (c) => {
   const user = (c as any).get("user") as any;
   const body = await c.req.json();
 
-  if (!body.line1 || !body.city || !body.postalCode || !body.country || !body.type) {
-    return c.json({ error: "line1, city, postalCode, country, and type are required" }, 400);
+  const line1 = body.line1 || body.street;
+  const postalCode = body.postalCode || body.zip;
+  const country = body.country || "US";
+  const type = body.type || "shipping";
+
+  if (!line1 || !body.city || !postalCode) {
+    return c.json(
+      {
+        error: "street (or line1), city, and zip (or postalCode) are required",
+      },
+      400,
+    );
   }
 
   try {
@@ -65,18 +101,32 @@ addressesUser.post("/", async (c) => {
       .values({
         id: nanoid(),
         userId: user.id,
-        type: body.type,
-        line1: body.line1,
+        type,
+        line1,
         line2: body.line2 || null,
         city: body.city,
         state: body.state || null,
-        postalCode: body.postalCode,
-        country: body.country,
+        postalCode,
+        country,
         isDefault: body.isDefault || false,
       })
       .returning();
 
-    return c.json({ address: newAddress[0] }, 201);
+    const r = newAddress[0];
+    const result = {
+      id: r.id,
+      name: body.name || "",
+      phone: body.phone || "",
+      street: r.line1,
+      city: r.city,
+      state: r.state || "",
+      zip: r.postalCode,
+      country: r.country,
+      isDefault: r.isDefault,
+      type: r.type,
+    };
+
+    return c.json({ address: result }, 201);
   } catch (error) {
     console.error("Failed to create address:", error);
     return c.json({ error: "Failed to create address" }, 500);
@@ -104,15 +154,18 @@ addressesUser.put("/:id", async (c) => {
         .where(and(eq(address.userId, user.id), eq(address.isDefault, true)));
     }
 
+    const line1 = body.line1 || body.street || existing.line1;
+    const postalCode = body.postalCode || body.zip || existing.postalCode;
+
     const updated = await db
       .update(address)
       .set({
         type: body.type ?? existing.type,
-        line1: body.line1 ?? existing.line1,
+        line1,
         line2: body.line2 !== undefined ? body.line2 : existing.line2,
         city: body.city ?? existing.city,
         state: body.state !== undefined ? body.state : existing.state,
-        postalCode: body.postalCode ?? existing.postalCode,
+        postalCode,
         country: body.country ?? existing.country,
         isDefault: body.isDefault ?? existing.isDefault,
         updatedAt: new Date(),
@@ -120,7 +173,21 @@ addressesUser.put("/:id", async (c) => {
       .where(eq(address.id, id))
       .returning();
 
-    return c.json({ address: updated[0] });
+    const r = updated[0];
+    const result = {
+      id: r.id,
+      name: body.name || "",
+      phone: body.phone || "",
+      street: r.line1,
+      city: r.city,
+      state: r.state || "",
+      zip: r.postalCode,
+      country: r.country,
+      isDefault: r.isDefault,
+      type: r.type,
+    };
+
+    return c.json({ address: result });
   } catch (error) {
     console.error("Failed to update address:", error);
     return c.json({ error: "Failed to update address" }, 500);

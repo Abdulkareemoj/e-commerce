@@ -3,6 +3,7 @@ import { db } from "@/db";
 import { conversation, message } from "@/db/schema/message-schema";
 import { vendor } from "@/db/schema/vendor-schema";
 import { eq, desc, and } from "drizzle-orm";
+import { createNotification } from "@/utils/notifications";
 
 const messagingUser = new Hono();
 
@@ -123,6 +124,14 @@ messagingUser.post("/start", async (c) => {
       });
       await db.update(conversation).set({ updatedAt: new Date() }).where(eq(conversation.id, existingConv.id));
 
+      await createNotification({
+        userId: v.userId,
+        type: "new_message",
+        title: `New message from ${user.name}`,
+        body: body.content.slice(0, 100),
+        data: { conversationId: existingConv.id },
+      });
+
       const created = await db.query.message.findFirst({
         where: eq(message.id, msgId),
         with: { sender: { columns: { id: true, name: true, image: true } } },
@@ -145,6 +154,14 @@ messagingUser.post("/start", async (c) => {
       conversationId: convId,
       senderId: user.id,
       content: body.content,
+    });
+
+    await createNotification({
+      userId: v.userId,
+      type: "new_message",
+      title: `New message from ${user.name}`,
+      body: body.content.slice(0, 100),
+      data: { conversationId: convId },
     });
 
     const created = await db.query.message.findFirst({
@@ -171,6 +188,9 @@ messagingUser.post("/send", async (c) => {
 
     const conv = await db.query.conversation.findFirst({
       where: and(eq(conversation.id, body.conversationId), eq(conversation.userId, user.id)),
+      with: {
+        vendor: { columns: { userId: true } },
+      },
     });
     if (!conv) return c.json({ error: "Conversation not found" }, 404);
 
@@ -183,6 +203,16 @@ messagingUser.post("/send", async (c) => {
     });
 
     await db.update(conversation).set({ updatedAt: new Date() }).where(eq(conversation.id, body.conversationId));
+
+    if (conv?.vendor?.userId) {
+      await createNotification({
+        userId: conv.vendor.userId,
+        type: "new_message",
+        title: `New message from ${user.name}`,
+        body: body.content.slice(0, 100),
+        data: { conversationId: body.conversationId },
+      });
+    }
 
     const created = await db.query.message.findFirst({
       where: eq(message.id, msgId),

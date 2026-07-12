@@ -11,6 +11,8 @@ import becomeVendorUser from "./become-vendor";
 import vendorStatusUser from "./vendor-status";
 import onboardingUser from "./onboarding";
 import addressesUser from "./addresses";
+import reportsUser from "./reports";
+import notificationsUser from "./notifications";
 
 const userRoutes = new Hono();
 
@@ -27,5 +29,7 @@ userRoutes.route("/become-vendor", becomeVendorUser);
 userRoutes.route("/vendor-status", vendorStatusUser);
 userRoutes.route("/", onboardingUser);
 userRoutes.route("/addresses", addressesUser);
+userRoutes.route("/reports", reportsUser);
+userRoutes.route("/notifications", notificationsUser);
 
 export default userRoutes;

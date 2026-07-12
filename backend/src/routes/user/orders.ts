@@ -3,6 +3,7 @@ import { db } from "@/db";
 import { order, orderItem } from "@/db/schema/order-schema";
 import { product } from "@/db/schema/product-schema";
 import { eq, inArray, desc, and } from "drizzle-orm";
+import { createNotification } from "@/utils/notifications";
 
 const ordersUser = new Hono();
 
@@ -64,6 +65,14 @@ ordersUser.post("/", async (c) => {
     });
 
     await db.insert(orderItem).values(orderItemsToInsert);
+
+    await createNotification({
+      userId: user.id,
+      type: "order_placed",
+      title: "Order Placed",
+      body: `Your order #${orderId.slice(0, 8)} has been placed successfully.`,
+      data: { orderId },
+    });
 
     return c.json({ message: "Order created successfully", orderId }, 201);
   } catch (error) {
