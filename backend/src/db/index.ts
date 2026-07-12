@@ -21,6 +21,8 @@ import * as couponSchema from "./schema/coupon-schema";
 import * as wishlistSchema from "./schema/wishlist-schema";
 import * as messageSchema from "./schema/message-schema";
 import * as payoutSchema from "./schema/payout-schema";
+import * as reportSchema from "./schema/report-schema";
+import * as notificationSchema from "./schema/notification-schema";
 
 export const schema = {
   ...authSchema,
@@ -37,6 +39,8 @@ export const schema = {
   ...wishlistSchema,
   ...messageSchema,
   ...payoutSchema,
+  ...reportSchema,
+  ...notificationSchema,
 };
 const queryClient = postgres(process.env.DATABASE_URL!);
-export const db = drizzle({ client: queryClient }, { schema });
+export const db = drizzle({ client: queryClient, schema });
