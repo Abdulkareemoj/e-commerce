@@ -106,6 +106,10 @@ export const api = {
     fetchWithAuth(endpoint, { ...options, method: 'POST', body, auth: false }),
   publicGet: (endpoint: string, options?: ApiRequestOptions) =>
     fetchWithAuth(endpoint, { ...options, method: 'GET', auth: false }),
+  publicPut: (endpoint: string, body: any, options?: ApiRequestOptions) =>
+    fetchWithAuth(endpoint, { ...options, method: 'PUT', body, auth: false }),
+  publicDelete: (endpoint: string, options?: ApiRequestOptions) =>
+    fetchWithAuth(endpoint, { ...options, method: 'DELETE', auth: false }),
   publicRequest: (endpoint: string, options?: ApiRequestOptions) =>
     fetchWithAuth(endpoint, { ...options, auth: false }),
 };
