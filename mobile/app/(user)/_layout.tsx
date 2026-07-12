@@ -98,7 +98,7 @@ function CustomDrawerContent() {
           return (
             <Pressable
               key={item.route}
-              onPress={() => router.push(item.route)}
+              onPress={() => router.push(item.route as any)}
               className={`mb-1 flex-row items-center gap-3 rounded-xl px-3 py-2.5 ${
                 isActive ? 'bg-primary/10' : 'active:bg-secondary/50'
               }`}>

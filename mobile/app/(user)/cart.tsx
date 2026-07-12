@@ -14,6 +14,7 @@ import { Link } from 'expo-router';
 import { useCart } from '@/hooks/useCart';
 import { useAuthStore } from '@/lib/authStore';
 import { ShoppingBag, ArrowRight, X, Tag } from 'lucide-react-native';
+import { AuthGuard } from '@/components/AuthGuard';
 
 const couponSchema = z.object({
   code: z.string().min(1, 'Enter a coupon code'),
@@ -89,37 +90,54 @@ export default function CartScreen() {
     }
   }, [loadCart]);
 
-  if (isLoading) {
-    return (
-      <View className="bg-background flex-1 items-center justify-center p-4">
-        <Text className="text-muted-foreground">Loading cart...</Text>
-      </View>
-    );
-  }
-
-  if (cartItems.length === 0) {
-    return (
-      <View className="bg-background flex-1 items-center justify-center p-6">
-        <View className="items-center gap-4">
-          <View className="bg-secondary size-24 items-center justify-center rounded-full">
-            <Icon as={ShoppingBag} size={40} className="text-muted-foreground" />
-          </View>
-          <View className="items-center gap-2">
-            <Text className="text-foreground text-xl font-bold">Your cart is empty</Text>
-            <Text className="text-muted-foreground text-center text-sm">
-              Looks like you haven't added anything{'\n'}to your cart yet.
-            </Text>
-          </View>
-          <Link href="/(user)/(tabs)/home" asChild>
-            <Button className="mt-2 h-12 rounded-2xl">
-              <Text className="text-primary-foreground font-semibold">Start Shopping</Text>
-            </Button>
-          </Link>
+  return (
+    <AuthGuard>
+      {isLoading ? (
+        <View className="bg-background flex-1 items-center justify-center p-4">
+          <Text className="text-muted-foreground">Loading cart...</Text>
         </View>
-      </View>
-    );
-  }
+      ) : cartItems.length === 0 ? (
+        <View className="bg-background flex-1 items-center justify-center p-6">
+          <View className="items-center gap-4">
+            <View className="bg-secondary size-24 items-center justify-center rounded-full">
+              <Icon as={ShoppingBag} size={40} className="text-muted-foreground" />
+            </View>
+            <View className="items-center gap-2">
+              <Text className="text-foreground text-xl font-bold">Your cart is empty</Text>
+              <Text className="text-muted-foreground text-center text-sm">
+                Looks like you haven't added anything{'\n'}to your cart yet.
+              </Text>
+            </View>
+            <Link href="/(user)/(tabs)/home" asChild>
+              <Button className="mt-2 h-12 rounded-2xl">
+                <Text className="text-primary-foreground font-semibold">Start Shopping</Text>
+              </Button>
+            </Link>
+          </View>
+        </View>
+      ) : (
+        <CartContent
+          cartItems={cartItems}
+          cartTotalCents={cartTotalCents}
+          coupon={coupon}
+          isWeb={isWeb}
+        />
+      )}
+    </AuthGuard>
+  );
+}
 
+function CartContent({
+  cartItems,
+  cartTotalCents,
+  coupon,
+  isWeb,
+}: {
+  cartItems: any[];
+  cartTotalCents: number;
+  coupon: any;
+  isWeb: boolean;
+}) {
   const subtotalCents = cartTotalCents;
   const shippingCents = subtotalCents >= 5000 ? 0 : 599;
   const taxCents = Math.round(subtotalCents * 0.08);

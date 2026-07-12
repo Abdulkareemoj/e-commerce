@@ -1,16 +1,19 @@
 import { Button } from '@/components/ui/button';
 import { Icon } from '@/components/ui/icon';
 import { Text } from '@/components/ui/text';
-import { ShoppingCart, Heart, Share2, ArrowLeft, Check, Truck, Star } from 'lucide-react-native';
+import { Input } from '@/components/ui/input';
+import { ShoppingCart, Heart, Share2, ArrowLeft, Check, Truck, Star, Flag } from 'lucide-react-native';
 import * as React from 'react';
 import {
   ScrollView,
   View,
   Image,
+  Platform,
   useWindowDimensions,
   NativeSyntheticEvent,
   NativeScrollEvent,
   Pressable,
+  Alert,
 } from 'react-native';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { formatCurrency } from '@/lib/money';
@@ -22,7 +25,58 @@ import { StarRating } from '@/components/StarRating';
 import { ReviewCard } from '@/components/ReviewCard';
 import { ReviewForm } from '@/components/ReviewForm';
 import { useAuthStore } from '@/lib/authStore';
+import { ProductCard } from '@/components/ProductCard';
 import { useWishlist } from '@/hooks/useWishlist';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
+
+function ZoomableImage({ uri, width, height }: { uri: string; width: number; height: number }) {
+  const scale = useSharedValue(1);
+  const savedScale = useSharedValue(1);
+
+  const pinchGesture = Gesture.Pinch()
+    .onUpdate((e) => {
+      scale.value = savedScale.value * e.scale;
+    })
+    .onEnd(() => {
+      if (scale.value < 1) {
+        scale.value = withSpring(1);
+      } else if (scale.value > 3) {
+        scale.value = withSpring(3);
+      }
+      savedScale.value = scale.value;
+    });
+
+  const doubleTapGesture = Gesture.Tap()
+    .numberOfTaps(2)
+    .onEnd(() => {
+      if (scale.value > 1) {
+        scale.value = withSpring(1);
+        savedScale.value = 1;
+      } else {
+        scale.value = withSpring(2);
+        savedScale.value = 2;
+      }
+    });
+
+  const composed = Gesture.Simultaneous(pinchGesture, doubleTapGesture);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
+  return (
+    <GestureDetector gesture={composed}>
+      <Animated.View style={{ width, height, overflow: 'hidden' }}>
+        <Animated.Image
+          source={{ uri }}
+          style={[{ width, height }, animatedStyle]}
+          resizeMode="cover"
+        />
+      </Animated.View>
+    </GestureDetector>
+  );
+}
 
 function ProductImageGallery({ images }: { images: string[] }) {
   const [activeIndex, setActiveIndex] = React.useState(0);
@@ -47,12 +101,11 @@ function ProductImageGallery({ images }: { images: string[] }) {
         style={{ height: width > 768 ? 500 : width * 0.9 }}
         contentContainerStyle={{ width: width * images.length }}>
         {images.map((uri, index) => (
-          <Image
+          <ZoomableImage
             key={index}
-            source={{ uri }}
-            className="bg-muted"
-            style={{ width, height: width > 768 ? 500 : width * 0.9 }}
-            resizeMode="cover"
+            uri={uri}
+            width={width}
+            height={width > 768 ? 500 : width * 0.9}
           />
         ))}
       </ScrollView>
@@ -254,6 +307,54 @@ function ProductReviews({ productId }: { productId: string }) {
   );
 }
 
+function RelatedProducts({ productId }: { productId: string }) {
+  const [products, setProducts] = React.useState<Product[]>([]);
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    const fetchRelated = async () => {
+      try {
+        const data = await api.publicGet(`/products/${productId}/related`);
+        const mapped = (data.products || []).map((p: any) => ({
+          ...p,
+          title: p.name,
+          priceCents: Math.round(parseFloat(p.price || 0) * 100),
+          currency: 'USD',
+          rating: p.avgRating ?? null,
+          attributes: {},
+          variants: (p.variants || []).map((v: any) => ({
+            ...v,
+            priceCents: v.price ? Math.round(parseFloat(v.price) * 100) : null,
+          })),
+        }));
+        setProducts(mapped);
+      } catch (err) {
+        console.error('Failed to fetch related products:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchRelated();
+  }, [productId]);
+
+  if (loading || products.length === 0) return null;
+
+  return (
+    <View className="mt-6 gap-4">
+      <Text className="text-foreground text-lg font-bold">You May Also Like</Text>
+      <View className="flex-row flex-wrap justify-between gap-3">
+        {products.slice(0, 4).map((product) => (
+          <View
+            key={product.id}
+            className={Platform.OS === 'web' ? 'w-[31%] lg:w-[23%]' : 'w-[48%]'}>
+            <ProductCard product={product} />
+          </View>
+        ))}
+      </View>
+    </View>
+  );
+}
+
 export default function ProductDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { width } = useWindowDimensions();
@@ -265,6 +366,11 @@ export default function ProductDetailScreen() {
   const [product, setProduct] = React.useState<Product | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [selectedVariant, setSelectedVariant] = React.useState<ProductVariant | null>(null);
+  const [showReport, setShowReport] = React.useState(false);
+  const [reportReason, setReportReason] = React.useState('');
+  const [reportDescription, setReportDescription] = React.useState('');
+  const [reporting, setReporting] = React.useState(false);
+  const [reportSuccess, setReportSuccess] = React.useState(false);
 
   React.useEffect(() => {
     loadWishlist();
@@ -399,6 +505,83 @@ export default function ProductDetailScreen() {
             <Text className="text-foreground text-sm">Free delivery on orders over $50</Text>
           </View>
 
+          <View className="gap-3">
+            {showReport ? (
+              <View className="bg-card shadow-card rounded-2xl p-4 gap-3">
+                <Text className="text-foreground font-semibold">Report this product</Text>
+                {reportSuccess ? (
+                  <View className="items-center gap-2 py-2">
+                    <Icon as={Check} size={24} className="text-success" />
+                    <Text className="text-muted-foreground text-sm text-center">
+                      Thanks for your report. Our team will review it.
+                    </Text>
+                    <Button variant="ghost" size="sm" onPress={() => { setShowReport(false); setReportSuccess(false); }}>
+                      <Text>Close</Text>
+                    </Button>
+                  </View>
+                ) : (
+                  <>
+                    <View className="gap-2">
+                      <Text className="text-muted-foreground text-xs">Reason</Text>
+                      {['Spam or misleading', 'Inappropriate content', 'Counterfeit item', 'Prohibited item', 'Other'].map((r) => (
+                        <Pressable
+                          key={r}
+                          onPress={() => setReportReason(r)}
+                          className={`rounded-xl border px-3 py-2 ${reportReason === r ? 'border-primary bg-primary/10' : 'border-border'}`}>
+                          <Text className={reportReason === r ? 'text-primary text-sm font-medium' : 'text-foreground text-sm'}>{r}</Text>
+                        </Pressable>
+                      ))}
+                    </View>
+                    <View className="gap-1">
+                      <Text className="text-muted-foreground text-xs">Description (optional)</Text>
+                      <Input
+                        placeholder="Additional details..."
+                        multiline
+                        value={reportDescription}
+                        onChangeText={setReportDescription}
+                        className="min-h-[60px]"
+                      />
+                    </View>
+                    <View className="flex-row gap-2">
+                      <Button variant="outline" className="flex-1" onPress={() => setShowReport(false)}>
+                        <Text>Cancel</Text>
+                      </Button>
+                      <Button
+                        className="flex-1"
+                        disabled={!reportReason || reporting}
+                        onPress={async () => {
+                          setReporting(true);
+                          try {
+                            await api.post('/user/reports', {
+                              targetType: 'product',
+                              targetId: id,
+                              reason: reportReason,
+                              description: reportDescription || null,
+                            });
+                            setReportSuccess(true);
+                          } catch (err) {
+                            console.error('Failed to submit report:', err);
+                            Alert.alert('Error', 'Failed to submit report. Please try again.');
+                          } finally {
+                            setReporting(false);
+                          }
+                        }}>
+                        <Text>{reporting ? 'Submitting...' : 'Submit Report'}</Text>
+                      </Button>
+                    </View>
+                  </>
+                )}
+              </View>
+            ) : (
+              <Pressable onPress={() => { setShowReport(true); setReportSuccess(false); setReportReason(''); setReportDescription(''); }}>
+                <View className="flex-row items-center gap-2 justify-center py-1">
+                  <Icon as={Flag} size={14} className="text-muted-foreground" />
+                  <Text className="text-muted-foreground text-xs">Report this product</Text>
+                </View>
+              </Pressable>
+            )}
+          </View>
+
           <Tabs value="reviews" onValueChange={() => {}}>
             <TabsList className="w-full rounded-2xl">
               <TabsTrigger value="reviews" className="flex-1 rounded-xl">
@@ -429,6 +612,8 @@ export default function ProductDetailScreen() {
               </View>
             </TabsContent>
           </Tabs>
+
+          <RelatedProducts productId={product.id} />
         </View>
       </ScrollView>
 
@@ -442,6 +627,18 @@ export default function ProductDetailScreen() {
             <Text className="text-primary text-2xl font-bold">
               {formatCurrency(effectivePrice, product.currency)}
             </Text>
+            {effectiveStock > 0 && effectiveStock <= 10 && (
+              <View className="mt-1 rounded-lg bg-amber-500/10 px-2 py-1">
+                <Text className="text-xs font-semibold text-amber-600">
+                  Only {effectiveStock} left in stock
+                </Text>
+              </View>
+            )}
+            {effectiveStock > 10 && (
+              <View className="mt-1 rounded-lg bg-green-500/10 px-2 py-1">
+                <Text className="text-xs font-semibold text-green-600">In Stock</Text>
+              </View>
+            )}
           </View>
           <Button
             className="h-12 flex-1 rounded-2xl"
