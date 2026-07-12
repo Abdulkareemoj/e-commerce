@@ -11,6 +11,7 @@ import payoutsRoutes from "./payouts";
 import categoriesRoutes from "./categories";
 import couponAdminRoutes from "./coupons";
 import profileAdminRoutes from "./profile";
+import reportsAdminRoutes from "./reports";
 
 const adminRoutes = new Hono();
 
@@ -26,5 +27,6 @@ adminRoutes.route("/payouts", payoutsRoutes);
 adminRoutes.route("/categories", categoriesRoutes);
 adminRoutes.route("/coupons", couponAdminRoutes);
 adminRoutes.route("/profile", profileAdminRoutes);
+adminRoutes.route("/reports", reportsAdminRoutes);
 
 export default adminRoutes;
