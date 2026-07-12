@@ -31,6 +31,63 @@ function OrderCard({ order, onUpdate }: { order: any; onUpdate: () => void }) {
     }
   };
 
+  const handleAcceptOrder = async () => {
+    setUpdating(true);
+    try {
+      // Update all items in the order to accepted
+      if (order.items) {
+        await Promise.all(
+          order.items.map((item: any) =>
+            api.put(`/vendor/orders/items/${item.id}/status`, { status: 'accepted' })
+          )
+        );
+      }
+      onUpdate();
+    } catch (err) {
+      console.error('Failed to accept order:', err);
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  const handleCancelOrder = async () => {
+    setUpdating(true);
+    try {
+      // Update all items in the order to cancelled
+      if (order.items) {
+        await Promise.all(
+          order.items.map((item: any) =>
+            api.put(`/vendor/orders/items/${item.id}/status`, { status: 'cancelled' })
+          )
+        );
+      }
+      onUpdate();
+    } catch (err) {
+      console.error('Failed to cancel order:', err);
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  const handleShipOrder = async () => {
+    setUpdating(true);
+    try {
+      // Update all items in the order to shipped
+      if (order.items) {
+        await Promise.all(
+          order.items.map((item: any) =>
+            api.put(`/vendor/orders/items/${item.id}/status`, { status: 'shipped' })
+          )
+        );
+      }
+      onUpdate();
+    } catch (err) {
+      console.error('Failed to ship order:', err);
+    } finally {
+      setUpdating(false);
+    }
+  };
+
   const STATUS_STYLES: Record<string, { bg: string; text: string }> = {
     pending: { bg: 'bg-warning/10', text: 'text-warning' },
     accepted: { bg: 'bg-primary/10', text: 'text-primary' },
@@ -95,9 +152,43 @@ function OrderCard({ order, onUpdate }: { order: any; onUpdate: () => void }) {
         );
       })}
 
-      <Text className="text-foreground text-sm font-bold">
-        Total: {formatCurrency(Math.round(parseFloat(order.totalAmount || 0) * 100), 'USD')}
-      </Text>
+      <View className="flex-row items-center justify-between">
+        <Text className="text-foreground text-sm font-bold">
+          Total: {formatCurrency(Math.round(parseFloat(order.totalAmount || 0) * 100), 'USD')}
+        </Text>
+      </View>
+
+      {order.status === 'pending' && (
+        <View className="flex-row gap-2">
+          <Button
+            variant="destructive"
+            size="sm"
+            className="flex-1 rounded-xl"
+            onPress={handleCancelOrder}
+            disabled={updating}>
+            <Text className="text-xs font-semibold">Cancel</Text>
+          </Button>
+          <Button
+            size="sm"
+            className="flex-1 rounded-xl"
+            onPress={handleAcceptOrder}
+            disabled={updating}>
+            <Text className="text-primary-foreground text-xs font-semibold">Accept</Text>
+          </Button>
+        </View>
+      )}
+
+      {order.status === 'accepted' && (
+        <Button
+          size="sm"
+          className="w-full rounded-xl"
+          onPress={handleShipOrder}
+          disabled={updating}>
+          <Text className="text-primary-foreground text-xs font-semibold">
+            {updating ? '...' : 'Mark as Shipped'}
+          </Text>
+        </Button>
+      )}
     </Card>
   );
 }

@@ -147,7 +147,7 @@ export default function InventoryScreen() {
           )}
         </View>
 
-        {data && data.lowStockProducts.length === 0 && data.lowStockVariants.length === 0 ? (
+        {data?.lowStockProducts.length === 0 && data?.lowStockVariants.length === 0 ? (
           <View className="items-center gap-3 py-10">
             <View className="bg-success/10 size-16 items-center justify-center rounded-full">
               <Icon as={Package} size={28} className="text-success" />
@@ -156,7 +156,7 @@ export default function InventoryScreen() {
           </View>
         ) : (
           <>
-            {data.lowStockProducts.length > 0 && (
+            {data?.lowStockProducts.length ? (
               <View className="gap-2">
                 <Text className="text-muted-foreground text-sm font-semibold">
                   Products ({data.lowStockProducts.length})
@@ -170,9 +170,9 @@ export default function InventoryScreen() {
                   />
                 ))}
               </View>
-            )}
+            ) : null}
 
-            {data.lowStockVariants.length > 0 && (
+            {data?.lowStockVariants.length ? (
               <View className="gap-2">
                 <Pressable
                   onPress={() => setShowVariants(!showVariants)}
@@ -196,7 +196,7 @@ export default function InventoryScreen() {
                     />
                   ))}
               </View>
-            )}
+            ) : null}
           </>
         )}
       </ScrollView>
