@@ -2,10 +2,6 @@
   "name": "e-commerce",
   "private": true,
   "type": "module",
-  "workspaces": [
-    "mobile",
-    "backend"
-  ],
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev",
@@ -14,11 +10,11 @@
     "check-types": "turbo run check-types"
   },
   "devDependencies": {
-    "prettier": "^3.6.2",
-    "turbo": "^2.5.8",
-    "typescript": "5.9.2"
+    "prettier": "^3.9.5",
+    "turbo": "^2.10.5",
+    "typescript": "7.0.2"
   },
-  "packageManager": "pnpm@10.2.1",
+  "packageManager": "pnpm@11.13.0",
   "engines": {
     "node": ">=18"
   }
