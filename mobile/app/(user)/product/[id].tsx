@@ -2,7 +2,7 @@ import { Button } from '@/components/ui/button';
 import { Icon } from '@/components/ui/icon';
 import { Text } from '@/components/ui/text';
 import { Input } from '@/components/ui/input';
-import { ShoppingCart, Heart, Share2, ArrowLeft, Check, Truck, Star, Flag } from 'lucide-react-native';
+import { ShoppingCart, Heart, Share2, ArrowLeft, Check, Truck, Star, Flag, X } from 'lucide-react-native';
 import * as React from 'react';
 import {
   ScrollView,
@@ -10,10 +10,9 @@ import {
   Image,
   Platform,
   useWindowDimensions,
-  NativeSyntheticEvent,
-  NativeScrollEvent,
   Pressable,
   Alert,
+  Modal,
 } from 'react-native';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { formatCurrency } from '@/lib/money';
@@ -27,101 +26,77 @@ import { ReviewForm } from '@/components/ReviewForm';
 import { useAuthStore } from '@/lib/authStore';
 import { ProductCard } from '@/components/ProductCard';
 import { useWishlist } from '@/hooks/useWishlist';
-import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
-
-function ZoomableImage({ uri, width, height }: { uri: string; width: number; height: number }) {
-  const scale = useSharedValue(1);
-  const savedScale = useSharedValue(1);
-
-  const pinchGesture = Gesture.Pinch()
-    .onUpdate((e) => {
-      scale.value = savedScale.value * e.scale;
-    })
-    .onEnd(() => {
-      if (scale.value < 1) {
-        scale.value = withSpring(1);
-      } else if (scale.value > 3) {
-        scale.value = withSpring(3);
-      }
-      savedScale.value = scale.value;
-    });
-
-  const doubleTapGesture = Gesture.Tap()
-    .numberOfTaps(2)
-    .onEnd(() => {
-      if (scale.value > 1) {
-        scale.value = withSpring(1);
-        savedScale.value = 1;
-      } else {
-        scale.value = withSpring(2);
-        savedScale.value = 2;
-      }
-    });
-
-  const composed = Gesture.Simultaneous(pinchGesture, doubleTapGesture);
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-  }));
-
-  return (
-    <GestureDetector gesture={composed}>
-      <Animated.View style={{ width, height, overflow: 'hidden' }}>
-        <Animated.Image
-          source={{ uri }}
-          style={[{ width, height }, animatedStyle]}
-          resizeMode="cover"
-        />
-      </Animated.View>
-    </GestureDetector>
-  );
-}
+import Carousel from 'react-native-reanimated-carousel';
+import { GestureViewer } from 'react-native-gesture-image-viewer';
 
 function ProductImageGallery({ images }: { images: string[] }) {
   const [activeIndex, setActiveIndex] = React.useState(0);
-  const scrollRef = React.useRef<ScrollView>(null);
+  const [showViewer, setShowViewer] = React.useState(false);
   const { width } = useWindowDimensions();
-
-  const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const contentOffsetX = event.nativeEvent.contentOffset.x;
-    const newIndex = Math.round(contentOffsetX / width);
-    setActiveIndex(newIndex);
-  };
+  const height = width > 768 ? 500 : width * 0.9;
 
   return (
-    <View className="relative w-full">
-      <ScrollView
-        ref={scrollRef}
-        horizontal
-        pagingEnabled
-        showsHorizontalScrollIndicator={false}
-        onScroll={handleScroll}
-        scrollEventThrottle={16}
-        style={{ height: width > 768 ? 500 : width * 0.9 }}
-        contentContainerStyle={{ width: width * images.length }}>
-        {images.map((uri, index) => (
-          <ZoomableImage
-            key={index}
-            uri={uri}
-            width={width}
-            height={width > 768 ? 500 : width * 0.9}
-          />
-        ))}
-      </ScrollView>
-      {images.length > 1 && (
-        <View className="absolute bottom-4 flex-row justify-center gap-1.5" style={{ width }}>
-          {images.map((_, index) => (
-            <View
-              key={index}
-              className={`rounded-full ${
-                index === activeIndex ? 'bg-primary h-2 w-2' : 'h-1.5 w-1.5 bg-white/60'
-              }`}
+    <>
+      <View className="relative w-full" style={{ height }}>
+        <Carousel
+          width={width}
+          height={height}
+          data={images}
+          loop={false}
+          pagingEnabled
+          onSnapToItem={setActiveIndex}
+          renderItem={({ item }) => (
+            <Pressable onPress={() => setShowViewer(true)}>
+              <Image
+                source={{ uri: item }}
+                style={{ width, height }}
+                resizeMode="cover"
+              />
+            </Pressable>
+          )}
+        />
+        {images.length > 1 && (
+          <View className="absolute bottom-4 flex-row justify-center gap-1.5" style={{ width }}>
+            {images.map((_, index) => (
+              <View
+                key={index}
+                className={`rounded-full ${
+                  index === activeIndex ? 'bg-white h-2 w-2' : 'h-1.5 w-1.5 bg-white/60'
+                }`}
+              />
+            ))}
+          </View>
+        )}
+      </View>
+
+      <Modal visible={showViewer} transparent onRequestClose={() => setShowViewer(false)}>
+        <GestureViewer
+          data={images}
+          initialIndex={activeIndex}
+          renderItem={(uri) => (
+            <Image
+              source={{ uri }}
+              style={{ width: '100%', height: '100%' }}
+              resizeMode="contain"
             />
-          ))}
-        </View>
-      )}
-    </View>
+          )}
+          ListComponent={ScrollView}
+          onDismiss={() => setShowViewer(false)}
+          enablePinchZoom
+          enableDoubleTapZoom
+          renderContainer={(children, { dismiss }) => (
+            <View style={{ flex: 1, backgroundColor: '#000' }}>
+              {children}
+              <Pressable
+                onPress={dismiss}
+                style={{ position: 'absolute', top: 50, right: 20, zIndex: 10 }}>
+                <Icon as={X} size={24} className="text-white" />
+              </Pressable>
+            </View>
+          )}
+        />
+      </Modal>
+    </>
   );
 }
 
