@@ -113,3 +113,32 @@ export const api = {
   publicRequest: (endpoint: string, options?: ApiRequestOptions) =>
     fetchWithAuth(endpoint, { ...options, auth: false }),
 };
+
+export async function uploadFile(
+  uri: string,
+  fileName: string,
+  contentType: string,
+  purpose: 'product' | 'variant' | 'avatar' | 'message' | 'general' = 'general',
+): Promise<string> {
+  const fileResponse = await fetch(uri);
+  const blob = await fileResponse.blob();
+
+  const { uploadUrl, publicUrl } = await api.post('/upload/init', {
+    fileName,
+    contentType,
+    fileSize: blob.size,
+    purpose,
+  });
+
+  const uploadResponse = await fetch(uploadUrl, {
+    method: 'PUT',
+    body: blob,
+    headers: { 'Content-Type': contentType },
+  });
+
+  if (!uploadResponse.ok) {
+    throw new Error('Failed to upload file to storage');
+  }
+
+  return publicUrl;
+}

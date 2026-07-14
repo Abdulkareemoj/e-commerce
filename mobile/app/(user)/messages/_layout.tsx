@@ -3,7 +3,7 @@ import React from 'react';
 
 export default function MessagesLayout() {
   return (
-    <Stack screenOptions={{ headerShown: true, title: 'Messages' }}>
+    <Stack screenOptions={{ headerShown: false, title: 'Messages' }}>
       <Stack.Screen name="[id]" options={{ headerShown: false }} />
     </Stack>
   );

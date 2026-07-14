@@ -11,7 +11,7 @@ import { FormInput } from '@/components/ui/form-input';
 import { FieldSet, Field, FieldContent, FieldLabel } from '@/components/ui/field';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { View, Pressable, FlatList, Alert } from 'react-native';
+import { View, Pressable, FlatList, Alert, ScrollView, Image } from 'react-native';
 import {
   Dialog,
   DialogContent,
@@ -22,7 +22,8 @@ import {
 } from '@/components/ui/dialog';
 import { api } from '@/lib/api';
 import { formatCurrency } from '@/lib/money';
-import { Plus, Pencil, Trash2, Package, Image, Layers, X, Check, Ban } from 'lucide-react-native';
+import { ImageUpload } from '@/components/ImageUpload';
+import { Plus, Pencil, Trash2, Package, Image as ImageIcon, Layers, X, Check, Ban } from 'lucide-react-native';
 
 const variantSchema = z.object({
   name: z.string().min(1, 'Required'),
@@ -206,34 +207,34 @@ function ProductForm({
         multiline
       />
 
-      <View className="gap-2">
-        <View className="flex-row items-center justify-between">
-          <Text className="text-sm font-medium">Images</Text>
-          <Button
-            variant="ghost"
-            size="sm"
-            onPress={() => appendImage({ url: '' })}>
-            <Icon as={Plus} size={14} className="text-primary" />
-            <Text className="text-primary text-xs">Add</Text>
-          </Button>
-        </View>
-        {imageFields.map((field, index) => (
-          <View key={field.id} className="flex-row items-center gap-2">
-            <View className="flex-1">
-              <FormInput
-                control={control}
-                name={`images.${index}.url` as any}
-                label=""
-                placeholder="https://example.com/image.jpg"
+      <View className="gap-3">
+        <Text className="text-sm font-medium">Images</Text>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} className="gap-2">
+          <View className="flex-row gap-2">
+            {imageFields.map((field, index) => (
+              <View key={field.id} className="relative">
+                <Image
+                  source={{ uri: field.url }}
+                  className="h-24 w-24 rounded-xl"
+                  resizeMode="cover"
+                />
+                <Pressable
+                  onPress={() => removeImage(index)}
+                  className="bg-destructive absolute -top-2 -right-2 rounded-full p-1">
+                  <Icon as={X} size={12} className="text-destructive-foreground" />
+                </Pressable>
+              </View>
+            ))}
+            <View className="h-24 w-24 rounded-xl border-2 border-dashed border-border">
+              <ImageUpload
+                onUpload={(url) => appendImage({ url })}
+                purpose="product"
+                compact
+                className="flex-1"
               />
             </View>
-            <Pressable
-              onPress={() => removeImage(index)}
-              className="bg-destructive/10 mt-1 size-9 items-center justify-center rounded-xl">
-              <Icon as={X} size={14} className="text-destructive" />
-            </Pressable>
           </View>
-        ))}
+        </ScrollView>
       </View>
 
       <View className="gap-2">
@@ -573,7 +574,7 @@ export default function ProductsScreen() {
                       )}
                       {item.images?.length > 0 && (
                         <View className="flex-row items-center gap-1">
-                          <Icon as={Image} size={10} className="text-muted-foreground" />
+                          <Icon as={ImageIcon} size={10} className="text-muted-foreground" />
                           <Text className="text-muted-foreground text-[10px]">
                             {item.images.length}
                           </Text>
