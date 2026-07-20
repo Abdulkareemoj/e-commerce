@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Icon } from '@/components/ui/icon';
 import { uploadFile } from '@/lib/api';
 import { cn } from '@/lib/utils';
+import { useToast } from '@/components/Toast';
 import * as ImagePicker from 'expo-image-picker';
 import { ImagePlus, X, Camera, Loader2 } from 'lucide-react-native';
 
@@ -19,6 +20,7 @@ interface ImageUploadProps {
 
 export function ImageUpload({ onUpload, onRemove, previewUrl, purpose = 'product', compact, className }: ImageUploadProps) {
   const [uploading, setUploading] = useState(false);
+  const { toast } = useToast();
 
   const pickAndUpload = useCallback(async () => {
     try {
@@ -47,7 +49,7 @@ export function ImageUpload({ onUpload, onRemove, previewUrl, purpose = 'product
       onUpload(publicUrl);
     } catch (err) {
       console.error('Upload failed:', err);
-      Alert.alert('Upload Failed', 'Could not upload the image. Please try again.');
+      toast({ title: 'Upload Failed', description: 'Could not upload the image. Please try again.', variant: 'destructive' });
     } finally {
       setUploading(false);
     }
@@ -78,7 +80,7 @@ export function ImageUpload({ onUpload, onRemove, previewUrl, purpose = 'product
       onUpload(publicUrl);
     } catch (err) {
       console.error('Camera upload failed:', err);
-      Alert.alert('Upload Failed', 'Could not upload the photo. Please try again.');
+      toast({ title: 'Upload Failed', description: 'Could not upload the photo. Please try again.', variant: 'destructive' });
     } finally {
       setUploading(false);
     }

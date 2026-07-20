@@ -5,6 +5,7 @@ import { MessageBubble } from './MessageBubble';
 import { MessageComposer, type PickedAsset } from './MessageComposer';
 import type { MessageItem } from './types';
 import { api } from '@/lib/api';
+import { useToast } from '@/components/Toast';
 import { useAuthStore } from '@/lib/authStore';
 import { View, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import { Icon } from '@/components/ui/icon';
@@ -35,6 +36,7 @@ export function ConversationView({
   const [messages, setMessages] = useState<MessageItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
+  const { toast } = useToast();
   const scrollRef = useRef<ScrollView>(null);
   const userId = useAuthStore((s) => s.user?.id);
   const basePath = isVendor ? '/vendor/messaging' : '/user/messaging';
@@ -78,7 +80,7 @@ export function ConversationView({
         setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100);
       }
     } catch (err) {
-      console.error('Failed to send message:', err);
+      toast({ title: 'Error', description: 'Failed to send message.', variant: 'destructive' });
     } finally {
       setSending(false);
     }
