@@ -7,6 +7,8 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useUniwind } from 'uniwind';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { ConfirmDialogProvider } from '@/components/ConfirmDialog';
+import { Toaster } from '@/sonner';
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -20,21 +22,24 @@ export default function RootLayout() {
   return (
     <SafeAreaView style={{ flex: 1 }}>
       <ThemeProvider value={NAV_THEME[colorScheme]}>
-        <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
-        <Stack screenOptions={{ headerShown: false }}>
-          {/* The index route handles the initial redirect logic */}
-          <Stack.Screen name="index" />
+          <ConfirmDialogProvider>
+            <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
+            <Stack screenOptions={{ headerShown: false }}>
+              {/* The index route handles the initial redirect logic */}
+              <Stack.Screen name="index" />
 
-          {/* Auth Route Group (Sign In, Sign Up) */}
-          <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+              {/* Auth Route Group (Sign In, Sign Up) */}
+              <Stack.Screen name="(auth)" options={{ headerShown: false }} />
 
-          {/* Role-based Route Groups */}
-          <Stack.Screen name="(admin)" options={{ headerShown: false }} />
-          <Stack.Screen name="(user)" options={{ headerShown: false }} />
-          <Stack.Screen name="(vendor)" options={{ headerShown: false }} />
-          <Stack.Screen name="+not-found" />
-        </Stack>
-        <PortalHost />
+              {/* Role-based Route Groups */}
+              <Stack.Screen name="(admin)" options={{ headerShown: false }} />
+              <Stack.Screen name="(user)" options={{ headerShown: false }} />
+              <Stack.Screen name="(vendor)" options={{ headerShown: false }} />
+              <Stack.Screen name="+not-found" />
+            </Stack>
+            <PortalHost />
+          </ConfirmDialogProvider>
+          <Toaster />
       </ThemeProvider>
     </SafeAreaView>
   );
