@@ -7,9 +7,10 @@ export const coupon = pgTable("coupon", {
   id: text("id").primaryKey(),
   code: text("code").notNull().unique(),
   description: text("description"),
-  discountType: text("discount_type").notNull(), // "percentage" | "fixed"
-  discountValue: numeric("discount_value", { precision: 10, scale: 2 }).notNull(),
-  minimumOrderCents: integer("minimum_order_cents").default(0),
+  discountType: text("discount_type").notNull(), // "percentage" | "fixed" — validated in coupons.ts, see below
+  discountPercent: numeric("discount_percent", { precision: 5, scale: 2 }), // set only when discountType = "percentage", e.g. 15.00 = 15%
+  discountAmount: numeric("discount_amount", { precision: 10, scale: 2 }), // set only when discountType = "fixed", same unit as product.price (dollars)
+  minimumOrderAmount: numeric("minimum_order_amount", { precision: 10, scale: 2 }).default("0"), // renamed from minimumOrderCents — it was always dollars, the name lied
   maxUses: integer("max_uses").default(0),
   currentUses: integer("current_uses").default(0),
   startsAt: timestamp("starts_at").defaultNow().notNull(),

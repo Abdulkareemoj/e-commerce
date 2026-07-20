@@ -33,9 +33,9 @@ export const orderItem = pgTable("order_item", {
   orderId: text("order_id")
     .notNull()
     .references(() => order.id, { onDelete: "cascade" }),
-  productId: text("product_id").references(() => product.id, {
-    onDelete: "cascade",
-  }),
+productId: text("product_id").references(() => product.id, {
+  onDelete: "set null",
+}),
   variantId: text("variant_id").references(() => productVariant.id, {
     onDelete: "set null",
   }),

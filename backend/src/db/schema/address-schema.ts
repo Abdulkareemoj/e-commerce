@@ -7,6 +7,8 @@ export const address = pgTable("address", {
     .notNull()
     .references(() => user.id, { onDelete: "cascade" }),
   type: text("type").notNull(), // shipping | billing
+  recipientName: text("recipient_name").notNull(),
+  phone: text("phone").notNull(),
   line1: text("line1").notNull(),
   line2: text("line2"),
   city: text("city").notNull(),

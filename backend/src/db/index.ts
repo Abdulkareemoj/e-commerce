@@ -23,6 +23,8 @@ import * as messageSchema from "./schema/message-schema";
 import * as payoutSchema from "./schema/payout-schema";
 import * as reportSchema from "./schema/report-schema";
 import * as notificationSchema from "./schema/notification-schema";
+import * as recentlyViewedSchema from "./schema/recently-viewed-schema";
+
 
 export const schema = {
   ...authSchema,
@@ -41,6 +43,7 @@ export const schema = {
   ...payoutSchema,
   ...reportSchema,
   ...notificationSchema,
+   ...recentlyViewedSchema,
 };
 const queryClient = postgres(process.env.DATABASE_URL!);
 export const db = drizzle({ client: queryClient, schema });
