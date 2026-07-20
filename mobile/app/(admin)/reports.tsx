@@ -4,7 +4,9 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Icon } from '@/components/ui/icon';
 import * as React from 'react';
-import { View, ScrollView, Pressable, Alert, useWindowDimensions } from 'react-native';
+import { View, ScrollView, Pressable, useWindowDimensions } from 'react-native';
+import { useConfirmDialog } from '@/components/ConfirmDialog';
+import { useToast } from '@/components/Toast';
 import { api } from '@/lib/api';
 import { Flag, Check, X, Clock, ChevronDown, ChevronUp } from 'lucide-react-native';
 
@@ -25,6 +27,8 @@ export default function AdminReportsScreen() {
   const [loading, setLoading] = React.useState(true);
   const [statusFilter, setStatusFilter] = React.useState<string>('');
   const [expandedId, setExpandedId] = React.useState<string | null>(null);
+  const { confirm } = useConfirmDialog();
+  const { toast } = useToast();
 
   const fetchReports = React.useCallback(async () => {
     try {
@@ -47,22 +51,25 @@ export default function AdminReportsScreen() {
       await api.put(`/admin/reports/${id}`, { status: 'resolved' });
       fetchReports();
     } catch (err) {
-      console.error('Failed to resolve report:', err);
+      toast({ title: 'Error', description: 'Failed to resolve report', variant: 'destructive' });
     }
   };
 
   const handleDismiss = async (id: string) => {
-    Alert.alert('Dismiss Report', 'Are you sure?', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Dismiss', style: 'destructive', onPress: async () => {
+    confirm({
+      title: 'Dismiss Report',
+      description: 'Are you sure?',
+      destructive: true,
+      confirmText: 'Dismiss',
+      onConfirm: async () => {
         try {
           await api.put(`/admin/reports/${id}`, { status: 'dismissed' });
           fetchReports();
         } catch (err) {
-          console.error('Failed to dismiss report:', err);
+          toast({ title: 'Error', description: 'Failed to dismiss report', variant: 'destructive' });
         }
-      }},
-    ]);
+      },
+    });
   };
 
   const filters = ['', 'pending', 'resolved', 'dismissed'];

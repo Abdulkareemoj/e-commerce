@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { View, ScrollView, Pressable, Alert, ActivityIndicator } from 'react-native';
+import { View, ScrollView, Pressable, ActivityIndicator } from 'react-native';
 import { Text } from '@/components/ui/text';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -8,28 +8,22 @@ import { Input } from '@/components/ui/input';
 import { Icon } from '@/components/ui/icon';
 import { api } from '@/lib/api';
 import {
-  Tag,
-  Plus,
-  Pencil,
-  Trash2,
-  Percent,
-  DollarSign,
-  Calendar,
-  Repeat,
-  ShoppingCart,
-  ArrowLeft,
+  Tag, Plus, Pencil, Trash2, Percent, DollarSign, Calendar, Repeat, ShoppingCart, ArrowLeft,
 } from 'lucide-react-native';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm, useWatch, Controller } from 'react-hook-form';
 import { Field, FieldContent, FieldError, FieldLabel } from '@/components/ui/field';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
+import { useConfirmDialog } from '@/components/ConfirmDialog';
+import { useToast } from '@/components/Toast';
 
 interface Coupon {
   id: string;
   code: string;
   description: string | null;
   discountType: 'percentage' | 'fixed';
-  discountValue: string;
-  minimumOrderCents: number;
+  discountPercent: string | null;
+  discountAmount: string | null;
+  minimumOrderAmount: string;
   maxUses: number;
   currentUses: number;
   expiresAt: string | null;
@@ -43,16 +37,13 @@ function formatDate(dateStr: string | null) {
 }
 
 function DiscountDisplay({ coupon }: { coupon: Coupon }) {
-  const value = parseFloat(coupon.discountValue);
+  const isPercent = coupon.discountType === 'percentage';
+  const value = parseFloat((isPercent ? coupon.discountPercent : coupon.discountAmount) || '0');
   return (
     <View className="flex-row items-center gap-1">
-      <Icon
-        as={coupon.discountType === 'percentage' ? Percent : DollarSign}
-        size={14}
-        className="text-primary"
-      />
+      <Icon as={isPercent ? Percent : DollarSign} size={14} className="text-primary" />
       <Text className="text-lg font-bold">
-        {coupon.discountType === 'percentage' ? `${value}%` : `$${value.toFixed(2)}`}
+        {isPercent ? `${value}%` : `$${value.toFixed(2)}`}
       </Text>
       <Text className="text-muted-foreground text-xs">OFF</Text>
     </View>
@@ -70,33 +61,41 @@ function CouponForm({
 }) {
   const [saving, setSaving] = useState(false);
   const isEdit = !!initial;
+  const { toast } = useToast();
 
   const { control, handleSubmit, formState: { errors } } = useForm({
     defaultValues: {
       code: initial?.code || '',
       description: initial?.description || '',
       discountType: initial?.discountType || 'percentage',
-      discountValue: initial?.discountValue || '',
-      minimumOrderCents: initial?.minimumOrderCents?.toString() || '0',
+      discountPercent: initial?.discountPercent || '',
+      discountAmount: initial?.discountAmount || '',
+      minimumOrderAmount: initial?.minimumOrderAmount || '0',
       maxUses: initial?.maxUses?.toString() || '0',
       expiresAt: initial?.expiresAt ? initial.expiresAt.split('T')[0] : '',
       isActive: initial?.isActive ?? true,
     },
   });
 
+  const discountType = useWatch({ control, name: 'discountType' });
+
   const onSubmit = useCallback(async (data: any) => {
     setSaving(true);
     try {
-      const payload = {
+      const payload: any = {
         code: data.code,
         description: data.description || undefined,
         discountType: data.discountType,
-        discountValue: parseFloat(data.discountValue),
-        minimumOrderCents: parseInt(data.minimumOrderCents) || 0,
+        minimumOrderAmount: data.minimumOrderAmount || '0',
         maxUses: parseInt(data.maxUses) || 0,
         expiresAt: data.expiresAt || undefined,
         isActive: data.isActive,
       };
+      if (data.discountType === 'percentage') {
+        payload.discountPercent = data.discountPercent;
+      } else {
+        payload.discountAmount = data.discountAmount;
+      }
 
       if (isEdit) {
         await api.put(`/admin/coupons/${initial.id}`, payload);
@@ -105,7 +104,7 @@ function CouponForm({
       }
       onSave();
     } catch (err: any) {
-      Alert.alert('Error', err.message || 'Failed to save coupon');
+      toast({ title: 'Error', description: err.message || 'Failed to save coupon', variant: 'destructive' });
     } finally {
       setSaving(false);
     }
@@ -150,12 +149,7 @@ function CouponForm({
           <Field>
             <FieldContent>
               <FieldLabel>Description</FieldLabel>
-              <Input
-                onBlur={onBlur}
-                onChangeText={onChange}
-                value={value}
-                placeholder="25% off summer collection"
-              />
+              <Input onBlur={onBlur} onChangeText={onChange} value={value} placeholder="25% off summer collection" />
             </FieldContent>
           </Field>
         )}
@@ -184,41 +178,55 @@ function CouponForm({
         )}
       />
 
-      <Controller
-        control={control}
-        name="discountValue"
-        rules={{ required: 'Value is required', pattern: { value: /^\d+(\.\d{0,2})?$/, message: 'Invalid amount' } }}
-        render={({ field: { onChange, onBlur, value } }) => (
-          <Field invalid={!!errors.discountValue}>
-            <FieldContent>
-              <FieldLabel>Discount Value</FieldLabel>
-              <Input
-                onBlur={onBlur}
-                onChangeText={onChange}
-                value={value}
-                placeholder="25"
-                keyboardType="decimal-pad"
-              />
-              <FieldError errors={errors.discountValue ? [errors.discountValue] : []} />
-            </FieldContent>
-          </Field>
-        )}
-      />
+      {discountType === 'percentage' ? (
+        <Controller
+          control={control}
+          name="discountPercent"
+          rules={{
+            required: 'Percent is required',
+            pattern: { value: /^\d+(\.\d{0,2})?$/, message: 'Invalid percent' },
+            validate: (v) => (parseFloat(v) > 0 && parseFloat(v) <= 100) || 'Must be between 0 and 100',
+          }}
+          render={({ field: { onChange, onBlur, value } }) => (
+            <Field invalid={!!errors.discountPercent}>
+              <FieldContent>
+                <FieldLabel>Discount Percent</FieldLabel>
+                <Input onBlur={onBlur} onChangeText={onChange} value={value} placeholder="25" keyboardType="decimal-pad" />
+                <FieldError errors={errors.discountPercent ? [errors.discountPercent] : []} />
+              </FieldContent>
+            </Field>
+          )}
+        />
+      ) : (
+        <Controller
+          control={control}
+          name="discountAmount"
+          rules={{
+            required: 'Amount is required',
+            pattern: { value: /^\d+(\.\d{0,2})?$/, message: 'Invalid amount' },
+          }}
+          render={({ field: { onChange, onBlur, value } }) => (
+            <Field invalid={!!errors.discountAmount}>
+              <FieldContent>
+                <FieldLabel>Discount Amount ($)</FieldLabel>
+                <Input onBlur={onBlur} onChangeText={onChange} value={value} placeholder="5.00" keyboardType="decimal-pad" />
+                <FieldError errors={errors.discountAmount ? [errors.discountAmount] : []} />
+              </FieldContent>
+            </Field>
+          )}
+        />
+      )}
 
       <Controller
         control={control}
-        name="minimumOrderCents"
+        name="minimumOrderAmount"
+        rules={{ pattern: { value: /^\d+(\.\d{0,2})?$/, message: 'Invalid amount' } }}
         render={({ field: { onChange, onBlur, value } }) => (
-          <Field>
+          <Field invalid={!!errors.minimumOrderAmount}>
             <FieldContent>
-              <FieldLabel>Minimum Order (cents)</FieldLabel>
-              <Input
-                onBlur={onBlur}
-                onChangeText={onChange}
-                value={value}
-                placeholder="0"
-                keyboardType="number-pad"
-              />
+              <FieldLabel>Minimum Order Amount ($)</FieldLabel>
+              <Input onBlur={onBlur} onChangeText={onChange} value={value} placeholder="0" keyboardType="decimal-pad" />
+              <FieldError errors={errors.minimumOrderAmount ? [errors.minimumOrderAmount] : []} />
             </FieldContent>
           </Field>
         )}
@@ -231,13 +239,7 @@ function CouponForm({
           <Field>
             <FieldContent>
               <FieldLabel>Max Uses (0 = unlimited)</FieldLabel>
-              <Input
-                onBlur={onBlur}
-                onChangeText={onChange}
-                value={value}
-                placeholder="0"
-                keyboardType="number-pad"
-              />
+              <Input onBlur={onBlur} onChangeText={onChange} value={value} placeholder="0" keyboardType="number-pad" />
             </FieldContent>
           </Field>
         )}
@@ -250,13 +252,7 @@ function CouponForm({
           <Field>
             <FieldContent>
               <FieldLabel>Expires At</FieldLabel>
-              <Input
-                onBlur={onBlur}
-                onChangeText={onChange}
-                value={value}
-                placeholder="YYYY-MM-DD (leave empty for no expiry)"
-                autoCapitalize="none"
-              />
+              <Input onBlur={onBlur} onChangeText={onChange} value={value} placeholder="YYYY-MM-DD (leave empty for no expiry)" autoCapitalize="none" />
             </FieldContent>
           </Field>
         )}
@@ -287,6 +283,8 @@ export default function CouponsScreen() {
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<Coupon | null>(null);
   const [creating, setCreating] = useState(false);
+  const { confirm } = useConfirmDialog();
+  const { toast } = useToast();
 
   const fetchCoupons = useCallback(async () => {
     setLoading(true);
@@ -300,55 +298,41 @@ export default function CouponsScreen() {
     }
   }, []);
 
-  useEffect(() => {
-    fetchCoupons();
-  }, [fetchCoupons]);
+  useEffect(() => { fetchCoupons(); }, [fetchCoupons]);
 
   const handleToggleActive = useCallback(async (coupon: Coupon) => {
     try {
       await api.put(`/admin/coupons/${coupon.id}`, { isActive: !coupon.isActive });
       fetchCoupons();
     } catch (err: any) {
-      Alert.alert('Error', err.message || 'Failed to update coupon');
+      toast({ title: 'Error', description: err.message || 'Failed to update coupon', variant: 'destructive' });
     }
-  }, [fetchCoupons]);
+  }, [fetchCoupons, toast]);
 
   const handleDelete = useCallback((coupon: Coupon) => {
-    Alert.alert(
-      'Delete Coupon',
-      `Are you sure you want to delete "${coupon.code}"?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await api.delete(`/admin/coupons/${coupon.id}`);
-              fetchCoupons();
-            } catch (err: any) {
-              Alert.alert('Error', err.message || 'Failed to delete coupon');
-            }
-          },
-        },
-      ],
-    );
-  }, [fetchCoupons]);
+    confirm({
+      title: 'Delete Coupon',
+      description: `Are you sure you want to delete "${coupon.code}"?`,
+      destructive: true,
+      confirmText: 'Delete',
+      onConfirm: async () => {
+        try {
+          await api.delete(`/admin/coupons/${coupon.id}`);
+          fetchCoupons();
+        } catch (err: any) {
+          toast({ title: 'Error', description: err.message || 'Failed to delete coupon', variant: 'destructive' });
+        }
+      },
+    });
+  }, [fetchCoupons, confirm, toast]);
 
   if (creating || editing) {
     return (
       <View className="bg-background flex-1">
         <CouponForm
           initial={editing || undefined}
-          onSave={() => {
-            setCreating(false);
-            setEditing(null);
-            fetchCoupons();
-          }}
-          onCancel={() => {
-            setCreating(false);
-            setEditing(null);
-          }}
+          onSave={() => { setCreating(false); setEditing(null); fetchCoupons(); }}
+          onCancel={() => { setCreating(false); setEditing(null); }}
         />
       </View>
     );
@@ -400,7 +384,7 @@ export default function CouponsScreen() {
                 <View className="flex-row items-center gap-1">
                   <Icon as={ShoppingCart} size={14} className="text-muted-foreground" />
                   <Text className="text-muted-foreground text-xs">
-                    Min: ${(coupon.minimumOrderCents / 100).toFixed(2)}
+                    Min: ${parseFloat(coupon.minimumOrderAmount || '0').toFixed(2)}
                   </Text>
                 </View>
                 <View className="flex-row items-center gap-1">
@@ -416,10 +400,7 @@ export default function CouponsScreen() {
               </View>
 
               <View className="mt-3 flex-row items-center gap-2 border-t border-border pt-3">
-                <Switch
-                  checked={coupon.isActive}
-                  onCheckedChange={() => handleToggleActive(coupon)}
-                />
+                <Switch checked={coupon.isActive} onCheckedChange={() => handleToggleActive(coupon)} />
                 <Text className="text-muted-foreground text-xs flex-1">
                   {coupon.isActive ? 'Active' : 'Inactive'}
                 </Text>

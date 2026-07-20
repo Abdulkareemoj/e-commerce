@@ -19,10 +19,10 @@ import { api } from '@/lib/api';
 import { useRouter } from 'expo-router';
 
 // Chart component - simple bar chart
-function RevenueChart({ data }: { data: { date: string; amount: number }[] }) {
+function RevenueChart({ data }: { data: { date: string; label: string; revenue: number }[] }) {
   if (!data || data.length === 0) return null;
 
-  const maxAmount = Math.max(...data.map((d) => d.amount));
+  const maxAmount = Math.max(...data.map((d) => d.revenue), 0);
   const chartHeight = 150;
 
   return (
@@ -30,19 +30,12 @@ function RevenueChart({ data }: { data: { date: string; amount: number }[] }) {
       <Text className="text-foreground mb-3 font-semibold">Revenue Trend</Text>
       <View style={{ height: chartHeight }} className="flex-row items-end justify-between gap-2">
         {data.slice(-7).map((item, index) => {
-          const barHeight = maxAmount > 0 ? (item.amount / maxAmount) * (chartHeight - 30) : 0;
+          const barHeight = maxAmount > 0 ? (item.revenue / maxAmount) * (chartHeight - 30) : 0;
           return (
             <View key={index} className="flex-1 items-center gap-1">
-              <Text className="text-muted-foreground text-xs">
-                ${Math.round(item.amount / 100)}
-              </Text>
-              <View
-                className="bg-primary/80 w-full rounded-t-md"
-                style={{ height: Math.max(barHeight, 4) }}
-              />
-              <Text className="text-muted-foreground text-xs">
-                {new Date(item.date).toLocaleDateString('en-US', { weekday: 'short' })}
-              </Text>
+              <Text className="text-muted-foreground text-xs">${item.revenue.toFixed(0)}</Text>
+              <View className="bg-primary/80 w-full rounded-t-md" style={{ height: Math.max(barHeight, 4) }} />
+              <Text className="text-muted-foreground text-xs">{item.label}</Text>
             </View>
           );
         })}
@@ -51,57 +44,58 @@ function RevenueChart({ data }: { data: { date: string; amount: number }[] }) {
   );
 }
 
-// Activity feed component
+function formatTimeAgo(dateStr: string) {
+  const diffSec = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
+  if (diffSec < 60) return 'just now';
+  const diffMin = Math.floor(diffSec / 60);
+  if (diffMin < 60) return `${diffMin} min ago`;
+  const diffHr = Math.floor(diffMin / 60);
+  if (diffHr < 24) return `${diffHr} hr ago`;
+  return `${Math.floor(diffHr / 24)}d ago`;
+}
+
 function ActivityFeed({ activities }: { activities: any[] }) {
-  const getActivityIcon = (type: string) => {
-    switch (type) {
-      case 'user_registered':
-        return UserPlus;
-      case 'vendor_approved':
-        return Store;
-      case 'order_placed':
-        return ShoppingBag;
-      case 'order_completed':
-        return CheckCircle;
-      default:
-        return Clock;
+  const getActivityIcon = (status: string) => {
+    switch (status) {
+      case 'delivered': return CheckCircle;
+      case 'cancelled':
+      case 'refunded': return Clock;
+      default: return ShoppingBag; // pending, confirmed, processing, shipped
     }
   };
 
-  const getActivityColor = (type: string) => {
-    switch (type) {
-      case 'user_registered':
-        return 'text-blue-500';
-      case 'vendor_approved':
-        return 'text-green-500';
-      case 'order_placed':
-        return 'text-amber-500';
-      case 'order_completed':
-        return 'text-green-500';
-      default:
-        return 'text-muted-foreground';
+  const getActivityColor = (status: string) => {
+    switch (status) {
+      case 'delivered': return 'text-green-500';
+      case 'cancelled':
+      case 'refunded': return 'text-red-500';
+      default: return 'text-amber-500';
     }
   };
 
-  if (!activities || activities.length === 0) return null;
+  if (!activities || activities.length === 0) {
+    return (
+      <View className="bg-card shadow-card rounded-2xl p-4 items-center">
+        <Text className="text-muted-foreground text-sm">No recent activity yet</Text>
+      </View>
+    );
+  }
 
   return (
     <View className="bg-card shadow-card rounded-2xl p-4">
       <Text className="text-foreground mb-3 font-semibold">Recent Activity</Text>
       <View className="gap-3">
         {activities.slice(0, 5).map((activity, index) => {
-          const ActivityIcon = getActivityIcon(activity.type);
-          const iconColor = getActivityColor(activity.type);
+          const ActivityIcon = getActivityIcon(activity.status);
+          const iconColor = getActivityColor(activity.status);
           return (
-            <View
-              key={index}
-              className="bg-secondary/30 flex-row items-center gap-3 rounded-xl p-3">
+            <View key={index} className="bg-secondary/30 flex-row items-center gap-3 rounded-xl p-3">
               <View className="bg-secondary size-10 items-center justify-center rounded-full">
                 <Icon as={ActivityIcon} size={18} className={iconColor} />
               </View>
               <View className="flex-1">
                 <Text className="text-foreground text-sm">{activity.message}</Text>
-                <Text className="text-muted-foreground text-xs">{activity.timeAgo}</Text>
+                <Text className="text-muted-foreground text-xs">{formatTimeAgo(activity.createdAt)}</Text>
               </View>
             </View>
           );
@@ -124,24 +118,8 @@ export default function DashboardScreen() {
       .finally(() => setLoading(false));
   }, []);
 
-  // Generate mock data if not provided by API
-  const revenueChartData = stats?.revenueChart || [
-    { date: '2024-01-01', amount: 450000 },
-    { date: '2024-01-02', amount: 520000 },
-    { date: '2024-01-03', amount: 380000 },
-    { date: '2024-01-04', amount: 610000 },
-    { date: '2024-01-05', amount: 490000 },
-    { date: '2024-01-06', amount: 720000 },
-    { date: '2024-01-07', amount: 580000 },
-  ];
-
-  const activityData = stats?.recentActivity || [
-    { type: 'user_registered', message: 'New user registered', timeAgo: '2 min ago' },
-    { type: 'order_placed', message: 'New order #1234 placed', timeAgo: '15 min ago' },
-    { type: 'vendor_approved', message: 'Vendor "Tech Store" approved', timeAgo: '1 hr ago' },
-    { type: 'order_completed', message: 'Order #1230 delivered', timeAgo: '3 hr ago' },
-    { type: 'user_registered', message: 'New user registered', timeAgo: '5 hr ago' },
-  ];
+const revenueChartData = stats?.revenueChart || [];
+const activityData = stats?.recentActivity || [];
 
   const statCards = [
     {
@@ -250,7 +228,13 @@ export default function DashboardScreen() {
           ))}
         </View>
 
-        <RevenueChart data={revenueChartData} />
+{revenueChartData.length > 0 ? (
+  <RevenueChart data={revenueChartData} />
+) : (
+  <View className="bg-card shadow-card rounded-2xl p-6 items-center">
+    <Text className="text-muted-foreground text-sm">No revenue data yet</Text>
+  </View>
+)}
 
         <View className="bg-card shadow-card rounded-2xl p-4">
           <Text className="text-foreground mb-3 font-semibold">Quick Actions</Text>

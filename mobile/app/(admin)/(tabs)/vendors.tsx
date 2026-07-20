@@ -5,6 +5,7 @@ import { Icon } from '@/components/ui/icon';
 import { Store, Check, X } from 'lucide-react-native';
 import * as React from 'react';
 import { ScrollView, View, Pressable } from 'react-native';
+import { useToast } from '@/components/Toast';
 import { api } from '@/lib/api';
 
 type VendorStatus = 'pending' | 'approved' | 'rejected';
@@ -46,6 +47,7 @@ export default function VendorsScreen() {
   const [vendors, setVendors] = React.useState<Vendor[]>([]);
   const [filter, setFilter] = React.useState<VendorStatus | 'all'>('pending');
   const [loading, setLoading] = React.useState(true);
+  const { toast } = useToast();
 
   async function fetchVendors() {
     setLoading(true);
@@ -69,7 +71,7 @@ export default function VendorsScreen() {
       await api.put(`/admin/vendor/${id}/approve`, {});
       fetchVendors();
     } catch (err: any) {
-      console.error('Failed to approve', err);
+      toast({ title: 'Error', description: 'Failed to approve vendor', variant: 'destructive' });
     }
   }
 
@@ -78,7 +80,7 @@ export default function VendorsScreen() {
       await api.put(`/admin/vendor/${id}/reject`, {});
       fetchVendors();
     } catch (err: any) {
-      console.error('Failed to reject', err);
+      toast({ title: 'Error', description: 'Failed to reject vendor', variant: 'destructive' });
     }
   }
 

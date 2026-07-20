@@ -15,11 +15,11 @@ usersRoutes.get("/list", async (c) => {
     const conditions = [];
     if (search) {
       conditions.push(
-        or(
-          ilike(user.name, `%${search}%`),
-          ilike(user.email, `%${search}%`),
-          ilike(user.username || user.id, `%${search}%`)
-        )
+    or(
+  ilike(user.name, `%${search}%`),
+  ilike(user.email, `%${search}%`),
+  ilike(user.username, `%${search}%`)
+)
       );
     }
     if (role) {
@@ -112,6 +112,21 @@ usersRoutes.put("/:id/role", async (c) => {
 
     const found = await db.select().from(user).where(eq(user.id, id)).limit(1);
     if (!found.length) return c.json({ error: "User not found" }, 404);
+
+    // Prevent locking every admin out of the panel with no recovery path
+    if (found[0].role === "admin" && body.role !== "admin") {
+      const [{ count: adminCount }] = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(user)
+        .where(eq(user.role, "admin"));
+
+      if (Number(adminCount) <= 1) {
+        return c.json(
+          { error: "Cannot remove the last admin. Promote another user to admin first." },
+          400
+        );
+      }
+    }
 
     await db
       .update(user)

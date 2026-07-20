@@ -7,6 +7,8 @@ import { Badge } from '@/components/ui/badge';
 import { View, ScrollView, ActivityIndicator, Pressable, RefreshControl } from 'react-native';
 import { Search, Shield, Ban, UserCog, ChevronRight } from 'lucide-react-native';
 import { api } from '@/lib/api';
+import { useConfirmDialog } from '@/components/ConfirmDialog';
+import { useToast } from '@/components/Toast';
 
 export default function UsersScreen() {
   const [users, setUsers] = useState<any[]>([]);
@@ -16,6 +18,8 @@ export default function UsersScreen() {
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState('');
   const [page, setPage] = useState(1);
+  const { confirm } = useConfirmDialog();
+  const { toast } = useToast();
 
   const fetchUsers = useCallback(async (p = 1, s = search, r = roleFilter) => {
     try {
@@ -50,10 +54,26 @@ export default function UsersScreen() {
     fetchUsers(page, search, roleFilter);
   };
 
-  const handleRole = async (userId: string, role: string) => {
-    await api.publicPut(`/admin/users/${userId}/role`, { role });
-    fetchUsers(page, search, roleFilter);
-  };
+ const handleRole = (userId: string, userName: string, currentRole: string) => {
+  const nextRole = currentRole === 'admin' ? 'user' : 'admin';
+  const verb = nextRole === 'admin' ? 'grant admin access to' : 'remove admin access from';
+
+  confirm({
+    title: nextRole === 'admin' ? 'Grant Admin Access' : 'Remove Admin Access',
+    description: `Are you sure you want to ${verb} ${userName}?`,
+    destructive: nextRole !== 'admin',
+    confirmText: 'Confirm',
+    onConfirm: async () => {
+      try {
+        await api.publicPut(`/admin/users/${userId}/role`, { role: nextRole });
+        fetchUsers(page, search, roleFilter);
+      } catch (err: any) {
+        toast({ title: 'Error', description: err.message || 'Failed to update role', variant: 'destructive' });
+      }
+    },
+  });
+};
+
 
   const roleBadge = (role: string) => {
     const colors: Record<string, string> = {
@@ -157,7 +177,7 @@ export default function UsersScreen() {
                     size="sm"
                     variant="outline"
                     className="h-8 gap-1"
-                    onPress={() => handleRole(u.id, u.role === 'admin' ? 'user' : 'admin')}>
+                    onPress={() => handleRole(u.id, u.name, u.role)}>
                     <Icon as={UserCog} size={14} />
                     <Text className="text-xs">Toggle Admin</Text>
                   </Button>

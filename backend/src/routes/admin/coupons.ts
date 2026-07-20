@@ -5,6 +5,30 @@ import { eq, desc } from "drizzle-orm";
 
 const couponAdminRoutes = new Hono();
 
+function validateDiscount(body: any) {
+  if (!["percentage", "fixed"].includes(body.discountType)) {
+    return "discountType must be 'percentage' or 'fixed'";
+  }
+  if (body.discountType === "percentage") {
+    const pct = Number(body.discountPercent);
+    if (body.discountPercent === undefined || isNaN(pct) || pct <= 0 || pct > 100) {
+      return "discountPercent must be a number between 0 and 100";
+    }
+    if (body.discountAmount !== undefined && body.discountAmount !== null) {
+      return "discountAmount must not be set for a percentage coupon";
+    }
+  } else {
+    const amt = Number(body.discountAmount);
+    if (body.discountAmount === undefined || isNaN(amt) || amt <= 0) {
+      return "discountAmount must be a positive number";
+    }
+    if (body.discountPercent !== undefined && body.discountPercent !== null) {
+      return "discountPercent must not be set for a fixed coupon";
+    }
+  }
+  return null;
+}
+
 couponAdminRoutes.get("/", async (c) => {
   try {
     const coupons = await db.query.coupon.findMany({ orderBy: [desc(coupon.createdAt)] });
@@ -17,8 +41,7 @@ couponAdminRoutes.get("/", async (c) => {
 
 couponAdminRoutes.get("/:id", async (c) => {
   try {
-    const id = c.req.param("id");
-    const found = await db.query.coupon.findFirst({ where: eq(coupon.id, id) });
+    const found = await db.query.coupon.findFirst({ where: eq(coupon.id, c.req.param("id")) });
     if (!found) return c.json({ error: "Coupon not found" }, 404);
     return c.json({ coupon: found });
   } catch (error) {
@@ -30,9 +53,12 @@ couponAdminRoutes.get("/:id", async (c) => {
 couponAdminRoutes.post("/", async (c) => {
   try {
     const body = await c.req.json();
-    if (!body.code || !body.discountType || body.discountValue === undefined) {
-      return c.json({ error: "code, discountType, and discountValue are required" }, 400);
+    if (!body.code || !body.discountType) {
+      return c.json({ error: "code and discountType are required" }, 400);
     }
+
+    const discountError = validateDiscount(body);
+    if (discountError) return c.json({ error: discountError }, 400);
 
     const id = crypto.randomUUID();
     await db.insert(coupon).values({
@@ -40,8 +66,9 @@ couponAdminRoutes.post("/", async (c) => {
       code: body.code.toUpperCase(),
       description: body.description || null,
       discountType: body.discountType,
-      discountValue: body.discountValue,
-      minimumOrderCents: body.minimumOrderCents || 0,
+      discountPercent: body.discountType === "percentage" ? body.discountPercent : null,
+      discountAmount: body.discountType === "fixed" ? body.discountAmount : null,
+      minimumOrderAmount: body.minimumOrderAmount ?? "0",
       maxUses: body.maxUses || 0,
       currentUses: 0,
       expiresAt: body.expiresAt ? new Date(body.expiresAt) : null,
@@ -67,14 +94,24 @@ couponAdminRoutes.put("/:id", async (c) => {
     const existing = await db.query.coupon.findFirst({ where: eq(coupon.id, id) });
     if (!existing) return c.json({ error: "Coupon not found" }, 404);
 
+    // Merge onto existing so a partial update still validates the resulting whole
+    const merged = {
+      discountType: body.discountType ?? existing.discountType,
+      discountPercent: body.discountPercent !== undefined ? body.discountPercent : existing.discountPercent,
+      discountAmount: body.discountAmount !== undefined ? body.discountAmount : existing.discountAmount,
+    };
+    const discountError = validateDiscount(merged);
+    if (discountError) return c.json({ error: discountError }, 400);
+
     await db
       .update(coupon)
       .set({
         code: body.code ? body.code.toUpperCase() : existing.code,
         description: body.description !== undefined ? body.description : existing.description,
-        discountType: body.discountType || existing.discountType,
-        discountValue: body.discountValue !== undefined ? body.discountValue : existing.discountValue,
-        minimumOrderCents: body.minimumOrderCents !== undefined ? body.minimumOrderCents : existing.minimumOrderCents,
+        discountType: merged.discountType,
+        discountPercent: merged.discountType === "percentage" ? merged.discountPercent : null,
+        discountAmount: merged.discountType === "fixed" ? merged.discountAmount : null,
+        minimumOrderAmount: body.minimumOrderAmount !== undefined ? body.minimumOrderAmount : existing.minimumOrderAmount,
         maxUses: body.maxUses !== undefined ? body.maxUses : existing.maxUses,
         expiresAt: body.expiresAt !== undefined ? (body.expiresAt ? new Date(body.expiresAt) : null) : existing.expiresAt,
         isActive: body.isActive !== undefined ? body.isActive : existing.isActive,
@@ -95,8 +132,7 @@ couponAdminRoutes.put("/:id", async (c) => {
 
 couponAdminRoutes.delete("/:id", async (c) => {
   try {
-    const id = c.req.param("id");
-    await db.delete(coupon).where(eq(coupon.id, id));
+    await db.delete(coupon).where(eq(coupon.id, c.req.param("id")));
     return c.json({ message: "Coupon deleted" });
   } catch (error) {
     console.error("Error deleting coupon:", error);

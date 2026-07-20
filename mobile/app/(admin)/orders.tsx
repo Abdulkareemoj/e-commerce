@@ -5,6 +5,7 @@ import { Icon } from '@/components/ui/icon';
 import { Badge } from '@/components/ui/badge';
 import { View, ScrollView, ActivityIndicator, RefreshControl, Pressable } from 'react-native';
 import { ShoppingCart, ChevronDown, ChevronUp } from 'lucide-react-native';
+import { useToast } from '@/components/Toast';
 import { api } from '@/lib/api';
 
 const STATUS_OPTIONS = [
@@ -48,9 +49,15 @@ export default function OrdersScreen() {
     fetchOrders(page, statusFilter);
   }, [page]);
 
+  const { toast } = useToast();
+
   const updateStatus = async (id: string, status: string) => {
-    await api.publicPut(`/admin/orders/${id}/status`, { status });
-    fetchOrders(page, statusFilter);
+    try {
+      await api.publicPut(`/admin/orders/${id}/status`, { status });
+      fetchOrders(page, statusFilter);
+    } catch (err) {
+      toast({ title: 'Error', description: 'Failed to update order status', variant: 'destructive' });
+    }
   };
 
   const statusBadge = (s: string) => {

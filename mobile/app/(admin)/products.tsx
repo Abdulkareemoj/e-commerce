@@ -7,6 +7,8 @@ import { Badge } from '@/components/ui/badge';
 import { View, ScrollView, ActivityIndicator, RefreshControl, Pressable } from 'react-native';
 import { Search, Package, EyeOff, Trash2, ChevronRight } from 'lucide-react-native';
 import { api } from '@/lib/api';
+import { useConfirmDialog } from '@/components/ConfirmDialog';
+import { useToast } from '@/components/Toast';
 
 export default function ProductsScreen() {
   const [products, setProducts] = useState<any[]>([]);
@@ -14,6 +16,8 @@ export default function ProductsScreen() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
+  const { confirm } = useConfirmDialog();
+  const { toast } = useToast();
 
   const fetchProducts = useCallback(async (p = 1, s = '') => {
     setLoading(true);
@@ -44,10 +48,19 @@ export default function ProductsScreen() {
     fetchProducts(page, search);
   };
 
-  const deleteProduct = async (id: string) => {
-    await api.publicDelete(`/admin/products/${id}`);
-    fetchProducts(page, search);
-  };
+const deleteProduct = (id: string, name: string) => {
+  confirm({
+    title: 'Delete Product',
+    description: `Delete "${name}"? This cannot be undone.`,
+    destructive: true,
+    confirmText: 'Delete',
+    onConfirm: async () => {
+      await api.publicDelete(`/admin/products/${id}`);
+      fetchProducts(page, search);
+    },
+  });
+};
+
 
   return (
     <View className="bg-background flex-1">
@@ -113,7 +126,7 @@ export default function ProductsScreen() {
                     size="sm"
                     variant="destructive"
                     className="h-8 gap-1"
-                    onPress={() => deleteProduct(p.id)}>
+                    onPress={() => deleteProduct(p.id, p.name)}
                     <Icon as={Trash2} size={14} />
                     <Text className="text-xs">Delete</Text>
                   </Button>

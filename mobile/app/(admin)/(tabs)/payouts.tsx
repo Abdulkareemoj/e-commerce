@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Icon } from '@/components/ui/icon';
 import { View, ScrollView, ActivityIndicator, Pressable } from 'react-native';
 import { Wallet, Check, X } from 'lucide-react-native';
+import { useToast } from '@/components/Toast';
 import { api } from '@/lib/api';
 
 export default function PayoutsScreen() {
@@ -35,9 +36,15 @@ export default function PayoutsScreen() {
     fetchPayouts(page, statusFilter);
   }, [page]);
 
+  const { toast } = useToast();
+
   const processPayout = async (id: string, status: string) => {
-    await api.publicPut(`/admin/payouts/${id}/process`, { status });
-    fetchPayouts(page, statusFilter);
+    try {
+      await api.publicPut(`/admin/payouts/${id}/process`, { status });
+      fetchPayouts(page, statusFilter);
+    } catch (err) {
+      toast({ title: 'Error', description: 'Failed to process payout', variant: 'destructive' });
+    }
   };
 
   const STATUS_STYLES: Record<string, { bg: string; text: string }> = {

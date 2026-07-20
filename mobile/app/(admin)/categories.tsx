@@ -9,10 +9,10 @@ import {
   ActivityIndicator,
   RefreshControl,
   Pressable,
-  Alert,
 } from 'react-native';
 import { Tags, Plus, Edit3, Trash2, X, Check } from 'lucide-react-native';
 import { api } from '@/lib/api';
+import { useConfirmDialog } from '@/components/ConfirmDialog';
 
 export default function CategoriesScreen() {
   const [categories, setCategories] = useState<any[]>([]);
@@ -23,6 +23,7 @@ export default function CategoriesScreen() {
   const [showNew, setShowNew] = useState(false);
   const [newName, setNewName] = useState('');
   const [newSlug, setNewSlug] = useState('');
+  const { confirm } = useConfirmDialog();
 
   const fetchCategories = useCallback(async () => {
     setLoading(true);
@@ -63,18 +64,17 @@ export default function CategoriesScreen() {
     }
   };
 
-  const deleteCategory = async (id: string) => {
-    Alert.alert('Delete Category', 'Are you sure?', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Delete',
-        style: 'destructive',
-        onPress: async () => {
-          await api.publicDelete(`/admin/categories/${id}`);
-          fetchCategories();
-        },
+  const deleteCategory = (id: string) => {
+    confirm({
+      title: 'Delete Category',
+      description: 'Are you sure you want to delete this category?',
+      destructive: true,
+      confirmText: 'Delete',
+      onConfirm: async () => {
+        await api.publicDelete(`/admin/categories/${id}`);
+        fetchCategories();
       },
-    ]);
+    });
   };
 
   return (
