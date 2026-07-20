@@ -2,10 +2,13 @@ import { Hono } from "hono";
 import { z } from "zod";
 import { zValidator } from "@hono/zod-validator";
 import { initUpload } from "@/utils/storage";
+import { db } from "@/db";
+import { vendor } from "@/db/schema/vendor-schema";
+import { eq } from "drizzle-orm";
+import { rateLimit } from "@/utils/rate-limiter";
 
 const uploadRoutes = new Hono();
 
-// All upload routes require authentication (any role)
 uploadRoutes.use("*", async (c, next) => {
   const user = (c as any).get("user");
   if (!user) {
@@ -13,6 +16,8 @@ uploadRoutes.use("*", async (c, next) => {
   }
   await next();
 });
+
+uploadRoutes.use("*", rateLimit({ windowMs: 60_000, max: 15 }));
 
 const initSchema = z.object({
   fileName: z.string().min(1, "fileName is required").max(255),
@@ -26,9 +31,37 @@ const initSchema = z.object({
     .default("general"),
 });
 
+// purposes that write into a vendor's own catalog — restricted below.
+// avatar/message/general stay open to any authenticated user.
+const VENDOR_ONLY_PURPOSES = new Set(["product", "variant"]);
+
 uploadRoutes.post("/init", zValidator("json", initSchema), async (c) => {
   try {
+    const user = (c as any).get("user");
     const { fileName, contentType, fileSize, purpose } = c.req.valid("json");
+
+    if (VENDOR_ONLY_PURPOSES.has(purpose)) {
+      // Admins bypass the vendor-approval check; they're not applicants.
+      if (user.role === "admin") {
+        // allowed
+      } else if (user.role !== "vendor") {
+        return c.json(
+          { error: `Only vendors can request uploads for purpose "${purpose}"` },
+          403,
+        );
+      } else {
+        const v = await db.query.vendor.findFirst({
+          where: eq(vendor.userId, user.id),
+          columns: { isVerified: true },
+        });
+        if (v?.isVerified !== "approved") {
+          return c.json(
+            { error: "Your vendor account must be approved before uploading catalog media" },
+            403,
+          );
+        }
+      }
+    }
 
     const result = await initUpload(fileName, contentType, fileSize, purpose);
 

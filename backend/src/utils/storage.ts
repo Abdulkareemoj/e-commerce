@@ -75,6 +75,7 @@ export async function initUpload(
     Bucket: bucket,
     Key: key,
     ContentType: contentType,
+     ContentLength: fileSize,
   });
 
   const uploadUrl = await getSignedUrl(r2, command, { expiresIn: 3600 });
