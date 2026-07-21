@@ -21,6 +21,7 @@ import {
 import { api } from '@/lib/api';
 import { MapPin, Edit, Trash2, Plus, Check } from 'lucide-react-native';
 import { AuthGuard } from '@/components/AuthGuard';
+import { useToast } from '@/components/Toast';
 
 const addressSchema = z.object({
   line1: z.string().min(1, 'Street address is required'),
@@ -128,6 +129,7 @@ function AddressForm({
 export default function AddressesScreen() {
   const [addresses, setAddresses] = React.useState<Address[]>([]);
   const [loading, setLoading] = React.useState(true);
+  const { toast } = useToast();
   const [dialogOpen, setDialogOpen] = React.useState(false);
   const [editingAddress, setEditingAddress] = React.useState<Address | null>(null);
 
@@ -157,7 +159,7 @@ export default function AddressesScreen() {
       setEditingAddress(null);
       fetchAddresses();
     } catch (err: any) {
-      console.error('Failed to save address', err);
+      toast({ title: 'Error', description: 'Failed to save address.', variant: 'destructive' });
     }
   }
 
@@ -166,7 +168,7 @@ export default function AddressesScreen() {
       await api.delete(`/addresses/${id}`);
       fetchAddresses();
     } catch (err: any) {
-      console.error('Failed to delete address', err);
+      toast({ title: 'Error', description: 'Failed to delete address.', variant: 'destructive' });
     }
   }
 

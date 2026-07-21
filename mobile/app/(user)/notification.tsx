@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { AuthGuard } from '@/components/AuthGuard';
 import { api } from '@/lib/api';
 import { Bell, Check, ShoppingBag, MessageSquare, Package, DollarSign, AlertTriangle, Info } from 'lucide-react-native';
+import { useToast } from '@/components/Toast';
 
 function formatDate(dateStr: string) {
   const d = new Date(dateStr);
@@ -45,6 +46,7 @@ export default function NotificationsScreen() {
   const [loading, setLoading] = React.useState(true);
   const [refreshing, setRefreshing] = React.useState(false);
   const [unreadCount, setUnreadCount] = React.useState(0);
+  const { toast } = useToast();
   const [page, setPage] = React.useState(1);
   const [hasMore, setHasMore] = React.useState(true);
 
@@ -90,7 +92,7 @@ export default function NotificationsScreen() {
       );
       setUnreadCount((prev) => Math.max(0, prev - 1));
     } catch (err) {
-      console.error('Failed to mark as read:', err);
+      toast({ title: 'Error', description: 'Failed to mark notification as read.', variant: 'destructive' });
     }
   };
 
@@ -100,7 +102,7 @@ export default function NotificationsScreen() {
       setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
       setUnreadCount(0);
     } catch (err) {
-      console.error('Failed to mark all as read:', err);
+      toast({ title: 'Error', description: 'Failed to mark all notifications as read.', variant: 'destructive' });
     }
   };
 

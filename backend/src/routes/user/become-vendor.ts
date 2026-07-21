@@ -36,16 +36,32 @@ becomeVendorRoutes.post("/", async (c) => {
       where: eq(vendor.userId, user.id),
     });
 
-    if (existing) {
+    if (existing && existing.isVerified !== "rejected") {
       return c.json({
         vendor: existing,
         message:
           existing.isVerified === "pending"
             ? "Application already submitted and pending review."
-            : existing.isVerified === "approved"
-              ? "You are already a verified vendor."
-              : "Application was rejected. Contact support.",
+            : "You are already a verified vendor.",
       });
+    }
+
+    if (existing && existing.isVerified === "rejected") {
+      // Resubmission: actually update the row and reset to pending,
+      // rather than returning the stale rejected record untouched.
+      const updated = await db
+        .update(vendor)
+        .set({
+          storeName,
+          storeSlug,
+          description: description || null,
+          isVerified: "pending",
+          updatedAt: new Date(),
+        })
+        .where(eq(vendor.id, existing.id))
+        .returning();
+
+      return c.json({ vendor: updated[0], message: "Application resubmitted and pending review." });
     }
 
     const newVendor = await db
@@ -69,5 +85,4 @@ becomeVendorRoutes.post("/", async (c) => {
     return c.json({ error: "Failed to submit application" }, 500);
   }
 });
-
 export default becomeVendorRoutes;

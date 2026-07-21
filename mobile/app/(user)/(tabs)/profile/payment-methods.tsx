@@ -11,12 +11,13 @@ import {
   ScrollView,
   ActivityIndicator,
   Pressable,
-  Alert,
   Modal,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
 import { api } from '@/lib/api';
+import { useConfirmDialog } from '@/components/ConfirmDialog';
+import { useToast } from '@/components/Toast';
 
 interface PaymentMethod {
   id: string;
@@ -37,6 +38,8 @@ export default function PaymentMethodsScreen() {
   const [expiry, setExpiry] = useState('');
   const [cvv, setCvv] = useState('');
   const [saving, setSaving] = useState(false);
+  const { confirm } = useConfirmDialog();
+  const { toast } = useToast();
 
   const fetchMethods = useCallback(async () => {
     setLoading(true);
@@ -56,7 +59,7 @@ export default function PaymentMethodsScreen() {
 
   const addMethod = async () => {
     if (!cardNumber || !cardHolder || !expiry || !cvv) {
-      Alert.alert('Error', 'Please fill in all fields.');
+      toast({ title: 'Error', description: 'Please fill in all fields.', variant: 'destructive' });
       return;
     }
     setSaving(true);
@@ -71,28 +74,27 @@ export default function PaymentMethodsScreen() {
       resetForm();
       fetchMethods();
     } catch (err) {
-      Alert.alert('Error', 'Failed to add payment method.');
+      toast({ title: 'Error', description: 'Failed to add payment method.', variant: 'destructive' });
     } finally {
       setSaving(false);
     }
   };
 
   const deleteMethod = async (id: string) => {
-    Alert.alert('Delete', 'Remove this payment method?', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Delete',
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            await api.publicDelete(`/user/payment-methods/${id}`);
-            fetchMethods();
-          } catch (err) {
-            Alert.alert('Error', 'Failed to delete payment method.');
-          }
-        },
+    confirm({
+      title: 'Delete',
+      description: 'Remove this payment method?',
+      destructive: true,
+      confirmText: 'Delete',
+      onConfirm: async () => {
+        try {
+          await api.publicDelete(`/user/payment-methods/${id}`);
+          fetchMethods();
+        } catch (err) {
+          toast({ title: 'Error', description: 'Failed to delete payment method.', variant: 'destructive' });
+        }
       },
-    ]);
+    });
   };
 
   const setDefault = async (id: string) => {
@@ -100,7 +102,7 @@ export default function PaymentMethodsScreen() {
       await api.publicPut(`/user/payment-methods/${id}/default`, {});
       fetchMethods();
     } catch (err) {
-      Alert.alert('Error', 'Failed to update default.');
+      toast({ title: 'Error', description: 'Failed to update default.', variant: 'destructive' });
     }
   };
 

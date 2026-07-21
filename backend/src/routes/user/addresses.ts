@@ -5,32 +5,34 @@ import { eq, and } from "drizzle-orm";
 import { customAlphabet } from "nanoid";
 
 const nanoid = customAlphabet("abcdefghijklmnopqrstuvwxyz0123456789", 12);
+const VALID_TYPES = ["shipping", "billing"];
+
+function toClient(r: typeof address.$inferSelect) {
+  return {
+    id: r.id,
+    name: r.recipientName,
+    phone: r.phone,
+    street: r.line1,
+    line2: r.line2 || "",
+    city: r.city,
+    state: r.state || "",
+    zip: r.postalCode,
+    country: r.country,
+    isDefault: r.isDefault,
+    type: r.type,
+  };
+}
 
 const addressesUser = new Hono();
 
 addressesUser.get("/", async (c) => {
   const user = (c as any).get("user") as any;
-
   try {
     const rows = await db.query.address.findMany({
       where: eq(address.userId, user.id),
       orderBy: (a, { desc }) => [desc(a.isDefault), desc(a.createdAt)],
     });
-
-    const addresses = rows.map((r) => ({
-      id: r.id,
-      name: "",
-      phone: "",
-      street: r.line1,
-      city: r.city,
-      state: r.state || "",
-      zip: r.postalCode,
-      country: r.country,
-      isDefault: r.isDefault,
-      type: r.type,
-    }));
-
-    return c.json({ addresses });
+    return c.json({ addresses: rows.map(toClient) });
   } catch (error) {
     console.error("Failed to fetch addresses:", error);
     return c.json({ error: "Failed to fetch addresses" }, 500);
@@ -40,30 +42,12 @@ addressesUser.get("/", async (c) => {
 addressesUser.get("/:id", async (c) => {
   const user = (c as any).get("user") as any;
   const { id } = c.req.param();
-
   try {
     const r = await db.query.address.findFirst({
       where: and(eq(address.id, id), eq(address.userId, user.id)),
     });
-
-    if (!r) {
-      return c.json({ error: "Address not found" }, 404);
-    }
-
-    const addr = {
-      id: r.id,
-      name: "",
-      phone: "",
-      street: r.line1,
-      city: r.city,
-      state: r.state || "",
-      zip: r.postalCode,
-      country: r.country,
-      isDefault: r.isDefault,
-      type: r.type,
-    };
-
-    return c.json({ address: addr });
+    if (!r) return c.json({ error: "Address not found" }, 404);
+    return c.json({ address: toClient(r) });
   } catch (error) {
     console.error("Failed to fetch address:", error);
     return c.json({ error: "Failed to fetch address" }, 500);
@@ -76,57 +60,50 @@ addressesUser.post("/", async (c) => {
 
   const line1 = body.line1 || body.street;
   const postalCode = body.postalCode || body.zip;
-  const country = body.country || "US";
   const type = body.type || "shipping";
 
-  if (!line1 || !body.city || !postalCode) {
+  if (!body.name) return c.json({ error: "name (recipient name) is required" }, 400);
+  if (!body.phone) return c.json({ error: "phone is required" }, 400);
+  if (!line1 || !body.city || !postalCode || !body.country) {
     return c.json(
-      {
-        error: "street (or line1), city, and zip (or postalCode) are required",
-      },
+      { error: "street (or line1), city, zip (or postalCode), and country are required" },
       400,
     );
   }
+  if (!VALID_TYPES.includes(type)) {
+    return c.json({ error: `type must be one of: ${VALID_TYPES.join(", ")}` }, 400);
+  }
 
   try {
-    if (body.isDefault) {
-      await db
-        .update(address)
-        .set({ isDefault: false })
-        .where(and(eq(address.userId, user.id), eq(address.isDefault, true)));
-    }
+    const created = await db.transaction(async (tx) => {
+      if (body.isDefault) {
+        await tx
+          .update(address)
+          .set({ isDefault: false })
+          .where(and(eq(address.userId, user.id), eq(address.isDefault, true)));
+      }
 
-    const newAddress = await db
-      .insert(address)
-      .values({
-        id: nanoid(),
-        userId: user.id,
-        type,
-        line1,
-        line2: body.line2 || null,
-        city: body.city,
-        state: body.state || null,
-        postalCode,
-        country,
-        isDefault: body.isDefault || false,
-      })
-      .returning();
+      const [r] = await tx
+        .insert(address)
+        .values({
+          id: nanoid(),
+          userId: user.id,
+          type,
+          recipientName: body.name,
+          phone: body.phone,
+          line1,
+          line2: body.line2 || null,
+          city: body.city,
+          state: body.state || null,
+          postalCode,
+          country: body.country,
+          isDefault: body.isDefault || false,
+        })
+        .returning();
+      return r;
+    });
 
-    const r = newAddress[0];
-    const result = {
-      id: r.id,
-      name: body.name || "",
-      phone: body.phone || "",
-      street: r.line1,
-      city: r.city,
-      state: r.state || "",
-      zip: r.postalCode,
-      country: r.country,
-      isDefault: r.isDefault,
-      type: r.type,
-    };
-
-    return c.json({ address: result }, 201);
+    return c.json({ address: toClient(created) }, 201);
   } catch (error) {
     console.error("Failed to create address:", error);
     return c.json({ error: "Failed to create address" }, 500);
@@ -138,56 +115,48 @@ addressesUser.put("/:id", async (c) => {
   const { id } = c.req.param();
   const body = await c.req.json();
 
+  if (body.type && !VALID_TYPES.includes(body.type)) {
+    return c.json({ error: `type must be one of: ${VALID_TYPES.join(", ")}` }, 400);
+  }
+
   try {
     const existing = await db.query.address.findFirst({
       where: and(eq(address.id, id), eq(address.userId, user.id)),
     });
-
-    if (!existing) {
-      return c.json({ error: "Address not found" }, 404);
-    }
-
-    if (body.isDefault) {
-      await db
-        .update(address)
-        .set({ isDefault: false })
-        .where(and(eq(address.userId, user.id), eq(address.isDefault, true)));
-    }
+    if (!existing) return c.json({ error: "Address not found" }, 404);
 
     const line1 = body.line1 || body.street || existing.line1;
     const postalCode = body.postalCode || body.zip || existing.postalCode;
 
-    const updated = await db
-      .update(address)
-      .set({
-        type: body.type ?? existing.type,
-        line1,
-        line2: body.line2 !== undefined ? body.line2 : existing.line2,
-        city: body.city ?? existing.city,
-        state: body.state !== undefined ? body.state : existing.state,
-        postalCode,
-        country: body.country ?? existing.country,
-        isDefault: body.isDefault ?? existing.isDefault,
-        updatedAt: new Date(),
-      })
-      .where(eq(address.id, id))
-      .returning();
+    const updated = await db.transaction(async (tx) => {
+      if (body.isDefault) {
+        await tx
+          .update(address)
+          .set({ isDefault: false })
+          .where(and(eq(address.userId, user.id), eq(address.isDefault, true)));
+      }
 
-    const r = updated[0];
-    const result = {
-      id: r.id,
-      name: body.name || "",
-      phone: body.phone || "",
-      street: r.line1,
-      city: r.city,
-      state: r.state || "",
-      zip: r.postalCode,
-      country: r.country,
-      isDefault: r.isDefault,
-      type: r.type,
-    };
+      const [r] = await tx
+        .update(address)
+        .set({
+          type: body.type ?? existing.type,
+          recipientName: body.name ?? existing.recipientName,
+          phone: body.phone ?? existing.phone,
+          line1,
+          line2: body.line2 !== undefined ? body.line2 : existing.line2,
+          city: body.city ?? existing.city,
+          state: body.state !== undefined ? body.state : existing.state,
+          postalCode,
+          country: body.country ?? existing.country,
+          isDefault: body.isDefault ?? existing.isDefault,
+          updatedAt: new Date(),
+        })
+        .where(eq(address.id, id))
+        .returning();
+      return r;
+    });
 
-    return c.json({ address: result });
+    return c.json({ address: toClient(updated) });
   } catch (error) {
     console.error("Failed to update address:", error);
     return c.json({ error: "Failed to update address" }, 500);
@@ -197,18 +166,13 @@ addressesUser.put("/:id", async (c) => {
 addressesUser.delete("/:id", async (c) => {
   const user = (c as any).get("user") as any;
   const { id } = c.req.param();
-
   try {
     const existing = await db.query.address.findFirst({
       where: and(eq(address.id, id), eq(address.userId, user.id)),
     });
-
-    if (!existing) {
-      return c.json({ error: "Address not found" }, 404);
-    }
+    if (!existing) return c.json({ error: "Address not found" }, 404);
 
     await db.delete(address).where(eq(address.id, id));
-
     return c.json({ success: true });
   } catch (error) {
     console.error("Failed to delete address:", error);

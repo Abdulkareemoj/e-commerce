@@ -9,23 +9,16 @@ onboardingRoutes.patch("/role", async (c) => {
   const user = c.get("user");
   if (!user) return c.json({ error: "Unauthorized" }, 401);
 
-  try {
-    const body = await c.req.json();
-    const { role } = body;
-
-    if (role && !["user", "vendor", "admin"].includes(role)) {
-      return c.json({ error: "Invalid role" }, 400);
-    }
-
-    if (role) {
-      await db.update(userTable).set({ role }).where(eq(userTable.id, user.id));
-    }
-
-    return c.json({ success: true, role });
-  } catch (error) {
-    console.error("Failed to update role:", error);
-    return c.json({ error: "Failed to update role" }, 500);
+  const { role } = await c.req.json();
+  // Never self-assignable. Vendor should go through become-vendor's
+  // verification flow, not this endpoint — confirm that's still true,
+  // then consider removing role from this route entirely.
+  if (role !== "vendor") {
+    return c.json({ error: "Invalid role" }, 400);
   }
+
+  await db.update(userTable).set({ role: "vendor" }).where(eq(userTable.id, user.id));
+  return c.json({ success: true, role: "vendor" });
 });
 
 onboardingRoutes.patch("/onboarding", async (c) => {
