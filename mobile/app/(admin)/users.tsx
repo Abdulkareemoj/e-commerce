@@ -9,6 +9,7 @@ import { Search, Shield, Ban, UserCog, ChevronRight } from 'lucide-react-native'
 import { api } from '@/lib/api';
 import { useConfirmDialog } from '@/components/ConfirmDialog';
 import { useToast } from '@/components/Toast';
+import { useAuthStore } from '@/lib/authStore';
 
 export default function UsersScreen() {
   const [users, setUsers] = useState<any[]>([]);
@@ -20,6 +21,7 @@ export default function UsersScreen() {
   const [page, setPage] = useState(1);
   const { confirm } = useConfirmDialog();
   const { toast } = useToast();
+  const currentUser = useAuthStore((s) => s.user);
 
   const fetchUsers = useCallback(async (p = 1, s = search, r = roleFilter) => {
     try {
@@ -55,6 +57,44 @@ export default function UsersScreen() {
   };
 
  const handleRole = (userId: string, userName: string, currentRole: string) => {
+  const isSuperadmin = currentUser?.role === 'superadmin';
+
+  if (currentRole === 'superadmin') {
+    confirm({
+      title: 'Remove Superadmin',
+      description: `Are you sure you want to remove superadmin access from ${userName}? They will become a regular user.`,
+      destructive: true,
+      confirmText: 'Confirm',
+      onConfirm: async () => {
+        try {
+          await api.publicPut(`/admin/users/${userId}/role`, { role: 'user' });
+          fetchUsers(page, search, roleFilter);
+        } catch (err: any) {
+          toast({ title: 'Error', description: err.message || 'Failed to update role', variant: 'destructive' });
+        }
+      },
+    });
+    return;
+  }
+
+  if (currentRole === 'admin' && isSuperadmin) {
+    confirm({
+      title: 'Promote to Superadmin',
+      description: `Are you sure you want to promote ${userName} to superadmin? They will have full platform access.`,
+      destructive: false,
+      confirmText: 'Promote',
+      onConfirm: async () => {
+        try {
+          await api.publicPut(`/admin/users/${userId}/role`, { role: 'superadmin' });
+          fetchUsers(page, search, roleFilter);
+        } catch (err: any) {
+          toast({ title: 'Error', description: err.message || 'Failed to update role', variant: 'destructive' });
+        }
+      },
+    });
+    return;
+  }
+
   const nextRole = currentRole === 'admin' ? 'user' : 'admin';
   const verb = nextRole === 'admin' ? 'grant admin access to' : 'remove admin access from';
 
@@ -77,6 +117,7 @@ export default function UsersScreen() {
 
   const roleBadge = (role: string) => {
     const colors: Record<string, string> = {
+      superadmin: 'bg-purple-600',
       admin: 'bg-red-500',
       vendor: 'bg-blue-500',
       user: 'bg-zinc-500',
@@ -109,7 +150,7 @@ export default function UsersScreen() {
         </View>
 
         <View className="flex-row gap-2">
-          {['', 'user', 'vendor', 'admin'].map((r) => (
+          {['', 'user', 'vendor', 'admin', 'superadmin'].map((r) => (
             <Pressable
               key={r}
               onPress={() => {
@@ -173,14 +214,18 @@ export default function UsersScreen() {
                 </View>
 
                 <View className="mt-3 flex-row gap-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="h-8 gap-1"
-                    onPress={() => handleRole(u.id, u.name, u.role)}>
-                    <Icon as={UserCog} size={14} />
-                    <Text className="text-xs">Toggle Admin</Text>
-                  </Button>
+                  {u.role !== 'superadmin' && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-8 gap-1"
+                      onPress={() => handleRole(u.id, u.name, u.role)}>
+                      <Icon as={UserCog} size={14} />
+                      <Text className="text-xs">
+                        {u.role === 'admin' ? (currentUser?.role === 'superadmin' ? 'Promote' : 'Remove Admin') : 'Make Admin'}
+                      </Text>
+                    </Button>
+                  )}
                   <Button
                     size="sm"
                     variant={u.banned ? 'outline' : 'destructive'}

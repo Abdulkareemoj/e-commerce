@@ -84,6 +84,10 @@ usersRoutes.put("/:id/ban", async (c) => {
     const found = await db.select().from(user).where(eq(user.id, id)).limit(1);
     if (!found.length) return c.json({ error: "User not found" }, 404);
 
+    if (found[0].role === "superadmin") {
+      return c.json({ error: "Cannot ban a superadmin." }, 400);
+    }
+
     await db
       .update(user)
       .set({
@@ -106,12 +110,27 @@ usersRoutes.put("/:id/role", async (c) => {
     const { id } = c.req.param();
     const body = await c.req.json();
 
-    if (!["user", "vendor", "admin"].includes(body.role)) {
+    if (!["user", "vendor", "admin", "superadmin"].includes(body.role)) {
       return c.json({ error: "Invalid role" }, 400);
     }
 
     const found = await db.select().from(user).where(eq(user.id, id)).limit(1);
     if (!found.length) return c.json({ error: "User not found" }, 404);
+
+    // Prevent demoting the last superadmin
+    if (found[0].role === "superadmin" && body.role !== "superadmin") {
+      const [{ count: superadminCount }] = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(user)
+        .where(eq(user.role, "superadmin"));
+
+      if (Number(superadminCount) <= 1) {
+        return c.json(
+          { error: "Cannot remove the last superadmin. Promote another user to superadmin first." },
+          400
+        );
+      }
+    }
 
     // Prevent locking every admin out of the panel with no recovery path
     if (found[0].role === "admin" && body.role !== "admin") {
