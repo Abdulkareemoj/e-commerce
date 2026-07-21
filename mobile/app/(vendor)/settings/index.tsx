@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { FormInput } from '@/components/ui/form-input';
 import { FieldSet } from '@/components/ui/field';
 import { api } from '@/lib/api';
+import { useToast } from '@/components/Toast';
 
 const storeSchema = z.object({
   storeName: z.string().min(1, 'Store name is required'),
@@ -23,6 +24,7 @@ const storeSchema = z.object({
 type StoreData = z.infer<typeof storeSchema>;
 
 export default function VendorSettingsScreen() {
+  const { toast } = useToast();
   const [loading, setLoading] = React.useState(true);
   const [saving, setSaving] = React.useState(false);
 
@@ -63,7 +65,7 @@ export default function VendorSettingsScreen() {
             payoutDetails: res.store.payoutDetails || '',
           });
       } catch (err) {
-        console.error('Failed to update store:', err);
+        toast({ title: 'Error', description: 'Failed to update store settings.', variant: 'destructive' });
       } finally {
         setSaving(false);
       }

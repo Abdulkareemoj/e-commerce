@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { FormInput } from '@/components/ui/form-input';
 import { FieldSet } from '@/components/ui/field';
 import { api } from '@/lib/api';
+import { useToast } from '@/components/Toast';
 
 const profileSchema = z.object({
   name: z.string().min(1, 'Name is required'),
@@ -19,6 +20,7 @@ const profileSchema = z.object({
 type ProfileData = z.infer<typeof profileSchema>;
 
 export default function VendorProfileScreen() {
+  const { toast } = useToast();
   const [loading, setLoading] = React.useState(true);
   const [saving, setSaving] = React.useState(false);
 
@@ -48,7 +50,7 @@ export default function VendorProfileScreen() {
         const res = await api.put('/vendor/profile', data);
         if (res.profile) reset(res.profile);
       } catch (err) {
-        console.error('Failed to update profile:', err);
+        toast({ title: 'Error', description: 'Failed to update profile.', variant: 'destructive' });
       } finally {
         setSaving(false);
       }

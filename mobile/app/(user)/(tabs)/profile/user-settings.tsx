@@ -4,7 +4,7 @@ import { Icon } from '@/components/ui/icon';
 import { Switch } from '@/components/ui/switch';
 import { Text } from '@/components/ui/text';
 import { router } from 'expo-router';
-import { MoonStarIcon, SunIcon, LogOut } from 'lucide-react-native';
+import { MoonStarIcon, SunIcon, LogOut, LogIn } from 'lucide-react-native';
 import { Uniwind, useUniwind } from 'uniwind';
 import React from 'react';
 import { ScrollView, View } from 'react-native';
@@ -14,7 +14,7 @@ export default function SettingsScreen() {
   const { theme } = useUniwind();
   const isDark = theme === 'dark';
   const toggleColorScheme = () => Uniwind.setTheme(isDark ? 'light' : 'dark');
-  const clearAuth = useAuthStore((s) => s.clearAuth);
+  const { isAuthenticated, clearAuth } = useAuthStore();
 
   const handleSignOut = async () => {
     await clearAuth();
@@ -49,11 +49,18 @@ export default function SettingsScreen() {
             <CardTitle className="text-foreground">Account Actions</CardTitle>
           </CardHeader>
           <CardContent className="gap-4">
-            <Button variant="destructive" onPress={handleSignOut} className="w-full rounded-xl">
-              <Icon as={LogOut} size={16} />
-              <Text className="font-semibold">Log Out</Text>
-            </Button>
-          </CardContent>
+    {isAuthenticated ? (
+      <Button variant="destructive" onPress={handleSignOut} className="w-full rounded-xl">
+        <Icon as={LogOut} size={16} />
+        <Text className="font-semibold">Log Out</Text>
+      </Button>
+    ) : (
+      <Button onPress={() => router.push('/(auth)/sign-in')} className="w-full rounded-xl">
+        <Icon as={LogIn} size={16} />
+        <Text className="font-semibold">Sign In</Text>
+      </Button>
+    )}
+  </CardContent>
         </Card>
       </ScrollView>
     </View>

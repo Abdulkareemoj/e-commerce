@@ -19,6 +19,7 @@ import {
   Wallet,
   Tag,
   Flag,
+  LogIn,
 } from 'lucide-react-native';
 import { useAuthStore } from '@/lib/authStore';
 import { useCart } from '@/hooks/useCart';
@@ -72,7 +73,7 @@ const ADMIN_NAV: NavItem[] = [
 export function AppSidebar({ role = 'user' }: AppSidebarProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const { user, clearAuth } = useAuthStore();
+  const { user, isAuthenticated, clearAuth } = useAuthStore();
   const { totalItems } = useCart();
 
   const navItems = role === 'admin' ? ADMIN_NAV : role === 'vendor' ? VENDOR_NAV : USER_NAV;
@@ -123,30 +124,46 @@ export function AppSidebar({ role = 'user' }: AppSidebarProps) {
         </View>
       </View>
 
-      <View className="border-border border-t p-4">
-        <View className="flex-row items-center gap-3">
-          <Avatar alt={user?.name || 'User'} className="size-9">
-            <AvatarFallback className="bg-primary">
-              <Text className="text-primary-foreground text-xs font-bold">
-                {user?.name?.charAt(0).toUpperCase() || 'U'}
+           <View className="border-border border-t p-4">
+        {isAuthenticated && user ? (
+          <View className="flex-row items-center gap-3">
+            <Avatar alt={user.name || 'User'} className="size-9">
+              <AvatarFallback className="bg-primary">
+                <Text className="text-primary-foreground text-xs font-bold">
+                  {user.name?.charAt(0).toUpperCase() || 'U'}
+                </Text>
+              </AvatarFallback>
+            </Avatar>
+            <View className="flex-1">
+              <Text className="text-foreground text-sm font-medium" numberOfLines={1}>
+                {user.name}
               </Text>
-            </AvatarFallback>
-          </Avatar>
-          <View className="flex-1">
-            <Text className="text-foreground text-sm font-medium" numberOfLines={1}>
-              {user?.name || 'Guest'}
-            </Text>
-            <Text className="text-muted-foreground text-xs" numberOfLines={1}>
-              {user?.email || ''}
-            </Text>
+              <Text className="text-muted-foreground text-xs" numberOfLines={1}>
+                {user.email}
+              </Text>
+            </View>
+            <Pressable
+              onPress={() => clearAuth()}
+              className="active:bg-secondary/50 size-8 items-center justify-center rounded-lg">
+              <Icon as={LogOut} size={16} className="text-muted-foreground" />
+            </Pressable>
           </View>
+        ) : (
           <Pressable
-            onPress={() => clearAuth()}
-            className="active:bg-secondary/50 size-8 items-center justify-center rounded-lg">
-            <Icon as={LogOut} size={16} className="text-muted-foreground" />
+            onPress={() => router.push('/(auth)/sign-in')}
+            className="active:bg-secondary/50 flex-row items-center gap-3 rounded-lg p-1">
+            <View className="bg-muted size-9 items-center justify-center rounded-full">
+              <Icon as={LogIn} size={16} className="text-muted-foreground" />
+            </View>
+            <View className="flex-1">
+              <Text className="text-foreground text-sm font-medium">Sign In</Text>
+              <Text className="text-muted-foreground text-xs">Tap to access your account</Text>
+            </View>
           </Pressable>
-        </View>
+        )}
       </View>
     </View>
+
+  
   );
 }

@@ -177,14 +177,7 @@ function MobileLayout() {
       <Drawer.Screen name="analytics" options={{ headerShown: true, title: 'Analytics' }} />
       <Drawer.Screen name="profile" options={{ headerShown: true, title: 'Profile' }} />
       <Drawer.Screen name="settings" options={{ headerShown: true, title: 'Settings' }} />
-      <Drawer.Screen
-        name="pending"
-        options={{ drawerItemStyle: { display: 'none' }, headerShown: false }}
-      />
-      <Drawer.Screen
-        name="rejected"
-        options={{ drawerItemStyle: { display: 'none' }, headerShown: false }}
-      />
+  
       <Drawer.Screen
         name="messages"
         options={{ drawerItemStyle: { display: 'none' }, headerShown: false }}
@@ -206,8 +199,6 @@ function WebLayout() {
       <Stack.Screen name="analytics" />
       <Stack.Screen name="profile" />
       <Stack.Screen name="settings" />
-      <Stack.Screen name="pending" />
-      <Stack.Screen name="rejected" />
       <Stack.Screen name="messages" />
     </Stack>
   );
