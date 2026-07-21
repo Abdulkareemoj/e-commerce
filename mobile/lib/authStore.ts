@@ -5,7 +5,7 @@ interface User {
   id: string;
   name: string;
   email: string;
-  role: 'user' | 'vendor' | 'admin';
+  role: 'user' | 'vendor' | 'admin' | 'superadmin';
   image?: string | null;
   vendorStatus?: 'pending' | 'approved' | 'rejected' | null;
   onboardingComplete?: boolean;
@@ -65,16 +65,26 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     set({ user: { ...current, ...updates } });
   },
 
-  clearAuth: async () => {
-    await signOut();
+clearAuth: async () => {
+  const wasAuthenticated = get().isAuthenticated;
+  try {
+    if (wasAuthenticated) {
+      await signOut();
+    }
+  } catch (err) {
+    // Don't let a failed remote sign-out (dead network, already-expired
+    // session server-side, etc.) prevent clearing local state — the user
+    // still needs to end up logged out locally either way.
+    console.error('Sign out request failed, clearing local session anyway:', err);
+  } finally {
     set({
       user: null,
       accessToken: null,
       isAuthenticated: false,
       isLoading: false,
     });
-  },
-
+  }
+},
   refreshToken: async () => {
     const { data } = await getSession();
     if (data?.session?.token) {

@@ -1,18 +1,14 @@
 import { router } from 'expo-router';
 
-type UserRole = 'user' | 'vendor' | 'admin';
+type UserRole = 'user' | 'vendor' | 'admin' | 'superadmin';
 type VendorStatus = 'pending' | 'approved' | 'rejected' | null | undefined;
 
 
 // Get the appropriate dashboard route based on user role and vendor status.
 
 export function getDashboardRoute(role: UserRole, vendorStatus?: VendorStatus): string {
-  if (role === 'admin') return '/(admin)/(tabs)/dashboard';
-  if (role === 'vendor') {
-    if (vendorStatus === 'pending') return '/(vendor)/pending';
-    if (vendorStatus === 'rejected') return '/(vendor)/rejected';
-    return '/(vendor)/(tabs)/dashboard';
-  }
+  if (role === 'admin' || role === 'superadmin') return '/(admin)/(tabs)/dashboard';
+  if (role === 'vendor') return '/(vendor)/(tabs)/dashboard';
   return '/(user)/(tabs)/home';
 }
 
@@ -26,8 +22,10 @@ export function navigateToDashboard(role: UserRole, vendorStatus?: VendorStatus)
 
 
  // Check if the user has the required role.
+ // Superadmin passes any role check.
  
 export function hasRole(userRole: UserRole | undefined, requiredRole: UserRole): boolean {
+  if (userRole === 'superadmin') return true;
   return userRole === requiredRole;
 }
 
