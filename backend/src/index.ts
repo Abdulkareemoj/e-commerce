@@ -18,6 +18,11 @@ import pino from "pino";
 
 const port = Number(process.env.PORT) || 8000;
 const app = new Hono<{ Variables: AppVariables }>();
+const allowedOrigins = [
+  process.env.CORS_ORIGIN, // production domain
+  "http://localhost:8081", // Expo web dev server
+].filter((o): o is string => Boolean(o));
+
 
 app.use("*", async (c, next) => {
   const session = await auth.api.getSession({ headers: c.req.raw.headers });
@@ -47,20 +52,34 @@ const log = pino({
 // Add pino logger middleware
 app.use("*", pinoLogger({ pino: log }));
 
+
 app.use(
-  "/api/auth/*",
+  "/api/*",
   cors({
-    origin:
-      process.env.NODE_ENV === "production" && process.env.CORS_ORIGIN
-        ? process.env.CORS_ORIGIN
-        : "*",
+    origin: (origin) => (origin && allowedOrigins.includes(origin) ? origin : undefined),
     allowHeaders: ["Content-Type", "Authorization"],
-    allowMethods: ["POST", "GET", "OPTIONS"],
+    allowMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     exposeHeaders: ["Content-Length"],
     maxAge: 600,
     credentials: true,
   }),
 );
+
+app.use("*", async (c, next) => {
+  const session = await auth.api.getSession({ headers: c.req.raw.headers });
+
+  if (!session) {
+    c.set("user", null);
+    c.set("session", null);
+    return await next();
+  }
+
+  c.set("user", session.user);
+  c.set("session", session.session);
+  await next();
+});
+
+
 
 app.on(["POST", "GET"], "/api/auth/*", (c) => {
   const req = c.req.raw;
